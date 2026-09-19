@@ -42,25 +42,39 @@ jobs:
           sudo xcode-select -s "$elegido/Contents/Developer"
           xcodebuild -version
 
-      # El nombre del simulador se elige en el momento: la imagen del runner cambia cada pocas
-      # semanas y fijar «iPhone 16» hace que el flujo falle solo, sin que nadie tocara el código.
+      # El simulador se elige en el momento y se pasa por identificador, no por nombre: la
+      # imagen del runner trae varias versiones de iOS y no todos los modelos existen en
+      # todas. Pasar solo el nombre hace que xcodebuild lo busque en «OS:latest» y falle con
+      # «unable to find a device matching the provided destination specifier» aunque ese
+      # modelo exista en una versión anterior.
       - name: Elegir un simulador disponible
         if: steps.proyecto.outputs.existe == 'si'
         id: simulador
         shell: bash
         run: |
-          nombre=$(xcrun simctl list devices available --json | python3 -c "
-          import json, sys
-          disp = json.load(sys.stdin)['devices']
-          iphones = [d['name'] for r, ds in disp.items() if 'iOS' in r for d in ds if d['name'].startswith('iPhone')]
-          print(iphones[-1] if iphones else '')
+          elegido=$(xcrun simctl list devices available --json | python3 -c "
+          import json, re, sys
+          equipos = json.load(sys.stdin)['devices']
+
+          def version(runtime):
+              m = re.search(r'iOS-([0-9-]+)\$', runtime)
+              return tuple(int(x) for x in m.group(1).split('-')) if m else (0,)
+
+          candidatos = [r for r in equipos
+                        if 'iOS' in r and any(d['name'].startswith('iPhone') for d in equipos[r])]
+          if not candidatos:
+              print('')
+          else:
+              runtime = max(candidatos, key=version)
+              iphones = [d for d in equipos[runtime] if d['name'].startswith('iPhone')]
+              print(iphones[-1]['udid'] + '|' + iphones[-1]['name'])
           ")
-          if [ -z "$nombre" ]; then
+          if [ -z "$elegido" ]; then
             echo "No hay ningún simulador de iPhone en el runner." >&2
             exit 1
           fi
-          echo "Usando el simulador: $nombre"
-          echo "nombre=$nombre" >> "$GITHUB_OUTPUT"
+          echo "Usando el simulador: ${elegido#*|} (${elegido%%|*})"
+          echo "id=${elegido%%|*}" >> "$GITHUB_OUTPUT"
 
       # El Xcode de la MacBook de Jesus es más nuevo que cualquiera de los quince que trae
       # el runner y guarda el proyecto con `objectVersion = 110`, que Xcode 26.6 no puede
@@ -90,6 +104,6 @@ jobs:
         run: |
           xcodebuild test \
             -scheme Glucy \
-            -destination "platform=iOS Simulator,name=${{ steps.simulador.outputs.nombre }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.simulador.outputs.id }}" \
             -only-testing:GlucyTests \
             CODE_SIGNING_ALLOWED=NO
