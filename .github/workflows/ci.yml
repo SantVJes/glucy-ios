@@ -62,6 +62,27 @@ jobs:
           echo "Usando el simulador: $nombre"
           echo "nombre=$nombre" >> "$GITHUB_OUTPUT"
 
+      # El Xcode de la MacBook de Jesus es más nuevo que cualquiera de los quince que trae
+      # el runner y guarda el proyecto con `objectVersion = 110`, que Xcode 26.6 no puede
+      # abrir siquiera. Aquí se baja a 77, que es el formato de Xcode 16, el que el propio
+      # proyecto declara como preferido (`preferredProjectObjectVersion = 77`) y el primero
+      # que soporta las carpetas sincronizadas, así que no se pierde nada.
+      #
+      # Se modifica SOLO la copia descargada en el runner; el repositorio no cambia. Es un
+      # apaño consciente: mientras dure, la compilación no corre sobre un archivo idéntico
+      # al del repositorio. Se quita en cuanto GitHub ofrezca un Xcode igual o más nuevo.
+      - name: Ajustar el formato del proyecto al Xcode del runner
+        if: steps.proyecto.outputs.existe == 'si'
+        shell: bash
+        run: |
+          archivo=Glucy.xcodeproj/project.pbxproj
+          actual=$(sed -n 's/^[[:space:]]*objectVersion = \([0-9]*\);.*/\1/p' "$archivo" | head -1)
+          echo "Formato del proyecto en el repositorio: $actual"
+          if [ -n "$actual" ] && [ "$actual" -gt 77 ]; then
+            sed -i '' "s/^\([[:space:]]*\)objectVersion = $actual;/\1objectVersion = 77;/" "$archivo"
+            echo "Bajado a 77 solo para esta compilación."
+          fi
+
       # Solo las pruebas de dominio: son las que tienen consecuencia clínica y las que corren
       # en segundos. Las de interfaz entran cuando la fase 1 tenga pantallas.
       - name: Compilar y correr las pruebas de dominio
