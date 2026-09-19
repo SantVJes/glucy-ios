@@ -10,7 +10,11 @@ en los archivos del proyecto. Especificación ejecutable de las reglas:
 
 ---
 
-## 0. Antes de nada: crear el proyecto en Xcode
+## 0. Crear el proyecto en Xcode — ✅ HECHO el 19 de septiembre de 2026
+
+Queda escrito para el reporte y por si hay que repetirlo. **No hay que volver a hacerlo.**
+El proyecto ya está en `main` y en `develop`, con iOS 17.0 en el proyecto y en los tres
+targets, Swift 6 y la integración continua compilando en verde.
 
 Esto **no** lo puede hacer Claude, hay que hacerlo a mano una sola vez.
 
@@ -42,6 +46,26 @@ Esto **no** lo puede hacer Claude, hay que hacerlo a mano una sola vez.
 Simulator,name=iPhone 17' build` termina en `BUILD SUCCEEDED`.
 
 ---
+
+## 0 bis. Antes de abrir Claude Code
+
+Dos cosas, una vez:
+
+```bash
+# 1. Tener la referencia de las reglas clínicas al lado, para que Claude la pueda leer.
+cd ~/Documents
+git clone https://github.com/SantVJes/glucy-backend.git
+
+# 2. Partir de develop, con Xcode cerrado.
+cd ~/Documents/glucy-ios
+git switch develop
+git pull origin develop
+git switch -c feature/dominio-y-reglas-clinicas
+```
+
+Lo primero importa: `referencia/reglas_clinicas.py` vive en **glucy-backend**, y es contra ese
+archivo contra el que se comparan los números. Si no está en la computadora, Claude no lo
+puede leer y solo queda lo que dice este documento, que alcanza pero no permite cotejar.
 
 ## 1. Qué se construye en el paso 1, y por qué va primero
 
@@ -455,6 +479,6 @@ rojo.
 > Lee `CLAUDE.md` y `docs/paso-1-dominio-y-reglas.md`. Haz el paso 1 completo: los enums, los
 > diez modelos de SwiftData y `Domain/Rules` con sus pruebas, en una rama
 > `feature/dominio-y-reglas-clinicas`. No crees ninguna vista. Los números tienen que coincidir
-> con `referencia/reglas_clinicas.py` del repositorio glucy-backend; empieza por el caso P-11,
+> con `../glucy-backend/referencia/reglas_clinicas.py`; empieza por el caso P-11,
 > que es 60 g con absorción de 180 minutos, a los 90 minutos, igual a 30 g. Corre las pruebas
 > antes de decirme que terminaste.
