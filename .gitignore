@@ -60,3 +60,28 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# --- Glucy iOS ---
+DerivedData/
+build/
+*.xcuserstate
+*.xcscmblueprint
+.swiftpm/
+# El modelo convertido a Core ML se versiona aparte; los artefactos intermedios no.
+*.mlmodelc
+
+# --- Glucy: nada de esto entra al repositorio ---
+# Llaves, tokens y cadenas de conexión. Van en variables de entorno o en el Keychain.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,35 @@
+# Integración continua de glucy-ios.
+# Corre en cada pull request y en cada push a main y develop. Nada se fusiona con esto en rojo.
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  pruebas:
+    name: Compilar y probar
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # En la fase 0 todavía no existe el proyecto de Xcode: el flujo se salta la compilación
+      # en lugar de fallar. En cuanto la fase 1 cree Glucy.xcodeproj, esto empieza a correr solo.
+      - name: Ver si ya hay proyecto de Xcode
+        id: proyecto
+        run: |
+          if ls *.xcodeproj *.xcworkspace >/dev/null 2>&1; then
+            echo "existe=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "existe=no" >> "$GITHUB_OUTPUT"
+            echo "Todavía no hay proyecto de Xcode. Se omite la compilación (fase 0)."
+          fi
+
+      - name: Compilar y correr las pruebas
+        if: steps.proyecto.outputs.existe == 'si'
+        run: |
+          xcodebuild test \
+            -scheme Glucy \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO | xcpretty && exit ${PIPESTATUS[0]}
