@@ -14,22 +14,48 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # En la fase 0 todavía no existe el proyecto de Xcode: el flujo se salta la compilación
-      # en lugar de fallar. En cuanto la fase 1 cree Glucy.xcodeproj, esto empieza a correr solo.
+      # Mientras no exista el proyecto de Xcode el flujo se salta la compilación en lugar de
+      # fallar. `compgen -G` se usa en vez de `ls` porque `ls a b` devuelve error si uno solo
+      # de los dos patrones no encuentra nada, y eso hacía que la compilación se omitiera
+      # incluso con el proyecto ya subido.
       - name: Ver si ya hay proyecto de Xcode
         id: proyecto
+        shell: bash
         run: |
-          if ls *.xcodeproj *.xcworkspace >/dev/null 2>&1; then
+          if compgen -G "*.xcodeproj" > /dev/null || compgen -G "*.xcworkspace" > /dev/null; then
             echo "existe=si" >> "$GITHUB_OUTPUT"
           else
             echo "existe=no" >> "$GITHUB_OUTPUT"
-            echo "Todavía no hay proyecto de Xcode. Se omite la compilación (fase 0)."
+            echo "Todavía no hay proyecto de Xcode. Se omite la compilación."
           fi
 
-      - name: Compilar y correr las pruebas
+      # El nombre del simulador se elige en el momento: la imagen del runner cambia cada pocas
+      # semanas y fijar «iPhone 16» hace que el flujo falle solo, sin que nadie tocara el código.
+      - name: Elegir un simulador disponible
+        if: steps.proyecto.outputs.existe == 'si'
+        id: simulador
+        shell: bash
+        run: |
+          nombre=$(xcrun simctl list devices available --json | python3 -c "
+          import json, sys
+          disp = json.load(sys.stdin)['devices']
+          iphones = [d['name'] for r, ds in disp.items() if 'iOS' in r for d in ds if d['name'].startswith('iPhone')]
+          print(iphones[-1] if iphones else '')
+          ")
+          if [ -z "$nombre" ]; then
+            echo "No hay ningún simulador de iPhone en el runner." >&2
+            exit 1
+          fi
+          echo "Usando el simulador: $nombre"
+          echo "nombre=$nombre" >> "$GITHUB_OUTPUT"
+
+      # Solo las pruebas de dominio: son las que tienen consecuencia clínica y las que corren
+      # en segundos. Las de interfaz entran cuando la fase 1 tenga pantallas.
+      - name: Compilar y correr las pruebas de dominio
         if: steps.proyecto.outputs.existe == 'si'
         run: |
           xcodebuild test \
             -scheme Glucy \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            CODE_SIGNING_ALLOWED=NO | xcpretty && exit ${PIPESTATUS[0]}
+            -destination "platform=iOS Simulator,name=${{ steps.simulador.outputs.nombre }}" \
+            -only-testing:GlucyTests \
+            CODE_SIGNING_ALLOWED=NO
