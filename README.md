@@ -52,6 +52,7 @@ xcodebuild -scheme Glucy -destination 'platform=iOS Simulator,name=iPhone 17' \
 | `GlucyAppTests/` | pruebas de dominio, las que importan |
 | `GlucyAppUITests/` | recorridos con XCUITest |
 | `docs/` | arquitectura, base de datos, modelos, pruebas y privacidad |
+| [`docs/paso-1-dominio-y-reglas.md`](docs/paso-1-dominio-y-reglas.md) | instrucciones concretas del primer paso de la fase 1: crear el proyecto en Xcode, los enums, los diez modelos, las reglas clínicas y sus pruebas |
 
 La API está documentada en [glucy-backend/docs/api.md](https://github.com/SantVJes/glucy-backend/blob/main/docs/api.md).
 
