@@ -18,16 +18,24 @@ Esto **no** lo puede hacer Claude, hay que hacerlo a mano una sola vez.
 2. Product Name: `Glucy` · Interface: **SwiftUI** · Language: **Swift** · Storage: **None**
    (SwiftData se configura a mano, el asistente lo mete mal) · Testing System: **Swift Testing**
    con XCTest de respaldo · Include Tests: **sí**.
-3. Guardarlo **en la raíz de este repositorio**, de modo que quede `Glucy.xcodeproj` al lado
-   de `CLAUDE.md`. Desmarcar «Create Git repository»: ya existe.
+3. En el diálogo de guardar, entrar a la carpeta del repositorio clonado y **desmarcar
+   «Create Git repository on my Mac»**: ya existe uno. Xcode crea una subcarpeta `Glucy`
+   dentro; hay que subir su contenido un nivel para que `Glucy.xcodeproj` quede al lado de
+   `CLAUDE.md`, porque ahí es donde lo busca la integración continua:
+
+   ```bash
+   cd ~/ruta/a/glucy-ios
+   mv Glucy _tmp && mv _tmp/* . && rmdir _tmp
+   ```
+
+   Después de eso la raíz tiene `Glucy.xcodeproj`, `Glucy/`, `GlucyTests/` y `GlucyUITests/`.
 4. En *Build Settings* del target:
    - `IPHONEOS_DEPLOYMENT_TARGET` = **17.0**
    - `SWIFT_VERSION` = **6.0**
    - `SWIFT_STRICT_CONCURRENCY` = **complete**
 5. En *Signing & Capabilities* todavía **no** se agrega nada. HealthKit, cámara, Face ID y
    notificaciones entran en los pasos 4, 5 y 9, no ahora.
-6. Renombrar los dos targets de prueba a `GlucyAppTests` y `GlucyAppUITests`.
-7. `git add . && git commit && git push`. En cuanto `Glucy.xcodeproj` exista, la integración
+6. `git add . && git commit && git push`. En cuanto `Glucy.xcodeproj` exista, la integración
    continua deja de saltarse la compilación y empieza a compilar de verdad.
 
 **Cómo se sabe que esto está hecho:** `xcodebuild -scheme Glucy -destination 'platform=iOS
@@ -49,7 +57,7 @@ dentro de las vistas y ya no se pueden probar. **En este paso no se dibuja ni un
 ## 2. Archivos que hay que crear
 
 ```
-GlucyApp/
+Glucy/
   Domain/
     Enums/
       Origen.swift
@@ -78,7 +86,7 @@ GlucyApp/
       Indicadores.swift            // TIR, TBR, TAR, promedio, CV, GMI
       DecisionModo.swift
       DecisionSincronizacion.swift
-GlucyAppTests/
+GlucyTests/
   ValidacionTests.swift
   CarbohidratosTests.swift
   InsulinaTests.swift
@@ -365,7 +373,7 @@ Se corren así, y son segundos:
 
 ```bash
 xcodebuild -scheme Glucy -destination 'platform=iOS Simulator,name=iPhone 17' \
-  -only-testing:GlucyAppTests test
+  -only-testing:GlucyTests test
 ```
 
 ---
@@ -404,13 +412,13 @@ en el tablero de FigJam.
 
 ## 8. Cómo se sabe que el paso 1 está hecho
 
-1. `xcodebuild … -only-testing:GlucyAppTests test` termina en verde, con las catorce pruebas
+1. `xcodebuild … -only-testing:GlucyTests test` termina en verde, con las catorce pruebas
    de la tabla de arriba.
 2. Los mismos números que da `referencia/reglas_clinicas.py` de glucy-backend, empezando por
    el caso P-11.
 3. **No se abrió una sola pantalla.** Si hay un `.swift` dentro de `Features/`, el paso 1 se
    desbordó.
-4. `grep -r "import HealthKit\|import SwiftUI\|import Vision" GlucyApp/Domain/` no devuelve
+4. `grep -r "import HealthKit\|import SwiftUI\|import Vision" Glucy/Domain/` no devuelve
    nada.
 5. No hay ningún número clínico escrito suelto fuera de `ConfiguracionDominio.swift`.
 

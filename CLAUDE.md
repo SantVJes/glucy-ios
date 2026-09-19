@@ -91,14 +91,14 @@ View SwiftUI  →  ViewModel @Observable  →  Use Case  →  Repository  →  S
   específico de cada fuente vive aquí y nada más que aquí.
 
 ```
-GlucyApp/
+Glucy/
   App/          GlucyApp.swift, contenedor de dependencias, Theme/
   Domain/       Models/ (los @Model) · Enums/ · UseCases/ · Rules/ (validación, COB, IOB, indicadores)
   Data/         Repositories/ · SwiftData/ · HealthKit/ · OCR/ · Network/ · Sync/
   Features/     una carpeta por pantalla, con su View y su ViewModel
   Resources/    Assets, Localizable (es-MX), modelo Core ML
-GlucyAppTests/      pruebas de Domain — las que importan
-GlucyAppUITests/    XCUITest de los recorridos
+GlucyTests/      pruebas de Domain — las que importan
+GlucyUITests/    XCUITest de los recorridos
 ```
 
 ## Configuración del proyecto
@@ -123,7 +123,7 @@ xcodebuild -scheme Glucy -destination 'platform=iOS Simulator,name=iPhone 17' te
 
 # Solo las pruebas de dominio, que son las rápidas
 xcodebuild -scheme Glucy -destination 'platform=iOS Simulator,name=iPhone 17' \
-  -only-testing:GlucyAppTests test
+  -only-testing:GlucyTests test
 
 # HealthKit en segundo plano, notificaciones, cámara y Vision: SOLO en el iPhone físico.
 # El simulador no los reproduce bien.
