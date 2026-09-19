@@ -29,6 +29,19 @@ jobs:
             echo "Todavía no hay proyecto de Xcode. Se omite la compilación."
           fi
 
+      # El runner trae varias versiones de Xcode y la seleccionada no siempre es la más
+      # nueva. Un proyecto guardado con un Xcode posterior no se puede ni abrir, así que se
+      # elige la mayor disponible y se deja anotada en la bitácora.
+      - name: Usar el Xcode más reciente del runner
+        if: steps.proyecto.outputs.existe == 'si'
+        shell: bash
+        run: |
+          echo "Xcode instalados en el runner:"
+          ls -d /Applications/Xcode*.app
+          elegido="$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$elegido/Contents/Developer"
+          xcodebuild -version
+
       # El nombre del simulador se elige en el momento: la imagen del runner cambia cada pocas
       # semanas y fijar «iPhone 16» hace que el flujo falle solo, sin que nadie tocara el código.
       - name: Elegir un simulador disponible
