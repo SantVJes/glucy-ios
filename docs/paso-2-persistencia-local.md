@@ -456,3 +456,64 @@ integración continua en rojo.
 > terminaste. Los requisitos que cubre este paso son RF-20, RF-36b y RF-36c del lado de la
 > app, y están pegados completos en el apartado 1 bis del documento: cada prueba tiene que
 > poder rastrearse a uno de los tres.
+
+---
+
+## 13. Las tres trampas de SwiftData, para no perder una tarde
+
+El paso 1 salió sin tropiezos porque `Domain/Rules` es aritmética pura: no depende de
+ningún framework. El paso 2 sí toca SwiftData, y SwiftData tiene esquinas. Estas tres se
+avisan de antemano.
+
+### 1. No filtrar por un enum dentro de `#Predicate`
+
+`syncEstado`, `origen` y `tipo` son enums. Comparar un enum dentro de un `#Predicate`
+falla en varias versiones de SwiftData, y falla **en tiempo de ejecución**, no al compilar:
+la prueba truena con un error que no menciona el enum por ningún lado y se va media tarde
+buscándolo en otro sitio.
+
+La salida es traer por fecha o por UUID, que sí funcionan, y **filtrar el enum en memoria**:
+
+```swift
+// Mal: puede tronar en ejecución.
+let d = FetchDescriptor<ColaSincronizacion>(
+    predicate: #Predicate { $0.estado == .pendiente }
+)
+
+// Bien: el predicado solo usa fechas, el enum se filtra después.
+var d = FetchDescriptor<ColaSincronizacion>(
+    sortBy: [SortDescriptor(\.creadoTsUtc, order: .forward)]
+)
+d.fetchLimit = limite * 4
+let filas = try modelContext.fetch(d).filter { $0.estado == .pendiente }.prefix(limite)
+```
+
+Si algún día la cola crece tanto que esto pesa, se agrega una columna con el valor crudo en
+texto y se filtra por ella. Hoy no hace falta: la cola de una persona no pasa de unos miles
+de filas.
+
+### 2. Dentro de `#Predicate` no se pueden llamar funciones
+
+`#Predicate` se traduce a una consulta, así que no acepta llamadas. La fecha de corte se
+calcula **antes** y se captura:
+
+```swift
+// Mal: Date() dentro del predicado no compila.
+predicate: #Predicate { $0.tsUtc > Date().addingTimeInterval(-horas * 3600) }
+
+// Bien.
+let corte = hasta.addingTimeInterval(-horas * 3600)
+predicate: #Predicate<Comida> { $0.tsUtc > corte && $0.tsUtc <= hasta }
+```
+
+### 3. Las firmas de este documento son la intención, no la verdad
+
+Las firmas de `ModelContainer`, `ModelConfiguration`, `VersionedSchema` y
+`SchemaMigrationPlan` están escritas de memoria y cambian entre versiones del SDK. **Si el
+compilador dice otra cosa, manda el compilador**, siempre que se respete la intención: un
+esquema con las diez tablas, un plan de migración con una sola versión y la opción de
+levantarlo en memoria para las pruebas.
+
+Lo que **no** se negocia aunque el compilador proteste: que los repositorios sean actores,
+que sus protocolos hablen solo de structs `Sendable` y que guardar y encolar ocurran en la
+misma llamada.
