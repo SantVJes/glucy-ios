@@ -56,4 +56,22 @@ actor LecturasSwiftData: RepositorioLecturas {
     func contar() throws -> Int {
         try modelContext.fetchCount(FetchDescriptor<LecturaGlucosa>())
     }
+
+    func eliminar(uuid: UUID) throws {
+        var descriptor = FetchDescriptor<LecturaGlucosa>(predicate: #Predicate { $0.uuid == uuid })
+        descriptor.fetchLimit = 1
+        guard let fila = try modelContext.fetch(descriptor).first else { return }
+        modelContext.delete(fila)
+
+        // La fila de la cola se va con ella, en la misma llamada: si se quedara, el backend
+        // recibiría un registro que en el teléfono ya no existe.
+        var enCola = FetchDescriptor<ColaSincronizacion>(
+            predicate: #Predicate { $0.uuidRegistro == uuid }
+        )
+        enCola.fetchLimit = 1
+        if let filaCola = try modelContext.fetch(enCola).first {
+            modelContext.delete(filaCola)
+        }
+        try modelContext.save()
+    }
 }

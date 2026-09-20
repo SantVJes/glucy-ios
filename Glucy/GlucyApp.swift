@@ -27,7 +27,7 @@ struct GlucyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            PestanasView()
         }
         .modelContainer(contenedor)
         .environment(dependencias)
