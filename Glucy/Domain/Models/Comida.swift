@@ -71,3 +71,45 @@ nonisolated final class Comida {
         self.syncEstado = syncEstado
     }
 }
+
+// MARK: - Conversión a valor
+
+extension Comida {
+    convenience init(dato: ComidaDato) {
+        self.init(
+            uuid: dato.uuid,
+            tsUtc: dato.tsUtc,
+            zonaHoraria: dato.zonaHoraria,
+            carbsG: dato.carbsG,
+            tiempoAbsorcionMin: dato.tiempoAbsorcionMin,
+            origen: dato.origen,
+            descripcion: dato.descripcion,
+            codigoBarras: dato.codigoBarras,
+            nombreProducto: dato.nombreProducto,
+            porcionG: dato.porcionG,
+            confirmadaPorUsuario: dato.confirmadaPorUsuario,
+            escritaEnHealthKit: dato.escritaEnHealthKit,
+            nota: dato.nota,
+            syncEstado: dato.syncEstado
+        )
+    }
+
+    var dato: ComidaDato {
+        ComidaDato(
+            uuid: uuid,
+            tsUtc: tsUtc,
+            zonaHoraria: zonaHoraria,
+            carbsG: carbsG,
+            tiempoAbsorcionMin: tiempoAbsorcionMin,
+            origen: origen,
+            descripcion: descripcion,
+            codigoBarras: codigoBarras,
+            nombreProducto: nombreProducto,
+            porcionG: porcionG,
+            confirmadaPorUsuario: confirmadaPorUsuario,
+            escritaEnHealthKit: escritaEnHealthKit,
+            nota: nota,
+            syncEstado: syncEstado
+        )
+    }
+}

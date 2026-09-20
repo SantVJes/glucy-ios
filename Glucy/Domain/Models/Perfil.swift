@@ -75,3 +75,47 @@ nonisolated final class Perfil {
         self.syncEstado = syncEstado
     }
 }
+
+// MARK: - Conversión a valor
+
+extension Perfil {
+    convenience init(dato: PerfilDato) {
+        self.init(
+            uuid: dato.uuid,
+            nombre: dato.nombre,
+            apellidos: dato.apellidos,
+            pesoKg: dato.pesoKg,
+            fechaNacimiento: dato.fechaNacimiento,
+            tipoUsuario: dato.tipoUsuario,
+            umbralHipo: dato.umbralHipo,
+            umbralHiper: dato.umbralHiper,
+            tiempoAbsorcionPorOmisionMin: dato.tiempoAbsorcionPorOmisionMin,
+            duracionAccionInsulinaH: dato.duracionAccionInsulinaH,
+            usaSensor: dato.usaSensor,
+            creadoTsUtc: dato.creadoTsUtc,
+            actualizadoTsUtc: dato.actualizadoTsUtc,
+            zonaHoraria: dato.zonaHoraria,
+            syncEstado: dato.syncEstado
+        )
+    }
+
+    var dato: PerfilDato {
+        PerfilDato(
+            uuid: uuid,
+            nombre: nombre,
+            apellidos: apellidos,
+            pesoKg: pesoKg,
+            fechaNacimiento: fechaNacimiento,
+            tipoUsuario: tipoUsuario,
+            umbralHipo: umbralHipo,
+            umbralHiper: umbralHiper,
+            tiempoAbsorcionPorOmisionMin: tiempoAbsorcionPorOmisionMin,
+            duracionAccionInsulinaH: duracionAccionInsulinaH,
+            usaSensor: usaSensor,
+            creadoTsUtc: creadoTsUtc,
+            actualizadoTsUtc: actualizadoTsUtc,
+            zonaHoraria: zonaHoraria,
+            syncEstado: syncEstado
+        )
+    }
+}
