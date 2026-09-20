@@ -51,3 +51,35 @@ nonisolated final class ColaSincronizacion {
         self.estado = estado
     }
 }
+
+// MARK: - Conversión a valor
+
+extension ColaSincronizacion {
+    convenience init(dato: PendienteDato) {
+        self.init(
+            uuid: dato.uuid,
+            tipoRegistro: dato.tipoRegistro,
+            uuidRegistro: dato.uuidRegistro,
+            creadoTsUtc: dato.creadoTsUtc,
+            zonaHoraria: dato.zonaHoraria,
+            intentos: dato.intentos,
+            ultimoIntentoTsUtc: dato.ultimoIntentoTsUtc,
+            ultimoError: dato.ultimoError,
+            estado: dato.estado
+        )
+    }
+
+    var dato: PendienteDato {
+        PendienteDato(
+            uuid: uuid,
+            tipoRegistro: tipoRegistro,
+            uuidRegistro: uuidRegistro,
+            creadoTsUtc: creadoTsUtc,
+            zonaHoraria: zonaHoraria,
+            intentos: intentos,
+            ultimoIntentoTsUtc: ultimoIntentoTsUtc,
+            ultimoError: ultimoError,
+            estado: estado
+        )
+    }
+}

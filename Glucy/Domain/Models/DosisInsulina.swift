@@ -59,3 +59,39 @@ nonisolated final class DosisInsulina {
         self.syncEstado = syncEstado
     }
 }
+
+// MARK: - Conversión a valor
+
+extension DosisInsulina {
+    convenience init(dato: DosisInsulinaDato) {
+        self.init(
+            uuid: dato.uuid,
+            tsUtc: dato.tsUtc,
+            zonaHoraria: dato.zonaHoraria,
+            unidades: dato.unidades,
+            tipo: dato.tipo,
+            motivo: dato.motivo,
+            origen: dato.origen,
+            duracionAccionH: dato.duracionAccionH,
+            escritaEnHealthKit: dato.escritaEnHealthKit,
+            nota: dato.nota,
+            syncEstado: dato.syncEstado
+        )
+    }
+
+    var dato: DosisInsulinaDato {
+        DosisInsulinaDato(
+            uuid: uuid,
+            tsUtc: tsUtc,
+            zonaHoraria: zonaHoraria,
+            unidades: unidades,
+            tipo: tipo,
+            motivo: motivo,
+            origen: origen,
+            duracionAccionH: duracionAccionH,
+            escritaEnHealthKit: escritaEnHealthKit,
+            nota: nota,
+            syncEstado: syncEstado
+        )
+    }
+}

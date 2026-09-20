@@ -60,3 +60,41 @@ nonisolated final class LecturaGlucosa {
         self.syncEstado = syncEstado
     }
 }
+
+// MARK: - Conversión a valor
+
+extension LecturaGlucosa {
+    /// La fila a partir del valor que entregó quien llama al repositorio.
+    convenience init(dato: LecturaGlucosaDato) {
+        self.init(
+            uuid: dato.uuid,
+            mgDl: dato.mgDl,
+            tsUtc: dato.tsUtc,
+            zonaHoraria: dato.zonaHoraria,
+            origen: dato.origen,
+            contexto: dato.contexto,
+            confirmadaPorUsuario: dato.confirmadaPorUsuario,
+            atipica: dato.atipica,
+            escritaEnHealthKit: dato.escritaEnHealthKit,
+            nota: dato.nota,
+            syncEstado: dato.syncEstado
+        )
+    }
+
+    /// La fila como valor, que es lo único que puede salir del actor.
+    var dato: LecturaGlucosaDato {
+        LecturaGlucosaDato(
+            uuid: uuid,
+            mgDl: mgDl,
+            tsUtc: tsUtc,
+            zonaHoraria: zonaHoraria,
+            origen: origen,
+            contexto: contexto,
+            confirmadaPorUsuario: confirmadaPorUsuario,
+            atipica: atipica,
+            escritaEnHealthKit: escritaEnHealthKit,
+            nota: nota,
+            syncEstado: syncEstado
+        )
+    }
+}

@@ -29,6 +29,10 @@ nonisolated final class ProductoCache {
     /// Identificador de `TimeZone`, por ejemplo `America/Mexico_City` (regla 5).
     var zonaHoraria: String
 
+    /// Nace `local` y se queda ahí: es caché de un tercero, no dato de la persona, y no
+    /// tiene por qué subir. Está escrito y no dado por hecho para que se pueda comprobar.
+    var syncEstado: SyncEstado
+
     init(
         codigoBarras: String,
         nombre: String,
@@ -37,7 +41,8 @@ nonisolated final class ProductoCache {
         porcionSugeridaG: Double? = nil,
         fuente: String = "Open Food Facts",
         consultadoTsUtc: Date = Date(),
-        zonaHoraria: String = TimeZone.current.identifier
+        zonaHoraria: String = TimeZone.current.identifier,
+        syncEstado: SyncEstado = .local
     ) {
         self.codigoBarras = codigoBarras
         self.nombre = nombre
@@ -47,5 +52,6 @@ nonisolated final class ProductoCache {
         self.fuente = fuente
         self.consultadoTsUtc = consultadoTsUtc
         self.zonaHoraria = zonaHoraria
+        self.syncEstado = syncEstado
     }
 }
