@@ -46,7 +46,58 @@ tomarlos desde el primer día**, y los cuatro viven en esta capa:
 Si esto se deja para la fase 2, hay que migrar datos ya guardados sin UUID propio y sin
 estado de sincronización, y eso cuesta mucho más que escribirlo ahora.
 
-Requisitos que cubre: **RF-36b**, **RF-36c** (lado app) y **RF-20**.
+---
+
+## 1 bis. Los tres requisitos, pegados
+
+No basta con citar el identificador: quien escribe el código tiene que poder leer el
+requisito sin abrir otro documento. Son estos tres, copiados literalmente del Documento 2
+v6, con lo que en el paso 2 los cumple y la prueba que lo demuestra.
+
+### RF-20 (fase 1)
+
+> La app funciona completa sin conexión: cola de sincronización local que se vacía cuando
+> hay wifi.
+
+**Qué lo cumple aquí:** la base de datos local funcionando y `ColaSincronizacion`
+llenándose sola en cada guardado. Registrar una lectura, una comida y una dosis no toca la
+red en ningún momento.
+
+**Ojo con la segunda mitad:** *«que se vacía cuando hay wifi»* **no** es del paso 2, porque
+no hay servidor hasta la fase 2. Lo que se entrega hoy es la parte de arriba: funciona sin
+conexión, y lo que se captura se queda en la cola esperando (caso P-07, modo avión).
+`DecisionSincronizacion.debeSincronizar`, del paso 1, ya tiene la regla de cuándo vaciarla.
+
+**Prueba que lo demuestra:** la 6 y la 9 de la tabla del apartado 8.
+
+### RF-36b (fase 2, lado app desde ahora)
+
+> Cada registro local lleva un estado de sincronización (local, pendiente, enviado,
+> confirmado, error) y solo sale de la cola cuando el servidor confirma. Un fallo deja el
+> motivo y se reintenta en la siguiente ventana de wifi.
+
+**Qué lo cumple aquí:** los cinco estados ya existen en `SyncEstado`, del paso 1. El paso 2
+los pone a funcionar: todo nace en `pendiente` salvo lo del grupo que nunca sale, que nace
+en `local`, y `marcarError` guarda el motivo y sube el contador de intentos **sin borrar la
+fila**.
+
+Este requisito está etiquetado como fase 2 en el Documento 2 porque la mitad que habla del
+servidor es de allá. La mitad del teléfono se construye hoy, igual que pasa con RF-36c.
+
+**Prueba que lo demuestra:** la 2, la 7, la 8 y sobre todo la 13.
+
+### RF-36c (fase 1 en la app, fase 2 en el servidor)
+
+> El identificador de cada registro es un UUID generado en el teléfono, y el envío es
+> idempotente: el servidor acepta el mismo UUID dos veces sin duplicar.
+
+**Qué lo cumple aquí:** el UUID ya lo genera cada modelo en su `init`, del paso 1. El paso 2
+agrega la idempotencia **del lado del teléfono**: `guardar` comprueba el UUID antes de
+insertar y devuelve `false` en lugar de crear una segunda fila. Importa antes de que exista
+el servidor, porque HealthKit reentrega las mismas muestras y la persona puede tocar
+«guardar» dos veces.
+
+**Prueba que lo demuestra:** la 5.
 
 ---
 
@@ -402,4 +453,6 @@ integración continua en rojo.
 > repositorios intercambian structs `Sendable`, nunca objetos `@Model`, porque el target
 > compila con concurrencia estricta y en el paso 4 HealthKit va a escribir en segundo plano.
 > No crees ninguna pantalla ni toques `ContentView`. Corre las pruebas antes de decirme que
-> terminaste.
+> terminaste. Los requisitos que cubre este paso son RF-20, RF-36b y RF-36c del lado de la
+> app, y están pegados completos en el apartado 1 bis del documento: cada prueba tiene que
+> poder rastrearse a uno de los tres.
