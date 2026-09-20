@@ -19,7 +19,16 @@ git pull origin develop
 git switch -c feature/captura-manual
 ```
 
-`develop` ya trae el paso 2. Sale de ahí, no de `main`.
+**La rama sale de `develop`, nunca de `main`.** `develop` ya trae los pasos 1 y 2 y está al
+día. Es la convención del proyecto: `feature` → `develop` → `main`, y en los dos pasos
+anteriores se saltó. El pull request también va **contra `develop`**.
+
+Para comprobar que estás donde debes antes de empezar:
+
+```bash
+git branch --show-current     # tiene que decir: feature/captura-manual
+git log --oneline -1 develop  # tiene que ser el merge del paso 2
+```
 
 ---
 
@@ -277,8 +286,26 @@ Tres cosas que se hacen mal con facilidad:
 
 ## 7. La pantalla, y lo que no se puede perder
 
-Es la **pantalla 4** del Figma, node-id `7-2`:
-https://www.figma.com/design/TFOHJ9wm2lhsiEk1e3595A
+### El diseño
+
+**Pantalla 4 — Registro de glucosa**, abierta directamente en su node-id:
+
+> **https://www.figma.com/design/TFOHJ9wm2lhsiEk1e3595A?node-id=7-2**
+
+El archivo completo con las diez pantallas:
+https://www.figma.com/design/TFOHJ9wm2lhsiEk1e3595A · 393 × 852 pt.
+Las otras trece pantallas del alcance: https://claude.ai/artifact/JjwUJfsZunXFGvQZyrG8pX
+
+Dos advertencias sobre ese enlace:
+
+- **Claude Code no lo va a poder abrir** desde la MacBook, salvo que tengas el conector de
+  Figma configurado ahí. El enlace es **para ti**: ábrelo en el navegador mientras revisas, y
+  compara. Lo que manda para escribir el código es la lista de abajo, que es esa misma ficha
+  puesta en palabras.
+- En el dibujo la tipografía es **Inter**; en la app se usa **San Francisco**, la del sistema,
+  porque es la única que responde bien a Dynamic Type. No hay que importar Inter.
+
+### Lo que no se puede perder
 
 De la ficha del mockup, lo que es obligatorio aunque el dibujo no se pueda abrir:
 
@@ -407,9 +434,80 @@ git commit -m "feat: captura manual de glucosa con validación y tema de la app"
 git push -u origin feature/captura-manual
 ```
 
-Pull request **contra `develop`**, no contra `main`, con los apartados de la plantilla
-llenos. No se fusiona con la integración continua en rojo: **hay que esperar a que termine**,
-no solo a que arranque.
+```bash
+# Cuando esté listo, el pull request se abre contra develop. Con --web se abre el
+# navegador ya con la plantilla puesta, y ahí se pega el cuerpo del apartado 14 bis:
+gh pr create --base develop --head feature/captura-manual --web
+```
+
+No se fusiona con la integración continua en rojo, y **hay que esperar a que termine**, no
+solo a que arranque. En los dos pasos anteriores se fusionó antes de tiempo.
+
+---
+
+## 14 bis. El cuerpo del pull request, ya escrito
+
+La plantilla de `.github/pull_request_template.md` **se llena, no se deja con los comentarios
+puestos**. Es un punto de la rúbrica: el «qué se veía antes / qué se ve después» es
+exactamente lo que se califica en control de versiones.
+
+Este es el cuerpo completo para este paso. Solo hay que cambiar el número de pruebas y marcar
+las casillas:
+
+```markdown
+## Antes
+
+La app abría en la pantalla de ejemplo que deja el asistente de Xcode, con el texto
+«Hello, Glucy!» y un icono de globo terráqueo. No había forma de anotar una glucosa: las
+reglas del paso 1 y la base de datos del paso 2 ya existían, pero nada las usaba.
+
+## Después
+
+La app abre en cuatro pestañas — Inicio, Registrar, Historial y Ajustes — y en Registrar se
+puede anotar una glucosa a mano: el número con el teclado ya abierto, la fecha y la hora
+puestas en «ahora» y editables, y una etiqueta de contexto opcional entre las cinco.
+Al guardar aparece una franja de confirmación con «Deshacer».
+
+Si el valor está fuera de 20–600 mg/dL, no se guarda y sale el mensaje pegado al campo:
+«Ese valor está fuera de lo que un medidor puede leer. Anota un número entre 20 y 600
+mg/dL». Si la hora es futura, lo mismo sobre el campo de la fecha.
+
+Las otras tres pestañas muestran su estado vacío con su texto, no un cero ni una pantalla en
+blanco. Las vías «Foto del medidor» y «Del sensor» se ven en la pantalla de registro, en
+gris, diciendo que todavía no están listas.
+
+## Cómo
+
+La cadena es vista → ViewModel → caso de uso → repositorio, y la regla clínica vive en un
+solo lugar: `RegistrarLecturaManual` llama a `Validacion.validarLectura`, que ya estaba
+probada desde el paso 1, y traduce el `Rechazo` a un mensaje en español. El ViewModel no
+compara contra ningún umbral; solo guarda el texto del campo y el mensaje que hay que
+enseñar. El origen `.manual` lo pone el caso de uso, no la vista, que es la única forma de
+garantizar que ninguna lectura entre sin él.
+
+Se agregan también `Theme.swift`, con los once colores y los siete niveles de tipografía, y
+la carcasa de pestañas que reemplaza a `ContentView`. Van en este paso y no en el 8 porque
+si no, la pantalla de registro tendría que ser la raíz de la app y habría que desmontarla
+después.
+
+## Requisitos que cubre
+
+- **RF-01** — captura manual con valor, fecha y hora editables y etiqueta de contexto entre
+  las cinco.
+- **RF-04** — cada lectura guarda su origen; todo lo de esta pantalla nace `manual`.
+- **RF-05** — se avisa si el valor está fuera de 20–600 mg/dL o si la hora es futura, y se
+  pide corregir antes de guardar.
+- **P-02** — 900 mg/dL no se guarda.
+- **P-07** — se registra en modo avión y queda en la cola.
+- **P-15** — la pantalla no corta texto con la letra de accesibilidad más grande.
+
+## Comprobado
+
+- [x] Las pruebas pasan en local (<número> en total: las de los pasos 1 y 2 más las doce
+      nuevas)
+- [x] La integración continua está en verde
+- [x] No se agregó ninguna llave, token ni dato personal al repositorio
+```
 
 ---
 
@@ -424,4 +522,9 @@ no solo a que arranque.
 > uso. Ningún hex suelto fuera de `Theme.swift` y ningún número clínico fuera de
 > `ConfiguracionDominio.swift`. Los requisitos son RF-01, RF-04 y RF-05, pegados completos en
 > el apartado 1 bis, y el caso que no puede fallar es P-02: 900 mg/dL no se guarda. Corre las
-> pruebas antes de decirme que terminaste y dime cuántas pasaron.
+> pruebas antes de decirme que terminaste y dime cuántas pasaron. La rama sale de `develop`,
+> no de `main`, y el pull request va contra `develop`: usa como cuerpo el del apartado 14 bis
+> del documento, con los apartados «Antes», «Después», «Cómo» y «Requisitos que cubre» ya
+> llenos, nunca la plantilla con los comentarios puestos. El diseño de la pantalla está en
+> https://www.figma.com/design/TFOHJ9wm2lhsiEk1e3595A?node-id=7-2 y su ficha escrita está en
+> el apartado 7; si no puedes abrir el enlace, manda el apartado 7.
