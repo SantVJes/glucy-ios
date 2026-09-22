@@ -16,9 +16,16 @@ nonisolated enum ContenedorGlucy {
     ///   falta hace.
     /// - **Nada de CloudKit.** El teléfono es el dueño del dato y el backend es la copia
     ///   (regla 1); un tercer sincronizador no está en el alcance.
-    static func crear(enMemoria: Bool = false) throws -> ModelContainer {
-        let esquema = Schema(versionedSchema: EsquemaGlucyV1.self)
-        let configuracion = ModelConfiguration(schema: esquema, isStoredInMemoryOnly: enMemoria)
+    /// - Parameter url: dónde vive el archivo. Solo lo pasan las pruebas de migración, que
+    ///   necesitan una base de verdad en disco: en memoria no hay nada que migrar.
+    static func crear(enMemoria: Bool = false, url: URL? = nil) throws -> ModelContainer {
+        // Siempre la versión más reciente del esquema; el plan se encarga de las viejas.
+        let esquema = Schema(versionedSchema: EsquemaGlucyV2.self)
+        let configuracion = if let url {
+            ModelConfiguration(schema: esquema, url: url)
+        } else {
+            ModelConfiguration(schema: esquema, isStoredInMemoryOnly: enMemoria)
+        }
         return try ModelContainer(
             for: esquema,
             migrationPlan: PlanMigracionGlucy.self,

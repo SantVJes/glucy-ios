@@ -375,6 +375,7 @@
 				DEVELOPMENT_TEAM = 428L48JNT7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Glucy usa la cámara para leer el número de la pantalla de tu glucómetro. La foto se procesa en tu teléfono y no se guarda ni se sube.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Glucy lee tu glucosa de Salud para mostrarte tu curva y anticipar bajadas. Nada de esto sale de tu teléfono.\n";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Glucy guarda en Salud lo que tú registras: glucosa, carbohidratos e insulina.\n";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -411,6 +412,7 @@
 				DEVELOPMENT_TEAM = 428L48JNT7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Glucy usa la cámara para leer el número de la pantalla de tu glucómetro. La foto se procesa en tu teléfono y no se guarda ni se sube.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Glucy lee tu glucosa de Salud para mostrarte tu curva y anticipar bajadas. Nada de esto sale de tu teléfono.\n";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Glucy guarda en Salud lo que tú registras: glucosa, carbohidratos e insulina.\n";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
