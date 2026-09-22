@@ -29,6 +29,7 @@ struct RegistroGlucosaView: View {
                 }
                 .padding(.horizontal, Tema.Espacio.margenLateral)
                 .padding(.bottom, Tema.Espacio.margenLateral)
+                .onTapGesture { campoEnfocado = false }
             }
             // La acción principal va anclada al borde inferior y **por encima del
             // teclado**: el teclado numérico se abre solo al entrar, y si el botón se
@@ -38,14 +39,41 @@ struct RegistroGlucosaView: View {
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: Tema.Espacio.unidad * 2) {
                     if modelo.ultimaGuardada != nil { franjaGuardada }
-                    botonGuardar
+
+                    HStack(spacing: Tema.Espacio.unidad * 2) {
+                        botonGuardar
+
+                        // Solo aparece mientras el teclado está abierto
+                        if campoEnfocado {
+                            Button {
+                                campoEnfocado = false
+                            } label: {
+                                Image(systemName: "keyboard.chevron.compact.down")
+                                    .font(.title2)
+                                    .frame(width: Tema.Medida.botonPrincipal,
+                                           height: Tema.Medida.botonPrincipal)
+                                    .foregroundStyle(Tema.Colores.azulPrimario)
+                                    .background(Tema.Colores.superficie)
+                                    .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.campo))
+                            }
+                            .accessibilityLabel("Cerrar teclado")
+                            .accessibilityIdentifier("botonCerrarTeclado")
+                        }
+                    }
                 }
                 .padding(.horizontal, Tema.Espacio.margenLateral)
                 .padding(.vertical, Tema.Espacio.unidad * 2)
                 .background(Tema.Colores.fondo)
             }
             .background(Tema.Colores.fondo)
-            .navigationTitle("Registrar")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Registrar")
+                        .font(.headline)
+                        .foregroundStyle(.black)
+                }
+            }
+            
             .navigationBarTitleDisplayMode(.inline)
         }
         // El teclado numérico se abre solo al entrar: un campo que hay que tocar para
@@ -98,11 +126,19 @@ struct RegistroGlucosaView: View {
     private var tarjetaDelValor: some View {
         VStack(alignment: .leading, spacing: Tema.Espacio.unidad * 2) {
             HStack(alignment: .firstTextBaseline, spacing: Tema.Espacio.unidad * 2) {
-                TextField("0", text: $modelo.textoValor)
+                TextField("", text: $modelo.textoValor)
                     .font(.system(size: tamanoCifra, weight: .bold))
                     .foregroundStyle(Tema.Colores.azulProfundo)
                     .keyboardType(.decimalPad)
                     .focused($campoEnfocado)
+                    .overlay(alignment: .leading) {
+                           if modelo.textoValor.isEmpty {
+                               Text("0")
+                                   .font(.system(size: tamanoCifra, weight: .bold))
+                                   .foregroundStyle(Tema.Colores.azulProfundo.opacity(0.3))
+                                   .allowsHitTesting(false)
+                           }
+                       }
                     .accessibilityLabel("Valor de glucosa en miligramos por decilitro")
 
                 Text("mg/dL")
@@ -145,12 +181,14 @@ struct RegistroGlucosaView: View {
             )
             .labelsHidden()
             .datePickerStyle(.compact)
+            .environment(\.colorScheme, .light)
+            .tint(.black)
             .accessibilityLabel("Fecha y hora de la lectura")
         }
         .padding(Tema.Espacio.interior)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Tema.Colores.superficie)
-        .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.tarjetaGrande))
+        .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.tarjetaGrande ))
     }
 
     private var contexto: some View {
@@ -177,6 +215,7 @@ struct RegistroGlucosaView: View {
                             // Tocar el elegido lo quita: el contexto es opcional y tiene
                             // que poder deshacerse sin salir de la pantalla.
                             modelo.contexto = modelo.contexto == opcion ? nil : opcion
+                            campoEnfocado = false
                         }
                     )
                 }
@@ -190,7 +229,9 @@ struct RegistroGlucosaView: View {
 
     private var botonGuardar: some View {
         Button {
-            Task { await modelo.guardar() }
+            Task { await modelo.guardar()
+                    campoEnfocado = false
+                }
         } label: {
             ZStack {
                 if modelo.guardando {
@@ -288,13 +329,14 @@ private struct ChipContexto: View {
                 .frame(minHeight: Tema.Medida.chip)
                 .frame(maxWidth: .infinity)
                 .background(elegido ? Tema.Colores.azulClaro : Tema.Colores.fondo)
-                .clipShape(Capsule())
+                .clipShape(Capsule() )
                 .overlay(
                     Capsule().stroke(
                         elegido ? Tema.Colores.azulPrimario : Tema.Colores.textoSecundario.opacity(0.4),
                         lineWidth: elegido ? 2 : 1
                     )
                 )
+        
         }
         // El área tocable es de 44 aunque el chip mida 36.
         .frame(minHeight: Tema.Medida.areaTocable)
