@@ -22,6 +22,9 @@ nonisolated enum ConfiguracionDominio {
     static let glucosaMinima = 20.0          // mg/dL
     static let glucosaMaxima = 600.0         // mg/dL
 
+    /// mg/dL = mmol/L × 18.0182. Solo se usa al entrar: adentro todo es mg/dL.
+    static let factorMmolLAMgDl = 18.0182
+
     static let umbralHipoPorOmision = 70.0   // mg/dL
     static let umbralHiperPorOmision = 180.0 // mg/dL
 

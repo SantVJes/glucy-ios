@@ -19,9 +19,7 @@ struct PestanasView: View {
             )
             .tabItem { Label("Inicio", systemImage: "house") }
 
-            RegistroGlucosaView(
-                registrar: RegistrarLecturaManual(repositorio: dependencias.lecturas)
-            )
+            RegistroGlucosaView(registrar: dependencias.registrarManual)
             .tabItem { Label("Registrar", systemImage: "plus.circle") }
 
             PendienteView(
