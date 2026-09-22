@@ -369,11 +369,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Glucy/GlucyDebug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 428L48JNT7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Glucy lee tu glucosa de Salud para mostrarte tu curva y anticipar bajadas. Nada de esto sale de tu teléfono.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Glucy guarda en Salud lo que tú registras: glucosa, carbohidratos e insulina.\n\n";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Glucy guarda en Salud lo que tú registras: glucosa, carbohidratos e insulina.\n";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -407,6 +411,9 @@
 				DEVELOPMENT_TEAM = 428L48JNT7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Glucy lee tu glucosa de Salud para mostrarte tu curva y anticipar bajadas. Nada de esto sale de tu teléfono.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Glucy guarda en Salud lo que tú registras: glucosa, carbohidratos e insulina.\n\n";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Glucy guarda en Salud lo que tú registras: glucosa, carbohidratos e insulina.\n";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -438,7 +445,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 428L48JNT7;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Freelancer.GlucyTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -460,7 +467,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 428L48JNT7;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Freelancer.GlucyTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
