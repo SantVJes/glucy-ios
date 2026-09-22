@@ -23,4 +23,11 @@ nonisolated protocol RepositorioLecturas: Sendable {
     func entre(desde: Date, hasta: Date) async throws -> [LecturaGlucosaDato]
 
     func contar() async throws -> Int
+
+    /// Borra la lectura y, con ella, su fila de la cola.
+    ///
+    /// Existe por el «Deshacer» de la pantalla de registro: una lectura borrada que dejara
+    /// su fila en la cola subiría al backend un registro que en el teléfono ya no existe.
+    /// No lanza si no encuentra nada: deshacer dos veces no es una falla.
+    func eliminar(uuid: UUID) async throws
 }
