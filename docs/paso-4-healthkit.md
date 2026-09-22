@@ -18,7 +18,24 @@ fusionados.
 
 ## 0. Antes de abrir Claude Code
 
-### 0.1 Lo que solo puedes hacer tú, en Xcode
+### 0.1 La rama, antes que nada
+
+Primero la rama, y después todo lo demás. Si se hace al revés, el commit de la capacidad de
+HealthKit cae en la rama en la que estabas, que normalmente es `main`, y hay que moverlo
+después.
+
+```bash
+cd ~/Documents/glucy-ios
+git fetch origin
+git switch -c feature/healthkit origin/develop
+git branch --show-current     # tiene que decir: feature/healthkit
+```
+
+La rama sale de `develop`, nunca de `main`, y el pull request también va contra `develop`.
+
+---
+
+### 0.2 Lo que solo puedes hacer tú, en Xcode
 
 Como cuando creaste el proyecto: esto **no lo puede hacer Claude Code**, porque son casillas
 de la interfaz de Xcode y archivos de firma. Son cinco minutos.
@@ -38,13 +55,31 @@ de la interfaz de Xcode y archivos de firma. Son cinco minutos.
    **Si falta cualquiera de las dos, la app se cierra sola** en el instante en que pide el
    permiso, sin mensaje de error útil. Es la causa número uno de «no entiendo por qué se
    cierra».
-5. Sube todo: `git add . && git commit -m "chore: capacidad de HealthKit con entrega en segundo plano" && git push`.
+5. **Comprueba que la capacidad quedó en las dos configuraciones, no solo en Debug.** Xcode
+   a veces crea el archivo de permisos como `GlucyDebug.entitlements` y lo engancha solo a
+   Debug; entonces la app firmada para Release se queda sin HealthKit. Es el mismo error que
+   con el iOS mínimo en el paso 0: un ajuste puesto con un solo renglón seleccionado.
+
+   ```bash
+   grep -c "CODE_SIGN_ENTITLEMENTS" Glucy.xcodeproj/project.pbxproj   # tiene que dar 2
+   ```
+
+   Si da 1, en Xcode: target `Glucy` → **Build Settings** → busca *Code Signing Entitlements*
+   → pon el mismo archivo en **Debug** y en **Release**.
+
+6. Sube el cambio a la rama que ya creaste en 0.1:
+
+   ```bash
+   git add .
+   git commit -m "chore: capacidad de HealthKit con entrega en segundo plano"
+   git push -u origin feature/healthkit
+   ```
 
 **Si Xcode se queja de la firma** al agregar la capacidad, es tu cuenta de desarrollador
 gratuita. HealthKit y la entrega en segundo plano sí funcionan con ella para desarrollo; si
 aparece un error de *provisioning profile*, avísame y lo vemos.
 
-### 0.2 El iPhone físico, que esta vez sí hace falta
+### 0.3 El iPhone físico, que esta vez sí hace falta
 
 **El simulador no sirve para este paso.** Ni la entrega en segundo plano, ni el observador,
 ni la app de Salud con datos de verdad. Hay que probar en tu iPhone 17, conectado, y con
@@ -53,21 +88,6 @@ algún dato de glucosa escrito a mano en la app **Salud** para tener qué leer.
 Cómo meter datos de prueba sin sensor: abre **Salud** → Explorar → Nutrición → Glucosa en
 sangre → **Agregar datos**, y mete tres o cuatro valores con horas distintas. Esos los va a
 ver Glucy como si fueran de un fabricante, porque el `HKSource` es la app Salud y no Glucy.
-
-### 0.3 La rama
-
-```bash
-cd ~/Documents/glucy-ios
-git switch develop
-git pull origin develop
-git switch -c feature/healthkit
-```
-
-**Sale de `develop`, nunca de `main`.** El pull request también va contra `develop`.
-
-```bash
-git branch --show-current     # tiene que decir: feature/healthkit
-```
 
 ---
 
