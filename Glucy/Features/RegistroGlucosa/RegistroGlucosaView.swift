@@ -157,6 +157,23 @@ struct RegistroGlucosaView: View {
 
     private var tarjetaDelValor: some View {
         VStack(alignment: .leading, spacing: Tema.Espacio.unidad * 2) {
+            // Cuando el número vino de la foto se dice, y se puede quitar. Sin esto, el
+            // campo se llenaría solo y nadie sabría de dónde salió el valor.
+            if modelo.propuestaOcr != nil {
+                HStack(spacing: Tema.Espacio.unidad * 2) {
+                    Label("Lo leí de la foto de tu medidor", systemImage: "camera.fill")
+                        .font(Tema.Tipografia.etiqueta)
+                        .foregroundStyle(Tema.Colores.textoSecundario)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button("Quitar") { modelo.descartarLoDeLaFoto() }
+                        .font(Tema.Tipografia.etiqueta)
+                        .foregroundStyle(Tema.Colores.azulPrimario)
+                        .accessibilityIdentifier("botonQuitarLoDeLaFoto")
+                }
+                .frame(minHeight: Tema.Medida.areaTocable)
+            }
+
             HStack(alignment: .firstTextBaseline, spacing: Tema.Espacio.unidad * 2) {
                 TextField("", text: $modelo.textoValor)
                     .font(.system(size: tamanoCifra, weight: .bold))
@@ -197,6 +214,13 @@ struct RegistroGlucosaView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Tema.Colores.superficie)
         .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.tarjetaGrande))
+        .overlay(
+            RoundedRectangle(cornerRadius: Tema.Radio.tarjetaGrande)
+                .stroke(
+                    modelo.propuestaOcr != nil ? Tema.Colores.alertaAmbar : .clear,
+                    lineWidth: 3
+                )
+        )
     }
 
     private var fechaYHora: some View {

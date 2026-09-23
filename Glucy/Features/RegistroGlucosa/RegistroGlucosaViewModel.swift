@@ -91,16 +91,33 @@ final class RegistroGlucosaViewModel {
         defer { guardando = false }
 
         do {
-            let guardada = try await registrar.ejecutar(
-                mgDl: mgDl,
-                tsUtc: fecha,
-                contexto: contexto
-            )
+            // Un valor que vino de la foto se guarda **como foto**, aunque se termine de
+            // confirmar en esta pantalla: el origen es de dónde salió el dato, no dónde se
+            // tocó el botón (regla 4, RF-04). Y con él viajan los tres campos de RF-05b,
+            // que es lo único que después permite evaluar si el OCR se equivoca.
+            let guardada: LecturaGlucosaDato
+            if let propuesta = propuestaOcr, let registrarPorFoto {
+                guardada = try await registrarPorFoto.ejecutar(
+                    valorConfirmado: mgDl,
+                    valorLeidoOcr: propuesta.valor,
+                    confianzaOcr: propuesta.confianza,
+                    tsUtc: fecha,
+                    contexto: contexto
+                )
+            } else {
+                guardada = try await registrar.ejecutar(
+                    mgDl: mgDl,
+                    tsUtc: fecha,
+                    contexto: contexto
+                )
+            }
+
             ultimaGuardada = guardada
             fallo = nil
             // El campo se limpia y el teclado se queda abierto para la siguiente.
             textoValor = ""
             contexto = nil
+            propuestaOcr = nil
         } catch let falloDeRegistro as FalloRegistro {
             fallo = falloDeRegistro
         } catch {
@@ -124,6 +141,7 @@ final class RegistroGlucosaViewModel {
         contexto = nil
         fallo = nil
         ultimaGuardada = nil
+        propuestaOcr = nil
         fecha = Date()
     }
 
@@ -182,38 +200,35 @@ final class RegistroGlucosaViewModel {
         estadoFoto = .camaraNegada
     }
 
-    /// **El único camino al repositorio desde la foto.** Guarda lo que la persona aprobó,
-    /// venga del OCR tal cual o corregido por ella (RF-02, D-11, caso P-01).
-    func confirmar(valor texto: String) async {
-        guard !guardando, let registrarPorFoto else { return }
-
-        guard let valorConfirmado = Self.numero(desde: texto) else {
+    /// La persona aprobó el valor leído, o escribió el suyo.
+    ///
+    /// **Aquí no se guarda nada.** El valor se lleva a la pantalla de registro, al campo de
+    /// «a mano», para que se le pueda poner contexto y hora antes de guardarlo. Guardar
+    /// sigue siendo un gesto aparte y explícito, así que la confirmación de D-11 se cumple
+    /// de sobra: ahora hay dos (RF-02, caso P-01).
+    ///
+    /// La propuesta del OCR **no** se borra: sobrevive hasta el guardado para que
+    /// `valorLeidoOcr`, `confianzaOcr` y `fueCorregido` queden registrados aunque el número
+    /// final sea otro (RF-05b).
+    func llevarAlRegistro(valor texto: String) {
+        guard let valor = Self.numero(desde: texto) else {
             fallo = .valorVacio
             return
         }
 
-        guardando = true
-        defer { guardando = false }
+        textoValor = Self.textoDe(valor)
+        fallo = nil
+        // Solo se cierra la hoja. La propuesta se queda.
+        estadoFoto = .ninguno
+    }
 
-        do {
-            let guardada = try await registrarPorFoto.ejecutar(
-                valorConfirmado: valorConfirmado,
-                valorLeidoOcr: propuestaOcr?.valor,
-                confianzaOcr: propuestaOcr?.confianza,
-                tsUtc: fecha,
-                contexto: contexto
-            )
-            ultimaGuardada = guardada
-            fallo = nil
-            cerrarFoto()
-            contexto = nil
-        } catch let falloDeRegistro as FalloRegistro {
-            // El rechazo se queda en la pantalla de confirmación: ahí está el valor que hay
-            // que corregir.
-            fallo = falloDeRegistro
-        } catch {
-            fallo = .noSePudoGuardar
-        }
+    /// Descarta lo que vino de la foto y deja el campo vacío. Lo que se guarde después es
+    /// manual, porque ya no viene de ninguna lectura del OCR.
+    func descartarLoDeLaFoto() {
+        propuestaOcr = nil
+        textoValor = ""
+        estadoFoto = .ninguno
+        textoCorreccion = ""
     }
 
     /// Cierra la vía de la foto sin guardar nada.

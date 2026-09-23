@@ -2,10 +2,12 @@ import SwiftUI
 
 /// Lo que se ve después de la foto: el número que leyó la app y la pregunta.
 ///
-/// **Aquí no se guarda nada.** El único camino al repositorio pasa por el botón de
-/// confirmar, que llama al caso de uso con el valor que la persona aprobó (RF-02, D-11,
-/// caso P-01). La confianza del OCR no se enseña: enseñarla invitaría a confiar en ella, y
-/// no decide nada.
+/// **Aquí no se guarda nada.** Al confirmar, el valor se lleva al campo de la pantalla de
+/// registro para que se le pueda poner contexto y hora; guardar es un gesto aparte y
+/// explícito. Así la confirmación de D-11 se cumple dos veces (RF-02, caso P-01).
+///
+/// La confianza del OCR no se enseña: enseñarla invitaría a confiar en ella, y no decide
+/// nada.
 struct ConfirmarLecturaOcrView: View {
     @Bindable var modelo: RegistroGlucosaViewModel
     @FocusState private var campoEnfocado: Bool
@@ -104,6 +106,12 @@ struct ConfirmarLecturaOcrView: View {
             )
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Leí \(textoDelValor(numero.valor)) miligramos por decilitro")
+
+            Text("Lo paso a la pantalla de registro por si quieres ponerle la hora o el "
+                + "momento de la comida. Todavía no se guarda.")
+                .font(Tema.Tipografia.etiqueta)
+                .foregroundStyle(Tema.Colores.textoSecundario)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -160,11 +168,10 @@ struct ConfirmarLecturaOcrView: View {
             switch modelo.estadoFoto {
             case .leido where !corrigiendo:
                 Button {
-                    Task { await modelo.confirmar(valor: modelo.textoCorreccion) }
+                    modelo.llevarAlRegistro(valor: modelo.textoCorreccion)
                 } label: {
                     etiquetaPrincipal("Sí, es correcto")
                 }
-                .disabled(modelo.guardando)
                 .accessibilityIdentifier("botonConfirmarOcr")
 
                 Button("Corregir") { corrigiendo = true }
@@ -175,12 +182,11 @@ struct ConfirmarLecturaOcrView: View {
 
             case .leido, .sinNumero, .camaraNegada:
                 Button {
-                    Task { await modelo.confirmar(valor: modelo.textoCorreccion) }
+                    modelo.llevarAlRegistro(valor: modelo.textoCorreccion)
                 } label: {
-                    etiquetaPrincipal("Guardar")
+                    etiquetaPrincipal("Usar este valor")
                 }
-                .disabled(modelo.guardando)
-                .accessibilityIdentifier("botonGuardarOcr")
+                .accessibilityIdentifier("botonUsarValorOcr")
 
             case .procesando, .ninguno:
                 EmptyView()
