@@ -17,11 +17,14 @@ final class ContenedorDependencias {
     /// HealthKit.
     let salud: any ServicioHealthKit
     let sincronizarSensor: SincronizarLecturasDelSensor
+    /// El OCR, detrás de su protocolo. Nadie fuera de `Data/OCR/` sabe que existe Vision.
+    let ocr: any ServicioOCR
 
     init(
         contenedor: ModelContainer,
         salud: any ServicioHealthKit = HealthKitReal(),
-        ancla: AnclaHealthKit = AnclaHealthKit()
+        ancla: AnclaHealthKit = AnclaHealthKit(),
+        ocr: any ServicioOCR = VisionOCR()
     ) {
         perfil = PerfilSwiftData(modelContainer: contenedor)
         let lecturas = LecturasSwiftData(modelContainer: contenedor)
@@ -30,6 +33,7 @@ final class ContenedorDependencias {
         dosis = DosisSwiftData(modelContainer: contenedor)
         cola = ColaSwiftData(modelContainer: contenedor)
         self.salud = salud
+        self.ocr = ocr
         sincronizarSensor = SincronizarLecturasDelSensor(
             servicio: salud, lecturas: lecturas, ancla: ancla
         )
@@ -38,6 +42,15 @@ final class ContenedorDependencias {
     /// La captura manual con su copia en Salud.
     var registrarManual: RegistrarLecturaManual {
         RegistrarLecturaManual(
+            repositorio: lecturas,
+            salud: EscribirEnHealthKit(servicio: salud, lecturas: lecturas)
+        )
+    }
+
+    /// La captura por foto con su copia en Salud. El origen `.fotoGlucometro` ya estaba en
+    /// la lista de los que se escriben desde el paso 4.
+    var registrarPorFoto: RegistrarLecturaPorFoto {
+        RegistrarLecturaPorFoto(
             repositorio: lecturas,
             salud: EscribirEnHealthKit(servicio: salud, lecturas: lecturas)
         )

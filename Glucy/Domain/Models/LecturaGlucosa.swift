@@ -32,6 +32,20 @@ nonisolated final class LecturaGlucosa {
     /// No sube al backend (regla 3).
     var nota: String?
 
+    // MARK: - Lo que leyó el OCR (RF-05b)
+
+    /// Lo que el OCR propuso, antes de que la persona lo tocara. `nil` si la lectura no
+    /// vino de una foto. El dato clínico sigue siendo `mgDl`: el confirmado.
+    var valorLeidoOcr: Double?
+
+    /// Si el valor guardado no es el que propuso el OCR.
+    var fueCorregido: Bool
+
+    /// Lo que el OCR reportó, de 0 a 1. **No decide nada** (D-11): se guarda para poder
+    /// evaluar después si predice bien los errores, no para elegir ni para comparar contra
+    /// ningún umbral.
+    var confianzaOcr: Double?
+
     var syncEstado: SyncEstado
 
     init(
@@ -45,6 +59,9 @@ nonisolated final class LecturaGlucosa {
         atipica: Bool = false,
         escritaEnHealthKit: Bool = false,
         nota: String? = nil,
+        valorLeidoOcr: Double? = nil,
+        fueCorregido: Bool = false,
+        confianzaOcr: Double? = nil,
         syncEstado: SyncEstado = .pendiente
     ) {
         self.uuid = uuid
@@ -57,6 +74,9 @@ nonisolated final class LecturaGlucosa {
         self.atipica = atipica
         self.escritaEnHealthKit = escritaEnHealthKit
         self.nota = nota
+        self.valorLeidoOcr = valorLeidoOcr
+        self.fueCorregido = fueCorregido
+        self.confianzaOcr = confianzaOcr
         self.syncEstado = syncEstado
     }
 }
@@ -77,6 +97,9 @@ extension LecturaGlucosa {
             atipica: dato.atipica,
             escritaEnHealthKit: dato.escritaEnHealthKit,
             nota: dato.nota,
+            valorLeidoOcr: dato.valorLeidoOcr,
+            fueCorregido: dato.fueCorregido,
+            confianzaOcr: dato.confianzaOcr,
             syncEstado: dato.syncEstado
         )
     }
@@ -94,6 +117,9 @@ extension LecturaGlucosa {
             atipica: atipica,
             escritaEnHealthKit: escritaEnHealthKit,
             nota: nota,
+            valorLeidoOcr: valorLeidoOcr,
+            fueCorregido: fueCorregido,
+            confianzaOcr: confianzaOcr,
             syncEstado: syncEstado
         )
     }

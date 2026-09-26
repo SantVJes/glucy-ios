@@ -1,5 +1,21 @@
 import Foundation
 
+/// En qué punto va la vía de la foto.
+///
+/// Es un estado y no tres banderas sueltas: con banderas se puede llegar a «procesando y
+/// además leído», que no significa nada, y la pantalla acaba enseñando dos cosas a la vez.
+nonisolated enum EstadoFoto: Equatable {
+    /// No hay ninguna foto en curso.
+    case ninguno
+    case procesando
+    /// El OCR propuso un número. Todavía **no** se ha guardado nada.
+    case leido(NumeroLeido)
+    /// No encontró ningún número: se dice y se ofrece escribirlo (RF-03).
+    case sinNumero
+    /// Sin permiso de cámara. No es un error: es la misma salida de RF-03.
+    case camaraNegada
+}
+
 /// El estado de la pantalla de registro manual.
 ///
 /// **No tiene ninguna regla clínica.** Que 900 sea imposible no lo decide este objeto: lo
@@ -27,10 +43,32 @@ final class RegistroGlucosaViewModel {
     private(set) var guardando = false
     private(set) var ultimaGuardada: LecturaGlucosaDato?
 
-    private let registrar: RegistrarLecturaManual
+    // MARK: - La vía de la foto
 
-    init(registrar: RegistrarLecturaManual) {
+    private(set) var estadoFoto: EstadoFoto = .ninguno
+
+    /// El valor mientras la persona lo corrige. Arranca con el número que propuso el OCR.
+    var textoCorreccion: String = ""
+
+    /// Lo que el OCR propuso, guardado mientras la persona decide. Sobrevive a la
+    /// corrección porque `valorLeidoOcr` y `confianzaOcr` tienen que quedar guardados aunque
+    /// el número final sea otro (RF-05b).
+    private(set) var propuestaOcr: NumeroLeido?
+
+    var mostrandoCamara = false
+
+    private let registrar: RegistrarLecturaManual
+    private let registrarPorFoto: RegistrarLecturaPorFoto?
+    private let ocr: (any ServicioOCR)?
+
+    init(
+        registrar: RegistrarLecturaManual,
+        registrarPorFoto: RegistrarLecturaPorFoto? = nil,
+        ocr: (any ServicioOCR)? = nil
+    ) {
         self.registrar = registrar
+        self.registrarPorFoto = registrarPorFoto
+        self.ocr = ocr
     }
 
     /// Hay algo escrito. La validación de verdad no se hace tecla por tecla: marcar en rojo
@@ -53,16 +91,33 @@ final class RegistroGlucosaViewModel {
         defer { guardando = false }
 
         do {
-            let guardada = try await registrar.ejecutar(
-                mgDl: mgDl,
-                tsUtc: fecha,
-                contexto: contexto
-            )
+            // Un valor que vino de la foto se guarda **como foto**, aunque se termine de
+            // confirmar en esta pantalla: el origen es de dónde salió el dato, no dónde se
+            // tocó el botón (regla 4, RF-04). Y con él viajan los tres campos de RF-05b,
+            // que es lo único que después permite evaluar si el OCR se equivoca.
+            let guardada: LecturaGlucosaDato
+            if let propuesta = propuestaOcr, let registrarPorFoto {
+                guardada = try await registrarPorFoto.ejecutar(
+                    valorConfirmado: mgDl,
+                    valorLeidoOcr: propuesta.valor,
+                    confianzaOcr: propuesta.confianza,
+                    tsUtc: fecha,
+                    contexto: contexto
+                )
+            } else {
+                guardada = try await registrar.ejecutar(
+                    mgDl: mgDl,
+                    tsUtc: fecha,
+                    contexto: contexto
+                )
+            }
+
             ultimaGuardada = guardada
             fallo = nil
             // El campo se limpia y el teclado se queda abierto para la siguiente.
             textoValor = ""
             contexto = nil
+            propuestaOcr = nil
         } catch let falloDeRegistro as FalloRegistro {
             fallo = falloDeRegistro
         } catch {
@@ -86,6 +141,7 @@ final class RegistroGlucosaViewModel {
         contexto = nil
         fallo = nil
         ultimaGuardada = nil
+        propuestaOcr = nil
         fecha = Date()
     }
 
@@ -103,6 +159,88 @@ final class RegistroGlucosaViewModel {
             .replacingOccurrences(of: ",", with: ".")
         guard !limpio.isEmpty else { return nil }
         return Double(limpio)
+    }
+
+
+    // MARK: - La vía de la foto
+
+    /// Procesa la imagen recién tomada. La foto **vive solo en memoria**: entra como
+    /// `Data`, Vision la lee y se suelta. No se escribe en disco, no va al carrete, no se
+    /// sube y no se guarda para depurar (regla 6).
+    func procesar(imagen: Data) async {
+        guard let ocr else { return }
+        estadoFoto = .procesando
+
+        do {
+            let numeros = try await ocr.numerosEn(imagen: imagen)
+            // Quien elige es la regla, no el ViewModel y no la confianza.
+            if let glucosa = SeleccionDeNumero.glucosa(entre: numeros) {
+                propuestaOcr = glucosa
+                textoCorreccion = Self.textoDe(glucosa.valor)
+                estadoFoto = .leido(glucosa)
+            } else {
+                propuestaOcr = nil
+                textoCorreccion = ""
+                estadoFoto = .sinNumero
+            }
+        } catch {
+            // Que la imagen no se pueda leer tiene la misma salida que no encontrar número:
+            // se dice y se ofrece escribirlo. No es una pantalla de error (RF-03).
+            propuestaOcr = nil
+            textoCorreccion = ""
+            estadoFoto = .sinNumero
+        }
+    }
+
+    /// La persona no dio permiso de cámara. No es un error: se dice en una línea y se
+    /// ofrece escribir el número.
+    func camaraSinPermiso() {
+        propuestaOcr = nil
+        textoCorreccion = ""
+        estadoFoto = .camaraNegada
+    }
+
+    /// La persona aprobó el valor leído, o escribió el suyo.
+    ///
+    /// **Aquí no se guarda nada.** El valor se lleva a la pantalla de registro, al campo de
+    /// «a mano», para que se le pueda poner contexto y hora antes de guardarlo. Guardar
+    /// sigue siendo un gesto aparte y explícito, así que la confirmación de D-11 se cumple
+    /// de sobra: ahora hay dos (RF-02, caso P-01).
+    ///
+    /// La propuesta del OCR **no** se borra: sobrevive hasta el guardado para que
+    /// `valorLeidoOcr`, `confianzaOcr` y `fueCorregido` queden registrados aunque el número
+    /// final sea otro (RF-05b).
+    func llevarAlRegistro(valor texto: String) {
+        guard let valor = Self.numero(desde: texto) else {
+            fallo = .valorVacio
+            return
+        }
+
+        textoValor = Self.textoDe(valor)
+        fallo = nil
+        // Solo se cierra la hoja. La propuesta se queda.
+        estadoFoto = .ninguno
+    }
+
+    /// Descarta lo que vino de la foto y deja el campo vacío. Lo que se guarde después es
+    /// manual, porque ya no viene de ninguna lectura del OCR.
+    func descartarLoDeLaFoto() {
+        propuestaOcr = nil
+        textoValor = ""
+        estadoFoto = .ninguno
+        textoCorreccion = ""
+    }
+
+    /// Cierra la vía de la foto sin guardar nada.
+    func cerrarFoto() {
+        estadoFoto = .ninguno
+        propuestaOcr = nil
+        textoCorreccion = ""
+    }
+
+    /// Sin decimales cuando el número es entero: «112», no «112.0».
+    private static func textoDe(_ valor: Double) -> String {
+        valor == valor.rounded() ? String(Int(valor)) : String(valor)
     }
 
     /// El mensaje se borra en cuanto la persona empieza a corregir: un rojo que se queda
