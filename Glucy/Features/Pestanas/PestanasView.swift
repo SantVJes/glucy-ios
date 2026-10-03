@@ -20,7 +20,9 @@ struct PestanasView: View {
             .tabItem { Label("Inicio", systemImage: "house") }
 
             RegistroGlucosaView(
-                registrar: RegistrarLecturaManual(repositorio: dependencias.lecturas)
+                registrar: dependencias.registrarManual,
+                registrarPorFoto: dependencias.registrarPorFoto,
+                ocr: dependencias.ocr
             )
             .tabItem { Label("Registrar", systemImage: "plus.circle") }
 

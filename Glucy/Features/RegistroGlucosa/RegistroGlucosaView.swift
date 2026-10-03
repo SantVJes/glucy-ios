@@ -13,8 +13,14 @@ struct RegistroGlucosaView: View {
     /// y esta pantalla se diseña para el peor momento (P-15).
     @ScaledMetric private var tamanoCifra: CGFloat = Tema.Tipografia.tamanoCifraGlucosa
 
-    init(registrar: RegistrarLecturaManual) {
-        _modelo = State(initialValue: RegistroGlucosaViewModel(registrar: registrar))
+    init(
+        registrar: RegistrarLecturaManual,
+        registrarPorFoto: RegistrarLecturaPorFoto? = nil,
+        ocr: (any ServicioOCR)? = nil
+    ) {
+        _modelo = State(initialValue: RegistroGlucosaViewModel(
+            registrar: registrar, registrarPorFoto: registrarPorFoto, ocr: ocr
+        ))
     }
 
     var body: some View {
@@ -84,6 +90,26 @@ struct RegistroGlucosaView: View {
             // El rechazo se anuncia solo: quien usa VoiceOver no ve el texto rojo aparecer.
             AccessibilityNotification.Announcement(nuevo.mensaje).post()
         }
+        .fullScreenCover(isPresented: $modelo.mostrandoCamara) {
+            CapturaFotoView(
+                alCapturar: { datos in
+                    modelo.mostrandoCamara = false
+                    // La imagen se procesa y se suelta. No se guarda en ningún lado
+                    // (regla 6): ni aquí, ni en el ViewModel, ni en la base.
+                    Task { await modelo.procesar(imagen: datos) }
+                },
+                alCancelar: { modelo.mostrandoCamara = false }
+            )
+            .ignoresSafeArea()
+        }
+        // La confirmación es una hoja aparte porque es **la única puerta** al guardado por
+        // foto: si el valor no pasa por aquí, no se guarda (RF-02, D-11, caso P-01).
+        .sheet(isPresented: .init(
+            get: { modelo.estadoFoto != .ninguno },
+            set: { abierta in if !abierta { modelo.cerrarFoto() } }
+        )) {
+            ConfirmarLecturaOcrView(modelo: modelo)
+        }
     }
 
     // MARK: - Partes
@@ -110,11 +136,17 @@ struct RegistroGlucosaView: View {
                 descripcion: "Escribe el número que te marcó el medidor",
                 activa: true
             )
-            ViaCaptura(
-                titulo: "Foto del medidor",
-                descripcion: "Todavía no está lista",
-                activa: false
-            )
+            Button {
+                modelo.mostrandoCamara = true
+            } label: {
+                ViaCaptura(
+                    titulo: "Foto del medidor",
+                    descripcion: "Le tomas una foto a la pantalla y leo el número",
+                    activa: false
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("viaFoto")
             ViaCaptura(
                 titulo: "Del sensor",
                 descripcion: "Todavía no está lista",
@@ -125,6 +157,23 @@ struct RegistroGlucosaView: View {
 
     private var tarjetaDelValor: some View {
         VStack(alignment: .leading, spacing: Tema.Espacio.unidad * 2) {
+            // Cuando el número vino de la foto se dice, y se puede quitar. Sin esto, el
+            // campo se llenaría solo y nadie sabría de dónde salió el valor.
+            if modelo.propuestaOcr != nil {
+                HStack(spacing: Tema.Espacio.unidad * 2) {
+                    Label("Lo leí de la foto de tu medidor", systemImage: "camera.fill")
+                        .font(Tema.Tipografia.etiqueta)
+                        .foregroundStyle(Tema.Colores.textoSecundario)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button("Quitar") { modelo.descartarLoDeLaFoto() }
+                        .font(Tema.Tipografia.etiqueta)
+                        .foregroundStyle(Tema.Colores.azulPrimario)
+                        .accessibilityIdentifier("botonQuitarLoDeLaFoto")
+                }
+                .frame(minHeight: Tema.Medida.areaTocable)
+            }
+
             HStack(alignment: .firstTextBaseline, spacing: Tema.Espacio.unidad * 2) {
                 TextField("", text: $modelo.textoValor)
                     .font(.system(size: tamanoCifra, weight: .bold))
@@ -165,6 +214,13 @@ struct RegistroGlucosaView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Tema.Colores.superficie)
         .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.tarjetaGrande))
+        .overlay(
+            RoundedRectangle(cornerRadius: Tema.Radio.tarjetaGrande)
+                .stroke(
+                    modelo.propuestaOcr != nil ? Tema.Colores.alertaAmbar : .clear,
+                    lineWidth: 3
+                )
+        )
     }
 
     private var fechaYHora: some View {

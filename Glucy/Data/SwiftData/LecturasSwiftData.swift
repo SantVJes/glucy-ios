@@ -43,6 +43,33 @@ actor LecturasSwiftData: RepositorioLecturas {
         return try modelContext.fetch(descriptor).first?.dato
     }
 
+    func ultima(origen: Origen) throws -> LecturaGlucosaDato? {
+        // SwiftData en iOS 17 no sabe comparar un enum dentro de un `#Predicate`, así que
+        // se recorre de la más nueva hacia atrás, por páginas. Con sensor puesto la
+        // encuentra en la primera.
+        let tamanoPagina = 200
+        var descriptor = FetchDescriptor<LecturaGlucosa>(
+            sortBy: [SortDescriptor(\.tsUtc, order: .reverse)]
+        )
+        descriptor.fetchLimit = tamanoPagina
+        let total = try modelContext.fetchCount(FetchDescriptor<LecturaGlucosa>())
+        for desplazamiento in stride(from: 0, to: total, by: tamanoPagina) {
+            descriptor.fetchOffset = desplazamiento
+            if let hallada = try modelContext.fetch(descriptor).first(where: { $0.origen == origen }) {
+                return hallada.dato
+            }
+        }
+        return nil
+    }
+
+    func marcarEscritaEnHealthKit(uuid: UUID) throws {
+        var descriptor = FetchDescriptor<LecturaGlucosa>(predicate: #Predicate { $0.uuid == uuid })
+        descriptor.fetchLimit = 1
+        guard let fila = try modelContext.fetch(descriptor).first else { return }
+        fila.escritaEnHealthKit = true
+        try modelContext.save()
+    }
+
     func entre(desde: Date, hasta: Date) throws -> [LecturaGlucosaDato] {
         // Los extremos se capturan antes: dentro de un `#Predicate` no se pueden llamar
         // funciones.

@@ -11,6 +11,11 @@ jobs:
   pruebas:
     name: Compilar y probar
     runs-on: macos-latest
+    # Sin este tope, un arranque del simulador que se cuelga deja el trabajo corriendo seis
+    # horas hasta que GitHub lo cancela, y «cancelado» no se lee ni como verde ni como rojo.
+    # Fue lo que pasó con el paso 5 el 26/09/2026: entró a develop sin que nadie viera que
+    # nunca llegó a correr una prueba. Treinta minutos es cinco veces una corrida sana.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -97,13 +102,32 @@ jobs:
             echo "Bajado a 77 solo para esta compilación."
           fi
 
+      # El simulador se arranca aquí y no dentro de xcodebuild. Si el arranque se cuelga
+      # —que es lo que pasó el 26/09/2026— falla este paso, con su nombre en la bitácora, en
+      # lugar de quedarse mudo dentro de la compilación sin decir en qué fase se detuvo.
+      - name: Arrancar el simulador
+        if: steps.proyecto.outputs.existe == 'si'
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          xcrun simctl bootstatus "${{ steps.simulador.outputs.id }}" -b
+          xcrun simctl list devices booted
+
       # Solo las pruebas de dominio: son las que tienen consecuencia clínica y las que corren
       # en segundos. Las de interfaz entran cuando la fase 1 tenga pantallas.
+      #
+      # Los tres topes de tiempo no son adorno: sin ellos una prueba que se queda esperando
+      # para siempre —una continuación que nunca se reanuda, por ejemplo— no falla nunca, y
+      # una prueba que no falla nunca tampoco pasa.
       - name: Compilar y correr las pruebas de dominio
         if: steps.proyecto.outputs.existe == 'si'
+        timeout-minutes: 20
         run: |
           xcodebuild test \
             -scheme Glucy \
             -destination "platform=iOS Simulator,id=${{ steps.simulador.outputs.id }}" \
             -only-testing:GlucyTests \
+            -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -maximum-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO

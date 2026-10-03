@@ -37,6 +37,16 @@ actor RepositorioLecturasFalso: RepositorioLecturas {
         guardadas.max { $0.tsUtc < $1.tsUtc }
     }
 
+    func ultima(origen: Origen) async throws -> LecturaGlucosaDato? {
+        guardadas.filter { $0.origen == origen }.max { $0.tsUtc < $1.tsUtc }
+    }
+
+    private(set) var marcadasEnHealthKit: [UUID] = []
+
+    func marcarEscritaEnHealthKit(uuid: UUID) async throws {
+        marcadasEnHealthKit.append(uuid)
+    }
+
     func entre(desde: Date, hasta: Date) async throws -> [LecturaGlucosaDato] {
         guardadas
             .filter { $0.tsUtc >= desde && $0.tsUtc <= hasta }
