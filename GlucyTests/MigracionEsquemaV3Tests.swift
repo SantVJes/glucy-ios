@@ -6,6 +6,13 @@ import Testing
 /// La segunda migración del esquema: `porciones` en `Comida`.
 ///
 /// Con una base **en disco**, por lo mismo que la primera: en memoria no hay nada que migrar.
+///
+/// En serie y no en paralelo: estas pruebas abren la V1, la V2 y la V3 dentro del mismo
+/// proceso, y las tres tienen una tabla `Comida` con una clase distinta detrás. SwiftData
+/// lleva un solo registro de qué clase es cada tabla, así que dos versiones abiertas a la vez
+/// se pisan: en iOS 26 la prueba se cae o relee los campos nuevos en su valor por omisión.
+/// La app nunca llega a eso, porque abre un solo contenedor.
+@Suite(.serialized)
 struct MigracionEsquemaV3Tests {
 
     private let ahora = Date(timeIntervalSince1970: 1_758_240_000)
