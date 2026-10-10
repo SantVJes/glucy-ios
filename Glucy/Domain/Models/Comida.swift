@@ -27,6 +27,13 @@ nonisolated final class Comida {
     var nombreProducto: String?
     var porcionG: Double?
 
+    /// Cuántas porciones se comió la persona. `porcionG` dice cuánto pesa una; sin esto,
+    /// media bolsa y dos bolsas del mismo código de barras darían la misma comida.
+    ///
+    /// El `1` va en la declaración, no solo en el `init`: es lo que deja a la migración
+    /// ligera rellenar las filas que ya existían, y con `1` siguen dando el mismo `carbsG`.
+    var porciones: Double = 1
+
     /// Lo que llegó por código de barras o por OCR de la etiqueta se confirma antes de
     /// guardarse, sin umbral de confianza (D-11, caso P-01).
     var confirmadaPorUsuario: Bool
@@ -50,6 +57,7 @@ nonisolated final class Comida {
         codigoBarras: String? = nil,
         nombreProducto: String? = nil,
         porcionG: Double? = nil,
+        porciones: Double = 1,
         confirmadaPorUsuario: Bool = true,
         escritaEnHealthKit: Bool = false,
         nota: String? = nil,
@@ -65,6 +73,7 @@ nonisolated final class Comida {
         self.codigoBarras = codigoBarras
         self.nombreProducto = nombreProducto
         self.porcionG = porcionG
+        self.porciones = porciones
         self.confirmadaPorUsuario = confirmadaPorUsuario
         self.escritaEnHealthKit = escritaEnHealthKit
         self.nota = nota
@@ -87,6 +96,7 @@ extension Comida {
             codigoBarras: dato.codigoBarras,
             nombreProducto: dato.nombreProducto,
             porcionG: dato.porcionG,
+            porciones: dato.porciones,
             confirmadaPorUsuario: dato.confirmadaPorUsuario,
             escritaEnHealthKit: dato.escritaEnHealthKit,
             nota: dato.nota,
@@ -106,6 +116,7 @@ extension Comida {
             codigoBarras: codigoBarras,
             nombreProducto: nombreProducto,
             porcionG: porcionG,
+            porciones: porciones,
             confirmadaPorUsuario: confirmadaPorUsuario,
             escritaEnHealthKit: escritaEnHealthKit,
             nota: nota,

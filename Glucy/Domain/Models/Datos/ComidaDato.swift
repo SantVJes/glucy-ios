@@ -16,7 +16,10 @@ nonisolated struct ComidaDato: Sendable, Equatable, Identifiable {
     let descripcion: String?
     let codigoBarras: String?
     let nombreProducto: String?
+    /// Los gramos de **una** porción. `nil` en la captura manual, donde la persona da los
+    /// carbohidratos directamente.
     let porcionG: Double?
+    let porciones: Double
     let confirmadaPorUsuario: Bool
     let escritaEnHealthKit: Bool
     /// No sube al backend (regla 3).
@@ -34,6 +37,7 @@ nonisolated struct ComidaDato: Sendable, Equatable, Identifiable {
         codigoBarras: String? = nil,
         nombreProducto: String? = nil,
         porcionG: Double? = nil,
+        porciones: Double = 1,
         confirmadaPorUsuario: Bool = true,
         escritaEnHealthKit: Bool = false,
         nota: String? = nil,
@@ -49,6 +53,7 @@ nonisolated struct ComidaDato: Sendable, Equatable, Identifiable {
         self.codigoBarras = codigoBarras
         self.nombreProducto = nombreProducto
         self.porcionG = porcionG
+        self.porciones = porciones
         self.confirmadaPorUsuario = confirmadaPorUsuario
         self.escritaEnHealthKit = escritaEnHealthKit
         self.nota = nota

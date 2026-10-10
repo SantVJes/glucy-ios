@@ -9,6 +9,8 @@ nonisolated enum Rechazo: Equatable, Sendable {
     case marcaDeTiempoFutura
     case ocrSinConfirmar
     case duplicado(uuid: UUID)
+    case absorcionFueraDeRango(minutos: Int)
+    case porcionesNoPositivas
 }
 
 /// Validación de lo que entra al teléfono. El backend la repite en la fase 2: un servidor
@@ -36,6 +38,36 @@ nonisolated enum Validacion {
         }
         // Una marca futura corrompe el orden de la serie, y con él la tasa de cambio y la
         // decisión de modo.
+        if tsUtc > ahora {
+            return .marcaDeTiempoFutura
+        }
+        return nil
+    }
+
+    /// Devuelve `nil` si la comida se puede guardar, o el motivo del rechazo.
+    ///
+    /// - Parameter carbsG: los gramos totales, ya multiplicados por las porciones.
+    static func validarComida(
+        carbsG: Double,
+        tiempoAbsorcionMin: Int,
+        porciones: Double,
+        tsUtc: Date,
+        ahora: Date
+    ) -> Rechazo? {
+        guard (ConfiguracionDominio.carbsMinimos...ConfiguracionDominio.carbsMaximos)
+            .contains(carbsG) else {
+            return .fueraDeRango(valor: carbsG)
+        }
+        guard ConfiguracionDominio.absorcionConfigurableMin.contains(tiempoAbsorcionMin) else {
+            return .absorcionFueraDeRango(minutos: tiempoAbsorcionMin)
+        }
+        guard porciones > 0 else {
+            return .porcionesNoPositivas
+        }
+        // Una comida futura llegaría a `Carbohidratos.cob` con minutos negativos. Ahí el
+        // Swift devuelve los carbohidratos completos y `referencia/reglas_clinicas.py`
+        // lanza: la divergencia sigue existiendo, pero rechazando aquí la hora futura el
+        // caso ya no puede llegar al COB desde la app.
         if tsUtc > ahora {
             return .marcaDeTiempoFutura
         }

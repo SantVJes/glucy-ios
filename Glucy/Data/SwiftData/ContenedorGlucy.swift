@@ -20,7 +20,7 @@ nonisolated enum ContenedorGlucy {
     ///   necesitan una base de verdad en disco: en memoria no hay nada que migrar.
     static func crear(enMemoria: Bool = false, url: URL? = nil) throws -> ModelContainer {
         // Siempre la versión más reciente del esquema; el plan se encarga de las viejas.
-        let esquema = Schema(versionedSchema: EsquemaGlucyV2.self)
+        let esquema = Schema(versionedSchema: EsquemaGlucyV3.self)
         let configuracion = if let url {
             ModelConfiguration(schema: esquema, url: url)
         } else {

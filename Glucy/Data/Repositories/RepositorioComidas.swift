@@ -13,4 +13,12 @@ nonisolated protocol RepositorioComidas: Sendable {
     func recientes(horas: Double, hasta: Date) async throws -> [ComidaDato]
 
     func contar() async throws -> Int
+
+    /// Para el «Deshacer» de la franja de confirmación. Se lleva también la fila de la
+    /// cola: si se quedara, el backend recibiría una comida que en el teléfono ya no existe.
+    func eliminar(uuid: UUID) async throws
+
+    /// La última comida registrada con ese código, para ofrecer las mismas porciones.
+    /// Es algo que la persona ya dijo, no algo que la app deduzca (RF-37).
+    func ultimaConCodigo(_ codigo: String) async throws -> ComidaDato?
 }

@@ -17,6 +17,18 @@ nonisolated struct NumeroLeido: Sendable, Equatable {
     let caja: CGRect
 }
 
+/// Un renglón de texto que el OCR encontró en la imagen, tal como lo leyó.
+///
+/// En una etiqueta nutrimental los números solos no sirven: hay que saber cuál está en el
+/// renglón que dice «Hidratos de carbono».
+nonisolated struct TextoLeido: Sendable, Equatable {
+    let texto: String
+    /// De 0 a 1. Igual que en `NumeroLeido`: **no decide nada** (D-11).
+    let confianza: Double
+    /// En coordenadas normalizadas de la imagen (0–1, origen abajo a la izquierda).
+    let caja: CGRect
+}
+
 /// El OCR del dispositivo, detrás de un protocolo.
 ///
 /// Mismo motivo que con HealthKit en el paso 4: la integración continua no tiene cámara. Con
@@ -28,6 +40,11 @@ nonisolated protocol ServicioOCR: Sendable {
     /// Quien elige es `SeleccionDeNumero`, que vive aparte justo para poder probarse sin
     /// imágenes y sin Vision.
     func numerosEn(imagen: Data) async throws -> [NumeroLeido]
+
+    /// Los renglones tal como los leyó, **sin interpretar nada**.
+    ///
+    /// Quien decide cuál son los carbohidratos es `SeleccionDeCarbohidratos`.
+    func textosEn(imagen: Data) async throws -> [TextoLeido]
 }
 
 /// Lo que puede salir mal al leer la imagen.
