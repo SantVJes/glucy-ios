@@ -8,9 +8,9 @@ nonisolated enum ConfiguracionOpenFoodFacts {
     /// Solo lo que la app usa: la respuesta completa de un producto pesa cientos de kB.
     static let campos = "code,product_name,brands,nutriments,serving_size"
 
-    /// El repositorio es público, así que este correo queda indexado: es uno de contacto
-    /// del proyecto, no el personal de nadie.
-    static let correoDeContacto = "PENDIENTE"
+    /// A dónde escribe Open Food Facts si la app consulta de más. El repositorio es
+    /// público, así que este correo queda indexado.
+    static let correoDeContacto = "taintsanty4538@gmail.com"
 
     /// Obligatorio. Una petición sin `User-Agent` propio puede quedar bloqueada.
     static let agenteDeUsuario = "Glucy/1.0 (\(correoDeContacto))"
