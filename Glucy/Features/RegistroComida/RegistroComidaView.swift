@@ -11,9 +11,19 @@ struct RegistroComidaView: View {
     @State private var modelo: RegistroComidaViewModel
     @FocusState private var campoEnfocado: Campo?
 
+    /// La pestaña «Registrar» mantiene montadas todas sus pantallas y oculta las que no
+    /// tocan, así que `onAppear` no dice cuándo se está viendo esta.
+    private let visible: Bool
+
     @ScaledMetric private var tamanoCifra: CGFloat = Tema.Tipografia.tamanoCifraGlucosa
 
-    init(registrar: RegistrarComida, buscar: BuscarProductoPorCodigo, ocr: any ServicioOCR) {
+    init(
+        registrar: RegistrarComida,
+        buscar: BuscarProductoPorCodigo,
+        ocr: any ServicioOCR,
+        visible: Bool = true
+    ) {
+        self.visible = visible
         _modelo = State(initialValue: RegistroComidaViewModel(
             registrar: registrar, buscar: buscar, ocr: ocr
         ))
@@ -52,8 +62,18 @@ struct RegistroComidaView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            // Aquí adentro y no sobre el `NavigationStack`: desde afuera el modificador no
+            // cruza la barra de navegación y VoiceOver seguiría leyendo la pantalla oculta.
+            .accessibilityHidden(!visible)
         }
-        .onAppear { modelo.ponerLaHoraDeAhora() }
+        .onChange(of: visible, initial: true) { _, seVe in
+            if seVe {
+                modelo.ponerLaHoraDeAhora()
+            } else {
+                // Una pantalla oculta no se queda con el teclado.
+                campoEnfocado = nil
+            }
+        }
         .onChange(of: modelo.fallo) { _, nuevo in
             guard let nuevo else { return }
             AccessibilityNotification.Announcement(nuevo.mensaje).post()

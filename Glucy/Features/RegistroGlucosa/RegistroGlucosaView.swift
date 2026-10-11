@@ -9,6 +9,10 @@ struct RegistroGlucosaView: View {
     @State private var modelo: RegistroGlucosaViewModel
     @FocusState private var campoEnfocado: Bool
 
+    /// La pestaña «Registrar» mantiene montadas todas sus pantallas y oculta las que no
+    /// tocan, así que `onAppear` no dice cuándo se está viendo esta.
+    private let visible: Bool
+
     /// La cifra crece con la letra del sistema: un tamaño fijo no se mueve con Dynamic Type
     /// y esta pantalla se diseña para el peor momento (P-15).
     @ScaledMetric private var tamanoCifra: CGFloat = Tema.Tipografia.tamanoCifraGlucosa
@@ -16,8 +20,10 @@ struct RegistroGlucosaView: View {
     init(
         registrar: RegistrarLecturaManual,
         registrarPorFoto: RegistrarLecturaPorFoto? = nil,
-        ocr: (any ServicioOCR)? = nil
+        ocr: (any ServicioOCR)? = nil,
+        visible: Bool = true
     ) {
+        self.visible = visible
         _modelo = State(initialValue: RegistroGlucosaViewModel(
             registrar: registrar, registrarPorFoto: registrarPorFoto, ocr: ocr
         ))
@@ -81,10 +87,16 @@ struct RegistroGlucosaView: View {
             }
             
             .navigationBarTitleDisplayMode(.inline)
+            // Aquí adentro y no sobre el `NavigationStack`: desde afuera el modificador no
+            // cruza la barra de navegación y VoiceOver seguiría leyendo la pantalla oculta.
+            .accessibilityHidden(!visible)
         }
         // El teclado numérico se abre solo al entrar: un campo que hay que tocar para
-        // empezar cuesta un gesto de más a las tres de la mañana.
-        .onAppear { campoEnfocado = true }
+        // empezar cuesta un gesto de más a las tres de la mañana. Con un valor ya escrito
+        // no: quien vuelve de Comida quiere ver lo que dejó, no un teclado encima.
+        .onChange(of: visible, initial: true) { _, seVe in
+            campoEnfocado = seVe && modelo.textoValor.isEmpty
+        }
         .onChange(of: modelo.fallo) { _, nuevo in
             guard let nuevo else { return }
             // El rechazo se anuncia solo: quien usa VoiceOver no ve el texto rojo aparecer.
