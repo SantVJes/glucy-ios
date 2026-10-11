@@ -27,4 +27,18 @@ actor OCRFalso: ServicioOCR {
         if falla { throw ErrorOCR.imagenIlegible }
         return respuesta
     }
+
+    private var renglones: [TextoLeido] = []
+
+    /// Lo que va a «leer» de una etiqueta nutrimental.
+    func responder(renglones: [TextoLeido]) {
+        self.renglones = renglones
+        falla = false
+    }
+
+    func textosEn(imagen: Data) async throws -> [TextoLeido] {
+        vecesLlamado += 1
+        if falla { throw ErrorOCR.imagenIlegible }
+        return renglones
+    }
 }

@@ -22,6 +22,11 @@ nonisolated final class ProductoCache {
 
     var porcionSugeridaG: Double?
 
+    /// `false` cuando la fuente contestó que no conoce el código, o que lo conoce sin
+    /// carbohidratos. Se guarda también esa respuesta para no gastar otra de las 15
+    /// consultas por minuto preguntando lo mismo; el caso de uso decide cuándo caduca.
+    var encontrado: Bool = true
+
     /// De dónde salió el dato, para poder atribuirlo y para saber qué caducar.
     var fuente: String
 
@@ -39,6 +44,7 @@ nonisolated final class ProductoCache {
         marca: String? = nil,
         carbsPor100g: Double,
         porcionSugeridaG: Double? = nil,
+        encontrado: Bool = true,
         fuente: String = "Open Food Facts",
         consultadoTsUtc: Date = Date(),
         zonaHoraria: String = TimeZone.current.identifier,
@@ -49,6 +55,7 @@ nonisolated final class ProductoCache {
         self.marca = marca
         self.carbsPor100g = carbsPor100g
         self.porcionSugeridaG = porcionSugeridaG
+        self.encontrado = encontrado
         self.fuente = fuente
         self.consultadoTsUtc = consultadoTsUtc
         self.zonaHoraria = zonaHoraria

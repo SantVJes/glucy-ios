@@ -9,6 +9,10 @@ struct RegistroGlucosaView: View {
     @State private var modelo: RegistroGlucosaViewModel
     @FocusState private var campoEnfocado: Bool
 
+    /// La pestaña «Registrar» mantiene montadas todas sus pantallas y oculta las que no
+    /// tocan, así que `onAppear` no dice cuándo se está viendo esta.
+    private let visible: Bool
+
     /// La cifra crece con la letra del sistema: un tamaño fijo no se mueve con Dynamic Type
     /// y esta pantalla se diseña para el peor momento (P-15).
     @ScaledMetric private var tamanoCifra: CGFloat = Tema.Tipografia.tamanoCifraGlucosa
@@ -16,8 +20,10 @@ struct RegistroGlucosaView: View {
     init(
         registrar: RegistrarLecturaManual,
         registrarPorFoto: RegistrarLecturaPorFoto? = nil,
-        ocr: (any ServicioOCR)? = nil
+        ocr: (any ServicioOCR)? = nil,
+        visible: Bool = true
     ) {
+        self.visible = visible
         _modelo = State(initialValue: RegistroGlucosaViewModel(
             registrar: registrar, registrarPorFoto: registrarPorFoto, ocr: ocr
         ))
@@ -38,10 +44,9 @@ struct RegistroGlucosaView: View {
                 .onTapGesture { campoEnfocado = false }
             }
             // La acción principal va anclada al borde inferior y **por encima del
-            // teclado**: el teclado numérico se abre solo al entrar, y si el botón se
-            // quedara dentro del scroll quedaría tapado justo por lo que la persona acaba
-            // de usar para escribir. Un dato y una acción por pantalla, y la acción
-            // siempre alcanzable.
+            // teclado**: si el botón se quedara dentro del scroll quedaría tapado justo
+            // por lo que la persona acaba de usar para escribir. Un dato y una acción por
+            // pantalla, y la acción siempre alcanzable.
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: Tema.Espacio.unidad * 2) {
                     if modelo.ultimaGuardada != nil { franjaGuardada }
@@ -81,10 +86,17 @@ struct RegistroGlucosaView: View {
             }
             
             .navigationBarTitleDisplayMode(.inline)
+            // Aquí adentro y no sobre el `NavigationStack`: desde afuera el modificador no
+            // cruza la barra de navegación y VoiceOver seguiría leyendo la pantalla oculta.
+            .accessibilityHidden(!visible)
         }
-        // El teclado numérico se abre solo al entrar: un campo que hay que tocar para
-        // empezar cuesta un gesto de más a las tres de la mañana.
-        .onAppear { campoEnfocado = true }
+        // El teclado no se abre solo, ni al entrar a la pestaña ni al volver de Comida:
+        // tapa media pantalla a quien solo venía a ver, y las otras vías de captura quedan
+        // debajo. Aparece cuando la persona toca el campo. Lo único que se hace aquí es
+        // soltarlo cuando la pantalla se oculta.
+        .onChange(of: visible) { _, seVe in
+            if !seVe { campoEnfocado = false }
+        }
         .onChange(of: modelo.fallo) { _, nuevo in
             guard let nuevo else { return }
             // El rechazo se anuncia solo: quien usa VoiceOver no ve el texto rojo aparecer.

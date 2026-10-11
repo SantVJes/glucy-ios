@@ -41,6 +41,9 @@ nonisolated enum ConfiguracionDominio {
 
     /// Tiempo de absorción por omisión (D-8). Presets de 30 min (rápida) y 300 (lenta).
     static let absorcionPorOmisionMin = 180
+    /// Las otras dos opciones que se ofrecen al ajustar (RF-12b). No hay una cuarta.
+    static let absorcionRapidaMin = 30
+    static let absorcionLentaMin = 300
     static let absorcionConfigurableMin = 30...300
 
     static let carbsMinimos = 0.0            // g

@@ -26,6 +26,23 @@ nonisolated enum Carbohidratos {
         return carbsG * (1 - minutosDesdeComida / Double(tiempoAbsorcionMin))
     }
 
+    /// Los carbohidratos de lo que la persona se comió, a partir de lo que publica la
+    /// etiqueta: `carbsPor100g / 100 × porcionG × porciones`.
+    ///
+    /// **Si falta cualquiera de los tres factores devuelve `nil`, nunca supone uno.** En
+    /// particular nunca supone que la porción son 100 g: si de verdad son 30, suponer 100
+    /// triplica los carbohidratos, eso entra al COB y el COB entra a la predicción. Lo que
+    /// falta se le pregunta a la persona al registrar (RF-37).
+    static func deProducto(
+        carbsPor100g: Double?,
+        porcionG: Double?,
+        porciones: Double?
+    ) -> Double? {
+        guard let carbsPor100g, let porcionG, let porciones,
+              carbsPor100g >= 0, porcionG > 0, porciones > 0 else { return nil }
+        return carbsPor100g / 100 * porcionG * porciones
+    }
+
     /// Suma el COB de varias comidas, cada una con su propio tiempo de absorción.
     ///
     /// No se infiere ninguna comida que la persona no haya registrado (D-9, RF-37): esta

@@ -39,7 +39,10 @@ nonisolated final class LecturaGlucosa {
     var valorLeidoOcr: Double?
 
     /// Si el valor guardado no es el que propuso el OCR.
-    var fueCorregido: Bool
+    ///
+    /// El `false` va en la declaración y no solo en el `init`: sin él, la migración ligera
+    /// no sabe con qué rellenar las lecturas que ya existían y no puede abrir la base.
+    var fueCorregido: Bool = false
 
     /// Lo que el OCR reportó, de 0 a 1. **No decide nada** (D-11): se guarda para poder
     /// evaluar después si predice bien los errores, no para elegir ni para comparar contra
