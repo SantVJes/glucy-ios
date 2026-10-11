@@ -1,17 +1,18 @@
 # Modo oscuro — los once colores con su variante oscura
 
 Documento de trabajo para Claude Code. **No es uno de los diez pasos de la fase 1**: es un
-arreglo transversal que va en su propia rama y no toca nada del paso 6.
+arreglo transversal que va en su propia rama, **después del paso 6 y antes del paso 7**.
 
 Lo que había antes: `Tema.Colores` define once colores y ninguno tiene variante oscura. Con el
 iPhone en modo oscuro, el sistema pinta de oscuro lo suyo (barra de pestañas, teclado,
 selector de fecha) y la app sigue pintando de claro lo nuestro. La pantalla de registro manual
 del paso 3 lo tapó con `.environment(\.colorScheme, .light)` dentro de la vista y un
-`.tint(.black)`, que es un parche: si las otras nueve pantallas lo copian, la app queda mitad
-clara y mitad oscura para siempre.
+`.tint(.black)`, que es un parche, **y la pantalla de comidas del paso 6 ya lo copió**: si las
+otras ocho pantallas hacen lo mismo, la app queda mitad clara y mitad oscura para siempre.
 
-Por qué ahora y no al final: hoy el parche está en **una** pantalla. Cada pantalla nueva que se
-escriba sin variantes oscuras es una pantalla más que hay que volver a revisar.
+Por qué ahora y no al final: hoy el parche está en **dos** pantallas. Cada pantalla nueva que
+se escriba sin variantes oscuras es una pantalla más que hay que volver a revisar, así que
+esto va antes del paso 7.
 
 No hay diseño en Figma para esto (las llamadas del plan Starter están gastadas). Lo que manda
 es lo escrito aquí, y todos los contrastes de este documento están calculados con la fórmula
@@ -372,6 +373,19 @@ Solo esto. Ninguna vista deja de usar `Tema.Colores`; lo que cambia es **cuál**
 - El botón de cerrar el teclado **no cambia**: ahí `superficie` es el fondo del botón, que es
   justo lo que significa.
 
+`Glucy/Features/RegistroComida/RegistroComidaView.swift` (paso 6, copió el mismo parche):
+
+- En la tarjeta de fecha y hora: **borrar** `.environment(\.colorScheme, .light)`. Si el
+  selector no tiene `.tint`, ponerle `.tint(Tema.Colores.azulPrimario)` como al de glucosa.
+- Botón «Tomar foto de la etiqueta», botón «Buscar» y botón «Guardar» (con su
+  `ProgressView().tint(...)`): `Tema.Colores.superficie` → `Tema.Colores.textoSobreColor`
+  en el `.foregroundStyle` y en el `.tint`.
+- En `franjaGuardada`: «Comida guardada» y «Deshacer» → `Tema.Colores.textoSobreColor`.
+- El botón de cerrar el teclado, igual que en glucosa, **no cambia**.
+
+Son seis apariciones de `superficie` como letra en este archivo; el tercer `grep` del
+apartado 8 las encuentra todas y tiene que acabar vacío.
+
 `Glucy/Features/RegistroGlucosa/ConfirmarLecturaOcrView.swift`:
 
 - En el botón principal: `ProgressView().tint(Tema.Colores.superficie)` y
@@ -456,8 +470,9 @@ grep -rn "0x[0-9A-Fa-f]\{6\}" Glucy/ | grep -v "Glucy/App/Theme/Theme.swift"
   `ParDeColores` y no cambia ninguna vista.
 - **Ícono de la app en oscuro.** El catálogo ya trae el hueco; es diseño, no código.
 - Tocar Tipografía, Espacio, Radio o Medida.
-- Cualquier cosa del paso 6: ni `Comida`, ni Open Food Facts, ni la migración V3. Este cambio
-  no toca el modelo de datos.
+- La lógica del paso 6: ni `Comida`, ni Open Food Facts, ni la migración V3. De
+  `RegistroComidaView` solo cambian los colores del apartado 6. Este cambio no toca el modelo
+  de datos.
 
 ---
 
@@ -483,8 +498,8 @@ integración continua termine en verde: no «en curso», verde.
 ## Antes
 
 Glucy solo tenía colores claros. Con el iPhone en modo oscuro, la barra de pestañas y el
-teclado se ponían oscuros y las pantallas de la app seguían blancas. La pantalla de registro
-lo tapaba forzando el modo claro dentro de la vista, y ninguna otra pantalla tenía arreglo.
+teclado se ponían oscuros y las pantallas de la app seguían blancas. Las pantallas de registro
+de glucosa y de comida lo tapaban forzando el modo claro dentro de la vista.
 
 ## Después
 
@@ -538,14 +553,16 @@ Comprobado en el iPhone físico:
 > ni en `develop`**. Haz el cambio completo: en `Theme.swift`, `ParDeColores`, `Tema.Paleta`
 > con los doce pares exactamente como la tabla del apartado 3, y `Tema.Colores` como colores
 > dinámicos con `UIColor(dynamicProvider:)`; el archivo nuevo `Contraste.swift`; los cambios
-> de vista del apartado 6; y las 12 pruebas de `GlucyTests/ContrasteTests.swift`.
+> de vista del apartado 6 **en las tres vistas que nombra, incluida la de comidas**; y las 12
+> pruebas de `GlucyTests/ContrasteTests.swift`.
 >
 > Lo que **no** hay que hacer: no forzar ningún modo (ni `.preferredColorScheme` en
 > `GlucyApp.swift` ni `UIUserInterfaceStyle` en el proyecto), porque la app sigue al
 > sistema; no crear *color sets* en `Assets.xcassets`, porque los hex viven solo en
 > `Theme.swift`; no cambiar ningún valor de la tabla «para que se vea mejor», porque cada uno
 > está medido; no usar `superficie` como color de letra, para eso es `textoSobreColor`; no
-> tocar Tipografía, Espacio, Radio ni Medida; y no tocar nada del paso 6.
+> tocar Tipografía, Espacio, Radio ni Medida; y de la pantalla de comidas no tocar más que
+> sus colores.
 >
 > Corre las pruebas antes de decirme que terminaste y dime cuántas pasaron. Corre también los
 > cuatro `grep` del apartado 8 y confirma que no devuelven nada. Después sube la rama y
