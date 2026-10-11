@@ -81,7 +81,7 @@ struct RegistroGlucosaView: View {
                 ToolbarItem(placement: .principal) {
                     Text("Registrar")
                         .font(.headline)
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Tema.Colores.textoPrincipal)
                 }
             }
             
@@ -249,8 +249,7 @@ struct RegistroGlucosaView: View {
             )
             .labelsHidden()
             .datePickerStyle(.compact)
-            .environment(\.colorScheme, .light)
-            .tint(.black)
+            .tint(Tema.Colores.azulPrimario)
             .accessibilityLabel("Fecha y hora de la lectura")
         }
         .padding(Tema.Espacio.interior)
@@ -303,13 +302,13 @@ struct RegistroGlucosaView: View {
         } label: {
             ZStack {
                 if modelo.guardando {
-                    ProgressView().tint(Tema.Colores.superficie)
+                    ProgressView().tint(Tema.Colores.textoSobreColor)
                 } else {
                     Text("Guardar").font(Tema.Tipografia.tituloTarjeta)
                 }
             }
             .frame(maxWidth: .infinity, minHeight: Tema.Medida.botonPrincipal)
-            .foregroundStyle(Tema.Colores.superficie)
+            .foregroundStyle(Tema.Colores.textoSobreColor)
             .background(modelo.sePuedeGuardar ? Tema.Colores.azulPrimario : Tema.Colores.textoSecundario)
             .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.campo))
         }
@@ -323,11 +322,11 @@ struct RegistroGlucosaView: View {
         HStack {
             Label("Lectura guardada", systemImage: "checkmark.circle.fill")
                 .font(Tema.Tipografia.valorFila)
-                .foregroundStyle(Tema.Colores.superficie)
+                .foregroundStyle(Tema.Colores.textoSobreColor)
             Spacer()
             Button("Deshacer") { Task { await modelo.deshacer() } }
                 .font(Tema.Tipografia.valorFila)
-                .foregroundStyle(Tema.Colores.superficie)
+                .foregroundStyle(Tema.Colores.textoSobreColor)
                 .accessibilityIdentifier("botonDeshacer")
         }
         .padding(.horizontal, Tema.Espacio.interior)

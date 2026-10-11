@@ -80,9 +80,7 @@ struct SelectorDeRegistro: View {
         } label: {
             Label(tipo.titulo, systemImage: tipo.icono(elegido: estaElegido))
                 .font(Tema.Tipografia.valorFila.weight(estaElegido ? .semibold : .regular))
-                // Blanco sobre `azulPrimario`: 6.2:1. La letra azul sobre `azulClaro` de los
-                // chips se queda en 4.14:1 y aquí no alcanza.
-                .foregroundStyle(estaElegido ? Tema.Colores.superficie : Tema.Colores.textoPrincipal)
+                .foregroundStyle(estaElegido ? Tema.Colores.textoSobreColor : Tema.Colores.textoPrincipal)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .padding(.horizontal, Tema.Espacio.interior)

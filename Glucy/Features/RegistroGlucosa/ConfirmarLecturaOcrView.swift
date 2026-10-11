@@ -200,13 +200,13 @@ struct ConfirmarLecturaOcrView: View {
     private func etiquetaPrincipal(_ texto: String) -> some View {
         ZStack {
             if modelo.guardando {
-                ProgressView().tint(Tema.Colores.superficie)
+                ProgressView().tint(Tema.Colores.textoSobreColor)
             } else {
                 Text(texto).font(Tema.Tipografia.tituloTarjeta)
             }
         }
         .frame(maxWidth: .infinity, minHeight: Tema.Medida.botonPrincipal)
-        .foregroundStyle(Tema.Colores.superficie)
+        .foregroundStyle(Tema.Colores.textoSobreColor)
         .background(Tema.Colores.azulPrimario)
         .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.campo))
     }

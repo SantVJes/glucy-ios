@@ -175,7 +175,7 @@ struct RegistroComidaView: View {
                     Label("Tomar foto de la etiqueta", systemImage: "camera")
                         .font(Tema.Tipografia.tituloTarjeta)
                         .frame(maxWidth: .infinity, minHeight: Tema.Medida.botonPrincipal)
-                        .foregroundStyle(Tema.Colores.superficie)
+                        .foregroundStyle(Tema.Colores.textoSobreColor)
                         .background(Tema.Colores.azulPrimario)
                         .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.campo))
                 }
@@ -261,7 +261,7 @@ struct RegistroComidaView: View {
             )
             .labelsHidden()
             .datePickerStyle(.compact)
-            .environment(\.colorScheme, .light)
+            .tint(Tema.Colores.azulPrimario)
             .accessibilityLabel("Fecha y hora de la comida")
         }
         .padding(Tema.Espacio.interior)
@@ -351,13 +351,13 @@ struct RegistroComidaView: View {
                 } label: {
                     ZStack {
                         if modelo.guardando {
-                            ProgressView().tint(Tema.Colores.superficie)
+                            ProgressView().tint(Tema.Colores.textoSobreColor)
                         } else {
                             Text("Guardar").font(Tema.Tipografia.tituloTarjeta)
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: Tema.Medida.botonPrincipal)
-                    .foregroundStyle(Tema.Colores.superficie)
+                    .foregroundStyle(Tema.Colores.textoSobreColor)
                     .background(
                         modelo.sePuedeGuardar
                             ? Tema.Colores.azulPrimario : Tema.Colores.textoSecundario
@@ -394,11 +394,11 @@ struct RegistroComidaView: View {
         HStack {
             Label("Comida guardada", systemImage: "checkmark.circle.fill")
                 .font(Tema.Tipografia.valorFila)
-                .foregroundStyle(Tema.Colores.superficie)
+                .foregroundStyle(Tema.Colores.textoSobreColor)
             Spacer()
             Button("Deshacer") { Task { await modelo.deshacer() } }
                 .font(Tema.Tipografia.valorFila)
-                .foregroundStyle(Tema.Colores.superficie)
+                .foregroundStyle(Tema.Colores.textoSobreColor)
                 .accessibilityIdentifier("botonDeshacerComida")
         }
         .padding(.horizontal, Tema.Espacio.interior)
@@ -610,7 +610,7 @@ private struct HojaEscaner: View {
                 Text("Buscar")
                     .font(Tema.Tipografia.tituloTarjeta)
                     .frame(maxWidth: .infinity, minHeight: Tema.Medida.botonPrincipal)
-                    .foregroundStyle(Tema.Colores.superficie)
+                    .foregroundStyle(Tema.Colores.textoSobreColor)
                     .background(
                         textoCodigo.isEmpty || modelo.buscando
                             ? Tema.Colores.textoSecundario : Tema.Colores.azulPrimario
