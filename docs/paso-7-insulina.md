@@ -278,6 +278,12 @@ GlucyTests/
 
 **No aparece `Theme.swift` en esa lista, y es a propósito.**
 
+**Y una regla que dejó el modo oscuro, para la pantalla nueva:** `superficie` **solo va en
+`.background`**. La letra y los iconos que van encima de un relleno de color —el botón
+«Guardar», la franja de «dosis guardada»— llevan `Tema.Colores.textoSobreColor`. En oscuro la
+superficie es casi negra, así que usarla como color de letra deja un botón azul con la letra
+casi invisible. El token ya existe; no hay que agregar nada a `Theme.swift`.
+
 ---
 
 ## 4. Las firmas
@@ -472,7 +478,7 @@ cortado a la mitad puede acabar diciendo lo contrario de lo que dice.
 - `grep -rn "ratio\|sensibilidad\|factorCorreccion\|calcularDosis\|sugerirDosis" Glucy/` no
   devuelve nada.
 - `grep -rn "Theme" Glucy/Features/RegistroInsulina/` usa solo tokens, ningún hex suelto.
-- `git diff --stat origin/develop -- Glucy/App/Theme.swift Glucy/Features/RegistroComida/`
+- `git diff --stat origin/develop -- Glucy/App/Theme/ Glucy/Features/RegistroComida/`
   está vacío: este paso no toca ni el tema ni la pantalla de comidas.
 - Una dosis guardada mueve el número de insulina activa, y ese número coincide con la
   referencia en Python.
@@ -612,7 +618,9 @@ En el iPhone físico:
 > horas de dosis, no cinco.
 >
 > **No toques `Theme.swift` ni nada de `Features/RegistroComida/`**: son del trabajo del modo
-> oscuro, que va en otra rama. Si crees que necesitas un color que no existe, para y dímelo.
+> oscuro, que ya está fusionado en `develop`. Si crees que necesitas un color que no existe,
+> para y dímelo. De los que ya existen: `superficie` **solo va en `.background`**; la letra y
+> los iconos encima de un relleno de color llevan `Tema.Colores.textoSobreColor`.
 >
 > La migración agrega una etapa ligera más sin tocar las de la V2 y la V3. La rama sale de
 > `develop` —con el modo oscuro ya dentro— y el pull request va contra `develop`, con el cuerpo
