@@ -2,10 +2,11 @@ import SwiftUI
 
 /// La pestaña «Registrar»: qué se va a anotar, y debajo su pantalla.
 ///
-/// Arranca en glucosa, que es lo que se registra con más prisa.
 struct RegistrarView: View {
     @Environment(ContenedorDependencias.self) private var dependencias
-    @State private var registro = TipoDeRegistro.glucosa
+    /// Lo que se está anotando. Lo guarda `PestanasView` y no esta vista porque los accesos
+    /// rápidos de Inicio traen aquí con la opción ya elegida.
+    @Binding var registro: TipoDeRegistro
     /// Arranca sin insulina y la agrega al leer el perfil: a quien la ocultó no se le dibuja
     /// ni un instante (RF-14).
     @State private var opciones = TipoDeRegistro.disponibles(registraInsulina: false)

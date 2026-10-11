@@ -93,4 +93,37 @@ nonisolated enum ConfiguracionDominio {
     /// GMI = `gmiIntercepto + gmiPendiente × promedio` (fórmula del consenso).
     static let gmiIntercepto = 3.31
     static let gmiPendiente = 0.02392
+
+    // MARK: - Historial
+
+    /// Por debajo de tres días distintos con lecturas, un porcentaje de tiempo en rango
+    /// describe un día suelto y se lee como si describiera la semana (Documento 1, punto 8).
+    static let diasMinimosIndicadores = 3
+
+    /// La fórmula del GMI se validó sobre series de al menos 14 días. Con menos, el número
+    /// sale igual y no significa nada, y es un dato que la persona puede llevar a consulta.
+    static let diasMinimosGmi = 14
+
+    /// Los tres periodos del historial (Documento 1, pantalla 6). No hay un cuarto.
+    static let periodosHistorialDias = [7, 14, 30]
+
+    /// Con una o dos lecturas en una hora, un cuartil no existe. La hora se queda vacía y la
+    /// pantalla dice cuántas faltan, en lugar de dibujar una banda que nadie midió.
+    static let lecturasMinimasPorHora = 3
+
+    // MARK: - Gráficas
+
+    /// Lo que la pantalla de inicio enseña en modo sensor: la serie es continua y tres
+    /// horas caben con cada muestra a la vista (RF-08).
+    static let ventanaInicioSensorH = 3.0
+
+    /// Lo que enseña en modo sin sensor: con unos pocos pinchazos al día, en tres horas no
+    /// habría casi nada que ver (RF-09).
+    static let ventanaInicioSinSensorDias = 7.0
+
+    /// La escala del eje Y, fija. Con escala automática la banda 70–180 cambia de tamaño en
+    /// cada actualización y de madrugada eso se lee como que la glucosa se movió. Es el
+    /// intervalo que reportan los sensores comerciales; lo que cae fuera se dibuja en el
+    /// borde con otra forma, y su valor verdadero se dice en texto.
+    static let escalaGraficaMgDl = 40.0...400.0
 }

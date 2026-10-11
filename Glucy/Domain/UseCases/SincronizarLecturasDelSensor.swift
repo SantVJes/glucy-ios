@@ -7,6 +7,9 @@ nonisolated struct ResultadoSincronizacion: Sendable, Equatable {
     /// Muestras que no pasaron la validación del paso 1 (fuera de 20–600, hora futura).
     let descartadas: Int
     let estado: EstadoModo
+    /// Si la última consulta a Salud respondió. Es lo que `ConsultarModo` y
+    /// `ConsultarInicio` reciben como `lecturaHealthKitActiva` (RF-07, caso P-09).
+    let saludRespondio: Bool
 }
 
 /// Trae de Salud la glucosa que escribió la app del sensor y la guarda en el teléfono.
@@ -74,7 +77,8 @@ nonisolated struct SincronizarLecturasDelSensor: Sendable {
         return ResultadoSincronizacion(
             guardadas: guardadas,
             descartadas: descartadas,
-            estado: estado
+            estado: estado,
+            saludRespondio: respondio
         )
     }
 
