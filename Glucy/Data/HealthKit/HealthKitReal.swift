@@ -112,6 +112,56 @@ nonisolated final class HealthKitReal: ServicioHealthKit, @unchecked Sendable {
     }
 
     func eliminarGlucosa(uuid: UUID) async throws {
+        try await eliminar(de: tipoGlucosa, uuid: uuid)
+    }
+
+    func escribirCarbohidratos(_ dato: ComidaDato) async throws {
+        guard disponible else { throw ErrorHealthKit.noDisponible }
+
+        var metadatos: [String: Any] = Self.metadatosDeSincronizacion(uuid: dato.uuid)
+        metadatos[HKMetadataKeyTimeZone] = dato.zonaHoraria
+
+        let muestra = HKQuantitySample(
+            type: tipoCarbohidratos,
+            quantity: HKQuantity(unit: .gram(), doubleValue: dato.carbsG),
+            start: dato.tsUtc,
+            end: dato.tsUtc,
+            metadata: metadatos
+        )
+        try await store.save(muestra)
+    }
+
+    func eliminarCarbohidratos(uuid: UUID) async throws {
+        try await eliminar(de: tipoCarbohidratos, uuid: uuid)
+    }
+
+    func escribirInsulina(_ dato: DosisInsulinaDato) async throws {
+        guard disponible else { throw ErrorHealthKit.noDisponible }
+        let razon: HKInsulinDeliveryReason = switch dato.tipo {
+        case .bolo: .bolus
+        case .basal: .basal
+        }
+
+        var metadatos: [String: Any] = Self.metadatosDeSincronizacion(uuid: dato.uuid)
+        metadatos[HKMetadataKeyTimeZone] = dato.zonaHoraria
+        // HealthKit rechaza una muestra de insulina sin este metadato.
+        metadatos[HKMetadataKeyInsulinDeliveryReason] = razon.rawValue
+
+        let muestra = HKQuantitySample(
+            type: tipoInsulina,
+            quantity: HKQuantity(unit: .internationalUnit(), doubleValue: dato.unidades),
+            start: dato.tsUtc,
+            end: dato.tsUtc,
+            metadata: metadatos
+        )
+        try await store.save(muestra)
+    }
+
+    func eliminarInsulina(uuid: UUID) async throws {
+        try await eliminar(de: tipoInsulina, uuid: uuid)
+    }
+
+    private func eliminar(de tipo: HKQuantityType, uuid: UUID) async throws {
         guard disponible else { throw ErrorHealthKit.noDisponible }
 
         // Por el identificador que Glucy le puso y **solo entre lo que Glucy escribió**:
@@ -123,39 +173,7 @@ nonisolated final class HealthKitReal: ServicioHealthKit, @unchecked Sendable {
                 allowedValues: [uuid.uuidString]
             ),
         ])
-        _ = try await store.deleteObjects(of: tipoGlucosa, predicate: predicado)
-    }
-
-    func escribirCarbohidratos(gramos: Double, ts: Date) async throws {
-        guard disponible else { throw ErrorHealthKit.noDisponible }
-        let muestra = HKQuantitySample(
-            type: tipoCarbohidratos,
-            quantity: HKQuantity(unit: .gram(), doubleValue: gramos),
-            start: ts,
-            end: ts,
-            metadata: [HKMetadataKeyTimeZone: TimeZone.current.identifier]
-        )
-        try await store.save(muestra)
-    }
-
-    func escribirInsulina(unidades: Double, ts: Date, tipo: TipoInsulina) async throws {
-        guard disponible else { throw ErrorHealthKit.noDisponible }
-        let motivo: HKInsulinDeliveryReason = switch tipo {
-        case .bolo: .bolus
-        case .basal: .basal
-        }
-        let muestra = HKQuantitySample(
-            type: tipoInsulina,
-            quantity: HKQuantity(unit: .internationalUnit(), doubleValue: unidades),
-            start: ts,
-            end: ts,
-            // HealthKit rechaza una muestra de insulina sin este metadato.
-            metadata: [
-                HKMetadataKeyInsulinDeliveryReason: motivo.rawValue,
-                HKMetadataKeyTimeZone: TimeZone.current.identifier,
-            ]
-        )
-        try await store.save(muestra)
+        _ = try await store.deleteObjects(of: tipo, predicate: predicado)
     }
 
     // MARK: - Unidades
@@ -169,8 +187,8 @@ nonisolated final class HealthKitReal: ServicioHealthKit, @unchecked Sendable {
 
     // MARK: - Traducciones
 
-    /// El UUID de la lectura como identificador de sincronización de HealthKit. Con él,
-    /// escribir dos veces la misma lectura reemplaza la muestra en lugar de duplicarla, y
+    /// El UUID del registro como identificador de sincronización de HealthKit. Con él,
+    /// escribir dos veces el mismo registro reemplaza la muestra en lugar de duplicarla, y
     /// el deshacer sabe cuál borrar.
     private static func metadatosDeSincronizacion(uuid: UUID) -> [String: Any] {
         [

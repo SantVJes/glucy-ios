@@ -77,11 +77,20 @@ nonisolated protocol ServicioHealthKit: Sendable {
     /// «Deshacer» de la pantalla de registro.
     func eliminarGlucosa(uuid: UUID) async throws
 
-    func escribirCarbohidratos(gramos: Double, ts: Date) async throws
+    /// Escribe una comida con su UUID como identificador de sincronización: escribirla dos
+    /// veces reemplaza la muestra en lugar de duplicarla (RF-15b).
+    func escribirCarbohidratos(_ dato: ComidaDato) async throws
+
+    /// Borra de Salud los carbohidratos que Glucy escribió con ese UUID, y solo esos.
+    func eliminarCarbohidratos(uuid: UUID) async throws
 
     /// Bolo o basal viaja como `HKMetadataKeyInsulinDeliveryReason`. Lo decide el tipo de
-    /// insulina y no el motivo: una dosis programada puede ser de rápida.
-    func escribirInsulina(unidades: Double, ts: Date, tipo: TipoInsulina) async throws
+    /// insulina y no el motivo: una dosis programada puede ser de rápida. Lleva también su
+    /// UUID como identificador de sincronización, igual que la glucosa y la comida.
+    func escribirInsulina(_ dato: DosisInsulinaDato) async throws
+
+    /// Borra de Salud la dosis que Glucy escribió con ese UUID, y solo esa.
+    func eliminarInsulina(uuid: UUID) async throws
 
     /// La unidad que la persona eligió en Salud. Solo para avisarle si no es mg/dL.
     func unidadPreferida() async throws -> UnidadGlucosa

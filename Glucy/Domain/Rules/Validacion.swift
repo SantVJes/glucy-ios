@@ -11,6 +11,8 @@ nonisolated enum Rechazo: Equatable, Sendable {
     case duplicado(uuid: UUID)
     case absorcionFueraDeRango(minutos: Int)
     case porcionesNoPositivas
+    case unidadesNoPositivas
+    case unidadesFueraDeResolucion(valor: Double)
 }
 
 /// Validación de lo que entra al teléfono. El backend la repite en la fase 2: un servidor
@@ -68,6 +70,34 @@ nonisolated enum Validacion {
         // Swift devuelve los carbohidratos completos y `referencia/reglas_clinicas.py`
         // lanza: la divergencia sigue existiendo, pero rechazando aquí la hora futura el
         // caso ya no puede llegar al COB desde la app.
+        if tsUtc > ahora {
+            return .marcaDeTiempoFutura
+        }
+        return nil
+    }
+
+    /// Devuelve `nil` si la dosis se puede guardar, o el motivo del rechazo.
+    ///
+    /// Revisa que lo anotado sea una dosis posible de anotar, nada más: no opina sobre si
+    /// la cantidad es la adecuada (regla 7).
+    static func validarDosis(
+        unidades: Double,
+        tsUtc: Date,
+        ahora: Date
+    ) -> Rechazo? {
+        // Cero unidades no es una dosis: es un campo sin llenar.
+        guard unidades > ConfiguracionDominio.insulinaMinima else {
+            return .unidadesNoPositivas
+        }
+        guard unidades <= ConfiguracionDominio.insulinaMaxima else {
+            return .fueraDeRango(valor: unidades)
+        }
+        guard unidades.truncatingRemainder(dividingBy: ConfiguracionDominio.insulinaResolucionUI)
+            == 0 else {
+            return .unidadesFueraDeResolucion(valor: unidades)
+        }
+        // Una dosis futura llegaría a `Insulina.fraccionActiva` con minutos negativos y
+        // contaría entera como insulina activa antes de haberse aplicado.
         if tsUtc > ahora {
             return .marcaDeTiempoFutura
         }

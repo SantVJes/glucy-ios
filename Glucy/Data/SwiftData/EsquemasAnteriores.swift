@@ -3,8 +3,8 @@ import SwiftData
 
 // Los modelos tal como eran en las versiones anteriores del esquema.
 //
-// **Por qué existen:** SwiftData reconoce cada versión por la forma de sus tablas. Si la V1,
-// la V2 y la V3 apuntan a las mismas clases —las de hoy—, las tres tienen la misma forma, y
+// **Por qué existen:** SwiftData reconoce cada versión por la forma de sus tablas. Si todas
+// las versiones apuntan a las mismas clases —las de hoy—, todas tienen la misma forma, y
 // al abrir una base que de verdad es vieja el plan de migración no la reconoce y la app se
 // cae al arrancar con «Duplicate version checksums detected». No es un error que se pueda
 // atrapar: es una excepción, y se lleva la app con las semanas de datos adentro.
@@ -97,6 +97,75 @@ extension EsquemaGlucyV1 {
             self.carbsPor100g = carbsPor100g
             fuente = "Open Food Facts"
             consultadoTsUtc = Date()
+            zonaHoraria = TimeZone.current.identifier
+            syncEstado = .local
+        }
+    }
+    /// `DosisInsulina` cuando `motivo` todavía era obligatorio. Es la misma en la V1, la V2
+    /// y la V3.
+    @Model
+    nonisolated final class DosisInsulina {
+        @Attribute(.unique) var uuid: UUID
+        var tsUtc: Date
+        var zonaHoraria: String
+        var unidades: Double
+        var tipo: TipoInsulina
+        var motivo: MotivoDosis
+        var origen: Origen
+        var duracionAccionH: Double
+        var escritaEnHealthKit: Bool
+        var nota: String?
+        var syncEstado: SyncEstado
+
+        init(
+            uuid: UUID = UUID(), tsUtc: Date, unidades: Double, tipo: TipoInsulina,
+            motivo: MotivoDosis
+        ) {
+            self.uuid = uuid
+            self.tsUtc = tsUtc
+            zonaHoraria = TimeZone.current.identifier
+            self.unidades = unidades
+            self.tipo = tipo
+            self.motivo = motivo
+            origen = .manual
+            duracionAccionH = ConfiguracionDominio.duracionAccionPorOmisionH
+            escritaEnHealthKit = false
+            syncEstado = .pendiente
+        }
+    }
+
+    /// `Perfil` antes de `registraInsulina`. Es el mismo en la V1, la V2 y la V3.
+    @Model
+    nonisolated final class Perfil {
+        @Attribute(.unique) var uuid: UUID
+        var nombre: String
+        var apellidos: String
+        var pesoKg: Double?
+        var fechaNacimiento: Date
+        var tipoUsuario: TipoUsuario
+        var umbralHipo: Double
+        var umbralHiper: Double
+        var tiempoAbsorcionPorOmisionMin: Int
+        var duracionAccionInsulinaH: Double
+        var usaSensor: Bool
+        var creadoTsUtc: Date
+        var actualizadoTsUtc: Date
+        var zonaHoraria: String
+        var syncEstado: SyncEstado
+
+        init(uuid: UUID = UUID(), fechaNacimiento: Date, tipoUsuario: TipoUsuario) {
+            self.uuid = uuid
+            nombre = ""
+            apellidos = ""
+            self.fechaNacimiento = fechaNacimiento
+            self.tipoUsuario = tipoUsuario
+            umbralHipo = ConfiguracionDominio.umbralHipoPorOmision
+            umbralHiper = ConfiguracionDominio.umbralHiperPorOmision
+            tiempoAbsorcionPorOmisionMin = ConfiguracionDominio.absorcionPorOmisionMin
+            duracionAccionInsulinaH = ConfiguracionDominio.duracionAccionPorOmisionH
+            usaSensor = false
+            creadoTsUtc = Date()
+            actualizadoTsUtc = Date()
             zonaHoraria = TimeZone.current.identifier
             syncEstado = .local
         }

@@ -161,8 +161,9 @@ struct MigracionEsquemaV3Tests {
     func elPlanDeclaraLaV3() {
         #expect(EsquemaGlucyV3.versionIdentifier == Schema.Version(3, 0, 0))
         #expect(EsquemaGlucyV3.models.count == 10)
-        #expect(PlanMigracionGlucy.schemas.count == 3)
-        #expect(PlanMigracionGlucy.stages.count == 2)
+        // Desde el paso 7 hay una versión y una etapa más; las de aquí siguen igual.
+        #expect(PlanMigracionGlucy.schemas.count == 4)
+        #expect(PlanMigracionGlucy.stages.count == 3)
         // Cada versión describe la base como era: si dos coinciden, el plan no las
         // distingue y la app se cae al abrir una base vieja.
         #expect(EsquemaGlucyV2.models.contains { $0 == EsquemaGlucyV1.Comida.self })

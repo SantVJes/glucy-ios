@@ -23,6 +23,8 @@ struct BuscarProductoPorCodigoTests {
         let servicio = ProductosFalso(conocidos: conocidos)
         let dependencias = ContenedorDependencias(
             contenedor: try ContenedorGlucy.crear(enMemoria: true),
+            // Desde el paso 7 la comida se copia en Salud; aquí no se prueba eso.
+            salud: HealthKitFalso(),
             servicioProductos: servicio
         )
         return (dependencias, servicio)

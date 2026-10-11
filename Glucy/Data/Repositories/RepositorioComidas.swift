@@ -21,4 +21,6 @@ nonisolated protocol RepositorioComidas: Sendable {
     /// La última comida registrada con ese código, para ofrecer las mismas porciones.
     /// Es algo que la persona ya dijo, no algo que la app deduzca (RF-37).
     func ultimaConCodigo(_ codigo: String) async throws -> ComidaDato?
+
+    func marcarEscritaEnHealthKit(uuid: UUID) async throws
 }

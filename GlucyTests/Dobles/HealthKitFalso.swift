@@ -19,6 +19,15 @@ actor HealthKitFalso: ServicioHealthKit {
     private(set) var escritas: [LecturaGlucosaDato] = []
     private(set) var eliminadas: [UUID] = []
 
+    /// Lo que va a lanzar cualquier escritura: Salud sin permiso de escritura o caída.
+    private var falloDeEscritura: (any Error)?
+
+    /// Los carbohidratos y la insulina que hay en Salud, por su identificador de
+    /// sincronización. Es un diccionario porque así se porta Salud: escribir otra vez con el
+    /// mismo identificador reemplaza la muestra, no agrega otra.
+    private(set) var carbohidratosEnSalud: [UUID: ComidaDato] = [:]
+    private(set) var insulinaEnSalud: [UUID: DosisInsulinaDato] = [:]
+
     init(disponible: Bool = true) {
         self.disponible = disponible
     }
@@ -30,6 +39,10 @@ actor HealthKitFalso: ServicioHealthKit {
 
     func fallarLecturas(con error: any Error) {
         falloDeLectura = error
+    }
+
+    func fallarEscrituras(con error: any Error) {
+        falloDeEscritura = error
     }
 
     func pedirPermisos() async throws {}
@@ -49,6 +62,7 @@ actor HealthKitFalso: ServicioHealthKit {
     func observarGlucosa(alLlegarMuestras: @escaping @Sendable () async -> Void) async throws {}
 
     func escribirGlucosa(_ dato: LecturaGlucosaDato) async throws {
+        if let falloDeEscritura { throw falloDeEscritura }
         escritas.append(dato)
     }
 
@@ -56,9 +70,23 @@ actor HealthKitFalso: ServicioHealthKit {
         eliminadas.append(uuid)
     }
 
-    func escribirCarbohidratos(gramos: Double, ts: Date) async throws {}
+    func escribirCarbohidratos(_ dato: ComidaDato) async throws {
+        if let falloDeEscritura { throw falloDeEscritura }
+        carbohidratosEnSalud[dato.uuid] = dato
+    }
 
-    func escribirInsulina(unidades: Double, ts: Date, tipo: TipoInsulina) async throws {}
+    func eliminarCarbohidratos(uuid: UUID) async throws {
+        carbohidratosEnSalud[uuid] = nil
+    }
+
+    func escribirInsulina(_ dato: DosisInsulinaDato) async throws {
+        if let falloDeEscritura { throw falloDeEscritura }
+        insulinaEnSalud[dato.uuid] = dato
+    }
+
+    func eliminarInsulina(uuid: UUID) async throws {
+        insulinaEnSalud[uuid] = nil
+    }
 
     func unidadPreferida() async throws -> UnidadGlucosa { .mgDl }
 

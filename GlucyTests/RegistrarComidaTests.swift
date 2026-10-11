@@ -24,6 +24,8 @@ struct RegistrarComidaTests {
     ) throws -> (RegistroComidaViewModel, ContenedorDependencias) {
         let dependencias = ContenedorDependencias(
             contenedor: try ContenedorGlucy.crear(enMemoria: true),
+            // Desde el paso 7 la comida se copia en Salud; aquí no se prueba eso.
+            salud: HealthKitFalso(),
             servicioProductos: ProductosFalso(conocidos: conocidos)
         )
         let modelo = RegistroComidaViewModel(

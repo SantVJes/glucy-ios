@@ -69,4 +69,12 @@ actor ComidasSwiftData: RepositorioComidas {
         descriptor.fetchLimit = 1
         return try modelContext.fetch(descriptor).first?.dato
     }
+
+    func marcarEscritaEnHealthKit(uuid: UUID) throws {
+        var descriptor = FetchDescriptor<Comida>(predicate: #Predicate { $0.uuid == uuid })
+        descriptor.fetchLimit = 1
+        guard let fila = try modelContext.fetch(descriptor).first else { return }
+        fila.escritaEnHealthKit = true
+        try modelContext.save()
+    }
 }

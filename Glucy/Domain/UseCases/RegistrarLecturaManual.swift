@@ -47,9 +47,10 @@ extension FalloRegistro {
         switch rechazo {
         case .fueraDeRango: self = .fueraDeRango
         case .marcaDeTiempoFutura: self = .horaFutura
-        // Los dos últimos son de comidas y tienen su propia traducción en
-        // `RegistrarComida`; una lectura no los puede producir.
-        case .ocrSinConfirmar, .duplicado, .absorcionFueraDeRango, .porcionesNoPositivas:
+        // Los demás son de comidas y de dosis, y tienen su propia traducción en
+        // `RegistrarComida` y en `RegistrarDosis`; una lectura no los puede producir.
+        case .ocrSinConfirmar, .duplicado, .absorcionFueraDeRango, .porcionesNoPositivas,
+             .unidadesNoPositivas, .unidadesFueraDeResolucion:
             self = .noSePudoGuardar
         }
     }

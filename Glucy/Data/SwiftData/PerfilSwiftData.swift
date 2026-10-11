@@ -33,6 +33,7 @@ actor PerfilSwiftData: RepositorioPerfil {
             existente.tiempoAbsorcionPorOmisionMin = dato.tiempoAbsorcionPorOmisionMin
             existente.duracionAccionInsulinaH = dato.duracionAccionInsulinaH
             existente.usaSensor = dato.usaSensor
+            existente.registraInsulina = dato.registraInsulina
             existente.actualizadoTsUtc = dato.actualizadoTsUtc
             existente.zonaHoraria = dato.zonaHoraria
             existente.syncEstado = .local

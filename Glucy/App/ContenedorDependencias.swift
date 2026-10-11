@@ -46,26 +46,38 @@ final class ContenedorDependencias {
         )
     }
 
+    /// La copia en Salud de lo que Glucy captura. Un solo caso de uso para los tres tipos.
+    private var escribirEnSalud: EscribirEnHealthKit {
+        EscribirEnHealthKit(servicio: salud, lecturas: lecturas, comidas: comidas, dosis: dosis)
+    }
+
     /// La captura manual con su copia en Salud.
     var registrarManual: RegistrarLecturaManual {
-        RegistrarLecturaManual(
-            repositorio: lecturas,
-            salud: EscribirEnHealthKit(servicio: salud, lecturas: lecturas)
-        )
+        RegistrarLecturaManual(repositorio: lecturas, salud: escribirEnSalud)
     }
 
     /// La captura por foto con su copia en Salud. El origen `.fotoGlucometro` ya estaba en
     /// la lista de los que se escriben desde el paso 4.
     var registrarPorFoto: RegistrarLecturaPorFoto {
-        RegistrarLecturaPorFoto(
-            repositorio: lecturas,
-            salud: EscribirEnHealthKit(servicio: salud, lecturas: lecturas)
-        )
+        RegistrarLecturaPorFoto(repositorio: lecturas, salud: escribirEnSalud)
     }
 
     /// El único camino por el que se escribe una comida (RF-37).
     var registrarComida: RegistrarComida {
-        RegistrarComida(repositorio: comidas)
+        RegistrarComida(repositorio: comidas, salud: escribirEnSalud)
+    }
+
+    /// El único camino por el que se escribe una dosis (regla 7).
+    var registrarDosis: RegistrarDosis {
+        RegistrarDosis(repositorio: dosis, salud: escribirEnSalud)
+    }
+
+    var calcularInsulinaActiva: CalcularInsulinaActiva {
+        CalcularInsulinaActiva(dosis: dosis)
+    }
+
+    var ajustesDeInsulina: ConsultarAjustesDeInsulina {
+        ConsultarAjustesDeInsulina(perfil: perfil)
     }
 
     /// El producto de un código de barras: primero la caché, después la red.
