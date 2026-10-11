@@ -1,16 +1,23 @@
 import SwiftUI
 
-/// Lo que se puede anotar en la pestaña «Registrar». La insulina del paso 7 entra aquí como
-/// un caso más y el selector la dibuja sin que nadie lo toque.
+/// Lo que se puede anotar en la pestaña «Registrar».
 enum TipoDeRegistro: String, CaseIterable, Identifiable {
-    case glucosa, comida
+    case glucosa, comida, insulina
 
     var id: Self { self }
+
+    /// Las opciones que se dibujan. Quien no se aplica insulina no ve la tercera: no sale en
+    /// gris ni deshabilitada, no está. Una opción deshabilitada invita a preguntarse qué
+    /// falta (RF-14).
+    static func disponibles(registraInsulina: Bool) -> [TipoDeRegistro] {
+        registraInsulina ? allCases : allCases.filter { $0 != .insulina }
+    }
 
     var titulo: String {
         switch self {
         case .glucosa: "Glucosa"
         case .comida: "Comida"
+        case .insulina: "Insulina"
         }
     }
 
@@ -18,6 +25,7 @@ enum TipoDeRegistro: String, CaseIterable, Identifiable {
         switch self {
         case .glucosa: elegido ? "drop.fill" : "drop"
         case .comida: "fork.knife"
+        case .insulina: elegido ? "syringe.fill" : "syringe"
         }
     }
 
@@ -35,6 +43,7 @@ enum TipoDeRegistro: String, CaseIterable, Identifiable {
         switch self {
         case .glucosa: "segmentoGlucosa"
         case .comida: "segmentoComida"
+        case .insulina: "segmentoInsulina"
         }
     }
 }
@@ -49,21 +58,33 @@ enum TipoDeRegistro: String, CaseIterable, Identifiable {
 /// donde el símbolo lo tiene, cambia a su versión rellena.
 struct SelectorDeRegistro: View {
     @Binding var elegido: TipoDeRegistro
+    var opciones: [TipoDeRegistro] = TipoDeRegistro.allCases
 
     @Environment(\.accessibilityReduceMotion) private var reducirMovimiento
+    @Environment(\.dynamicTypeSize) private var tamanoLetra
     @Namespace private var pildora
 
     var body: some View {
-        HStack(spacing: Tema.Espacio.unidad) {
-            ForEach(TipoDeRegistro.allCases) { tipo in
+        // Con la letra de accesibilidad tres opciones no caben en un renglón sin cortarse,
+        // así que se apilan (P-15).
+        let apilado = tamanoLetra.isAccessibilitySize
+        let disposicion = apilado
+            ? AnyLayout(VStackLayout(spacing: Tema.Espacio.unidad))
+            : AnyLayout(HStackLayout(spacing: Tema.Espacio.unidad))
+        let forma = RoundedRectangle(
+            cornerRadius: apilado ? Tema.Radio.tarjetaGrande : Tema.Radio.completo
+        )
+
+        return disposicion {
+            ForEach(opciones) { tipo in
                 segmento(tipo)
             }
         }
         .padding(Tema.Espacio.unidad)
         .background(Tema.Colores.superficie)
-        .clipShape(Capsule())
+        .clipShape(forma)
         .overlay(
-            Capsule().stroke(Tema.Colores.textoSecundario.opacity(0.25), lineWidth: 1)
+            forma.stroke(Tema.Colores.textoSecundario.opacity(0.25), lineWidth: 1)
         )
         .sensoryFeedback(.selection, trigger: elegido)
         .accessibilityElement(children: .contain)
@@ -83,7 +104,8 @@ struct SelectorDeRegistro: View {
                 .foregroundStyle(estaElegido ? Tema.Colores.textoSobreColor : Tema.Colores.textoPrincipal)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .padding(.horizontal, Tema.Espacio.interior)
+                .padding(.horizontal, Tema.Espacio.unidad * 2)
+                .padding(.vertical, Tema.Espacio.unidad)
                 .frame(maxWidth: .infinity, minHeight: Tema.Medida.areaTocable)
                 .background {
                     if estaElegido {

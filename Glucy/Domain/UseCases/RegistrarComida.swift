@@ -35,7 +35,9 @@ extension FalloRegistro {
         case .fueraDeRango: self = .carbohidratosFueraDeRango
         case .marcaDeTiempoFutura: self = .horaFutura
         case .porcionesNoPositivas: self = .porcionesNoPositivas
-        case .absorcionFueraDeRango, .ocrSinConfirmar, .duplicado: self = .comidaNoSePudoGuardar
+        case .absorcionFueraDeRango, .ocrSinConfirmar, .duplicado, .unidadesNoPositivas,
+             .unidadesFueraDeResolucion:
+            self = .comidaNoSePudoGuardar
         }
     }
 }
@@ -48,6 +50,8 @@ extension FalloRegistro {
 /// de glucosa (D-9, RF-37).
 nonisolated struct RegistrarComida: Sendable {
     let repositorio: any RepositorioComidas
+    /// Copia en Salud. Opcional porque la captura no depende de ella (regla 1).
+    var salud: EscribirEnHealthKit? = nil
 
     /// - Parameter carbsG: los gramos que la persona confirmó. **Es el dato.**
     /// - Parameter origen: `.barcode`, `.ocrEtiqueta` o `.manual`, según de dónde salió el
@@ -99,11 +103,15 @@ nonisolated struct RegistrarComida: Sendable {
             confirmadaPorUsuario: true
         )
         try await repositorio.guardar(dato)
+        // Después de guardar y sin poder fallar el guardado: Salud es una copia, no la
+        // fuente (RF-15).
+        await salud?.ejecutar(dato)
         return dato
     }
 
-    /// Deshace el último guardado. Borra la comida y su fila de la cola.
+    /// Deshace el último guardado. Borra la comida, su fila de la cola y su muestra en Salud.
     func deshacer(_ dato: ComidaDato) async throws {
         try await repositorio.eliminar(uuid: dato.uuid)
+        await salud?.deshacer(dato)
     }
 }

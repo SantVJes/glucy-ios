@@ -3,7 +3,7 @@ import SwiftData
 
 /// Las diez tablas tal como nacieron en el paso 1.
 ///
-/// Las tres que cambiaron después están congeladas en `EsquemasAnteriores.swift`: cada
+/// Las cinco que cambiaron después están congeladas en `EsquemasAnteriores.swift`: cada
 /// versión tiene que describir la base **como era**, no como es hoy, o el plan de migración
 /// no la distingue de la siguiente.
 ///
@@ -13,9 +13,10 @@ nonisolated enum EsquemaGlucyV1: VersionedSchema {
     static var versionIdentifier: Schema.Version { Schema.Version(1, 0, 0) }
 
     static var models: [any PersistentModel.Type] {
-        [Perfil.self, EsquemaGlucyV1.LecturaGlucosa.self, EsquemaGlucyV1.Comida.self,
-         DosisInsulina.self, EventoContexto.self, Alerta.self, PrediccionCache.self,
-         EsquemaGlucyV1.ProductoCache.self, ColaSincronizacion.self, ColaXapi.self]
+        [EsquemaGlucyV1.Perfil.self, EsquemaGlucyV1.LecturaGlucosa.self,
+         EsquemaGlucyV1.Comida.self, EsquemaGlucyV1.DosisInsulina.self, EventoContexto.self,
+         Alerta.self, PrediccionCache.self, EsquemaGlucyV1.ProductoCache.self,
+         ColaSincronizacion.self, ColaXapi.self]
     }
 }
 
@@ -26,9 +27,10 @@ nonisolated enum EsquemaGlucyV2: VersionedSchema {
     static var versionIdentifier: Schema.Version { Schema.Version(2, 0, 0) }
 
     static var models: [any PersistentModel.Type] {
-        [Perfil.self, Glucy.LecturaGlucosa.self, EsquemaGlucyV1.Comida.self,
-         DosisInsulina.self, EventoContexto.self, Alerta.self, PrediccionCache.self,
-         EsquemaGlucyV1.ProductoCache.self, ColaSincronizacion.self, ColaXapi.self]
+        [EsquemaGlucyV1.Perfil.self, Glucy.LecturaGlucosa.self, EsquemaGlucyV1.Comida.self,
+         EsquemaGlucyV1.DosisInsulina.self, EventoContexto.self, Alerta.self,
+         PrediccionCache.self, EsquemaGlucyV1.ProductoCache.self, ColaSincronizacion.self,
+         ColaXapi.self]
     }
 }
 
@@ -37,6 +39,19 @@ nonisolated enum EsquemaGlucyV2: VersionedSchema {
 /// guardar también el «no lo tengo» de Open Food Facts.
 nonisolated enum EsquemaGlucyV3: VersionedSchema {
     static var versionIdentifier: Schema.Version { Schema.Version(3, 0, 0) }
+
+    static var models: [any PersistentModel.Type] {
+        [EsquemaGlucyV1.Perfil.self, LecturaGlucosa.self, Comida.self,
+         EsquemaGlucyV1.DosisInsulina.self, EventoContexto.self, Alerta.self,
+         PrediccionCache.self, ProductoCache.self, ColaSincronizacion.self, ColaXapi.self]
+    }
+}
+
+/// Las mismas diez, con `motivo` opcional en `DosisInsulina` —lo que la persona no dijo no se
+/// inventa— y `registraInsulina` en `Perfil`, para poder ocultar el registro de insulina a
+/// quien no se la aplica (RF-14).
+nonisolated enum EsquemaGlucyV4: VersionedSchema {
+    static var versionIdentifier: Schema.Version { Schema.Version(4, 0, 0) }
 
     static var models: [any PersistentModel.Type] {
         [Perfil.self, LecturaGlucosa.self, Comida.self, DosisInsulina.self,
@@ -53,13 +68,15 @@ nonisolated enum EsquemaGlucyV3: VersionedSchema {
 /// semanas de datos de una persona real, es un desastre que no se puede deshacer.
 nonisolated enum PlanMigracionGlucy: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [EsquemaGlucyV1.self, EsquemaGlucyV2.self, EsquemaGlucyV3.self]
+        [EsquemaGlucyV1.self, EsquemaGlucyV2.self, EsquemaGlucyV3.self, EsquemaGlucyV4.self]
     }
 
-    /// Ligeras las dos: los campos nuevos son opcionales o traen valor por omisión, así que
-    /// SwiftData puede migrar sin que nadie escriba cómo rellenar las filas existentes.
+    /// Ligeras las tres: los campos nuevos son opcionales o traen valor por omisión, y un
+    /// campo que pasa a opcional no pierde lo que tenía, así que SwiftData puede migrar sin
+    /// que nadie escriba cómo rellenar las filas existentes.
     static var stages: [MigrationStage] {
         [.lightweight(fromVersion: EsquemaGlucyV1.self, toVersion: EsquemaGlucyV2.self),
-         .lightweight(fromVersion: EsquemaGlucyV2.self, toVersion: EsquemaGlucyV3.self)]
+         .lightweight(fromVersion: EsquemaGlucyV2.self, toVersion: EsquemaGlucyV3.self),
+         .lightweight(fromVersion: EsquemaGlucyV3.self, toVersion: EsquemaGlucyV4.self)]
     }
 }

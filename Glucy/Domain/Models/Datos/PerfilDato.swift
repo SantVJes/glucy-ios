@@ -25,6 +25,8 @@ nonisolated struct PerfilDato: Sendable, Equatable, Identifiable {
     let tiempoAbsorcionPorOmisionMin: Int
     let duracionAccionInsulinaH: Double
     let usaSensor: Bool
+    /// RF-14: quien no se aplica insulina puede ocultar su registro.
+    let registraInsulina: Bool
     let creadoTsUtc: Date
     let actualizadoTsUtc: Date
     /// Identificador de `TimeZone` (regla 5).
@@ -43,6 +45,7 @@ nonisolated struct PerfilDato: Sendable, Equatable, Identifiable {
         tiempoAbsorcionPorOmisionMin: Int = ConfiguracionDominio.absorcionPorOmisionMin,
         duracionAccionInsulinaH: Double = ConfiguracionDominio.duracionAccionPorOmisionH,
         usaSensor: Bool = false,
+        registraInsulina: Bool = true,
         creadoTsUtc: Date = Date(),
         actualizadoTsUtc: Date = Date(),
         zonaHoraria: String = TimeZone.current.identifier,
@@ -59,6 +62,7 @@ nonisolated struct PerfilDato: Sendable, Equatable, Identifiable {
         self.tiempoAbsorcionPorOmisionMin = tiempoAbsorcionPorOmisionMin
         self.duracionAccionInsulinaH = duracionAccionInsulinaH
         self.usaSensor = usaSensor
+        self.registraInsulina = registraInsulina
         self.creadoTsUtc = creadoTsUtc
         self.actualizadoTsUtc = actualizadoTsUtc
         self.zonaHoraria = zonaHoraria

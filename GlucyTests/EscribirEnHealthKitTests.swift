@@ -56,4 +56,78 @@ struct EscribirEnHealthKitTests {
         #expect(escrita)
         #expect(await salud.escritas.map(\.uuid) == [dato.uuid])
     }
+
+    // MARK: - Paso 7: insulina y carbohidratos
+
+    @Test("14 · RF-15: la dosis se escribe en Salud con su UUID como identificador")
+    func laDosisSeEscribeConSuUuid() async throws {
+        let salud = HealthKitFalso()
+        let dosis = RepositorioDosisFalso()
+        let dato = DosisInsulinaDato(tsUtc: ahora, unidades: 4, tipo: .bolo)
+
+        let escrita = await EscribirEnHealthKit(
+            servicio: salud, lecturas: RepositorioLecturasFalso(), dosis: dosis
+        ).ejecutar(dato)
+
+        #expect(escrita)
+        let enSalud = try #require(await salud.insulinaEnSalud[dato.uuid])
+        #expect(enSalud.unidades == 4)
+        // El tipo viaja con ella: de ahí sale la razón de bolo o basal.
+        #expect(enSalud.tipo == .bolo)
+        #expect(await dosis.marcadasEnHealthKit == [dato.uuid])
+    }
+
+    @Test("15 · RF-15b: escribir la dosis dos veces no crea dos muestras")
+    func escribirDosVecesNoDuplica() async throws {
+        let salud = HealthKitFalso()
+        let escribir = EscribirEnHealthKit(servicio: salud, lecturas: RepositorioLecturasFalso())
+        let dato = DosisInsulinaDato(tsUtc: ahora, unidades: 4, tipo: .bolo)
+
+        // Un reintento, con el mismo registro.
+        await escribir.ejecutar(dato)
+        await escribir.ejecutar(dato)
+
+        // El mismo identificador las dos veces: Salud reemplaza, no agrega.
+        #expect(await salud.insulinaEnSalud.count == 1)
+        #expect(await salud.insulinaEnSalud.keys.first == dato.uuid)
+
+        // Y la que ya consta como escrita ni siquiera se vuelve a mandar.
+        let otraSalud = HealthKitFalso()
+        let yaEscrita = DosisInsulinaDato(
+            tsUtc: ahora, unidades: 4, tipo: .bolo, escritaEnHealthKit: true
+        )
+        let escrita = await EscribirEnHealthKit(
+            servicio: otraSalud, lecturas: RepositorioLecturasFalso()
+        ).ejecutar(yaEscrita)
+        #expect(!escrita)
+        #expect(await otraSalud.insulinaEnSalud.isEmpty)
+    }
+
+    @Test("18 · RF-15: una comida se escribe en Salud como carbohidratos, con su UUID")
+    func laComidaSeEscribeComoCarbohidratos() async throws {
+        let salud = HealthKitFalso()
+        let comidas = ComidasSwiftData(modelContainer: try ContenedorGlucy.crear(enMemoria: true))
+        let registrar = RegistrarComida(
+            repositorio: comidas,
+            salud: EscribirEnHealthKit(
+                servicio: salud, lecturas: RepositorioLecturasFalso(), comidas: comidas
+            )
+        )
+
+        let dato = try await registrar.ejecutar(
+            carbsG: 45, tsUtc: ahora, origen: .barcode, porcionG: 30, porciones: 2, ahora: ahora
+        )
+
+        let enSalud = try #require(await salud.carbohidratosEnSalud[dato.uuid])
+        #expect(enSalud.carbsG == 45)
+        #expect(try await comidas.porUuid(dato.uuid)?.escritaEnHealthKit == true)
+        // No se escribió como ninguna otra cosa.
+        #expect(await salud.insulinaEnSalud.isEmpty)
+        #expect(await salud.escritas.isEmpty)
+
+        // Y el «Deshacer» de la comida también la quita de Salud.
+        try await registrar.deshacer(dato)
+        #expect(await salud.carbohidratosEnSalud.isEmpty)
+        #expect(try await comidas.contar() == 0)
+    }
 }

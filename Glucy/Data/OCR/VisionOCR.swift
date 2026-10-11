@@ -72,14 +72,11 @@ nonisolated struct VisionOCR: ServicioOCR {
 
     /// Convierte una observación en número, si lo es.
     ///
-    /// Se queda con los dígitos de la cadena: un «112 mg/dL» leído junto sigue siendo 112, y
-    /// un «08:30» se queda en 0830, que después descarta `SeleccionDeNumero` por estar fuera
-    /// de rango. Aquí no se elige nada, solo se traduce.
+    /// Cómo se pasa del texto al número lo decide `SeleccionDeNumero.valor(deTexto:)`, que
+    /// vive aparte para poder probarse sin imágenes. Aquí no se elige nada, solo se traduce.
     private static func numero(de observacion: VNRecognizedTextObservation) -> NumeroLeido? {
-        guard let candidato = observacion.topCandidates(1).first else { return nil }
-
-        let digitos = candidato.string.filter(\.isNumber)
-        guard !digitos.isEmpty, let valor = Double(digitos) else { return nil }
+        guard let candidato = observacion.topCandidates(1).first,
+              let valor = SeleccionDeNumero.valor(deTexto: candidato.string) else { return nil }
 
         return NumeroLeido(
             valor: valor,

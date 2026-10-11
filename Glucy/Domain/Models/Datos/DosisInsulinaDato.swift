@@ -12,7 +12,8 @@ nonisolated struct DosisInsulinaDato: Sendable, Equatable, Identifiable {
     let zonaHoraria: String
     let unidades: Double
     let tipo: TipoInsulina
-    let motivo: MotivoDosis
+    /// `nil` si la persona no lo dijo. No se adivina.
+    let motivo: MotivoDosis?
     let origen: Origen
     let duracionAccionH: Double
     let escritaEnHealthKit: Bool
@@ -26,7 +27,7 @@ nonisolated struct DosisInsulinaDato: Sendable, Equatable, Identifiable {
         zonaHoraria: String = TimeZone.current.identifier,
         unidades: Double,
         tipo: TipoInsulina,
-        motivo: MotivoDosis,
+        motivo: MotivoDosis? = nil,
         origen: Origen = .manual,
         duracionAccionH: Double = ConfiguracionDominio.duracionAccionPorOmisionH,
         escritaEnHealthKit: Bool = false,

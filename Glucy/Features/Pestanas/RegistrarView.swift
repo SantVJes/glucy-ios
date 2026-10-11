@@ -6,9 +6,12 @@ import SwiftUI
 struct RegistrarView: View {
     @Environment(ContenedorDependencias.self) private var dependencias
     @State private var registro = TipoDeRegistro.glucosa
+    /// Arranca sin insulina y la agrega al leer el perfil: a quien la ocultó no se le dibuja
+    /// ni un instante (RF-14).
+    @State private var opciones = TipoDeRegistro.disponibles(registraInsulina: false)
 
     var body: some View {
-        // Las dos pantallas están siempre montadas y la que no toca solo se oculta. Con un
+        // Las pantallas están siempre montadas y la que no toca solo se oculta. Con un
         // `switch` la que se va se destruye con todo y su ViewModel: quien pasaba a Comida a
         // media captura de una glucosa volvía a un campo vacío y al principio de la pantalla.
         ZStack {
@@ -27,12 +30,29 @@ struct RegistrarView: View {
                 visible: registro == .comida
             )
             .pantalla(de: .comida, elegida: registro)
+
+            if opciones.contains(.insulina) {
+                RegistroInsulinaView(
+                    registrar: dependencias.registrarDosis,
+                    calcular: dependencias.calcularInsulinaActiva,
+                    ajustes: dependencias.ajustesDeInsulina,
+                    visible: registro == .insulina
+                )
+                .pantalla(de: .insulina, elegida: registro)
+            }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            SelectorDeRegistro(elegido: $registro)
+            SelectorDeRegistro(elegido: $registro, opciones: opciones)
                 .padding(.horizontal, Tema.Espacio.margenLateral)
                 .padding(.vertical, Tema.Espacio.unidad * 2)
                 .background(Tema.Colores.fondo)
+        }
+        // Cada vez que se entra a la pestaña: el interruptor se va a mover desde Ajustes.
+        .task {
+            opciones = TipoDeRegistro.disponibles(
+                registraInsulina: await dependencias.ajustesDeInsulina.registraInsulina()
+            )
+            if !opciones.contains(registro) { registro = .glucosa }
         }
     }
 }

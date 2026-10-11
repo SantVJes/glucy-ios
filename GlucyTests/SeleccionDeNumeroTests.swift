@@ -92,4 +92,30 @@ struct SeleccionDeNumeroTests {
         ]
         #expect(SeleccionDeNumero.glucosa(entre: mismosTamanosOtraConfianza)?.valor == 140)
     }
+
+    /// Prueba 24 del paso 7 — un glucómetro en mmol/L. Sin el separador, «6.2» cae dentro de
+    /// 20–600 y se propondría como 62, que se lee como hipoglucemia cuando son 112 mg/dL.
+    @Test("24: «6.2» en la pantalla del glucómetro no se propone como 62")
+    func unDecimalNoEsUnaLectura() {
+        #expect(SeleccionDeNumero.valor(deTexto: "6.2") == nil)
+        #expect(SeleccionDeNumero.valor(deTexto: "6,2") == nil)
+        #expect(SeleccionDeNumero.valor(deTexto: "6.2 mmol/L") == nil)
+        #expect(SeleccionDeNumero.valor(deTexto: "11.4") == nil)
+
+        // Lo que sí es una lectura se sigue leyendo, con su unidad pegada o sin ella.
+        #expect(SeleccionDeNumero.valor(deTexto: "112") == 112)
+        #expect(SeleccionDeNumero.valor(deTexto: "112 mg/dL") == 112)
+        // Un punto que no separa dos dígitos no es un decimal.
+        #expect(SeleccionDeNumero.valor(deTexto: "112.") == 112)
+        #expect(SeleccionDeNumero.valor(deTexto: "mg/dL") == nil)
+    }
+
+    /// Prueba 25 del paso 7 — la hora de la pantalla. «5:26» sin los dos puntos es 526, que
+    /// está en rango.
+    @Test("25: «5:26» no se propone como 526")
+    func unaHoraNoEsUnaLectura() {
+        #expect(SeleccionDeNumero.valor(deTexto: "5:26") == nil)
+        #expect(SeleccionDeNumero.valor(deTexto: "08:30") == nil)
+        #expect(SeleccionDeNumero.valor(deTexto: "5:26 PM") == nil)
+    }
 }

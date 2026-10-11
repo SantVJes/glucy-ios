@@ -34,6 +34,11 @@ nonisolated final class Perfil {
     /// frescura de la última lectura, no este campo.
     var usaSensor: Bool
 
+    /// RF-14: el usuario secundario —prediabetes, resistencia a la insulina— no se aplica
+    /// insulina, y una pestaña que no usa nunca le estorba. Nace en `true` porque el usuario
+    /// principal es quien sí la usa.
+    var registraInsulina: Bool = true
+
     var creadoTsUtc: Date
     var actualizadoTsUtc: Date
     /// Identificador de `TimeZone`, por ejemplo `America/Mexico_City` (regla 5).
@@ -53,6 +58,7 @@ nonisolated final class Perfil {
         tiempoAbsorcionPorOmisionMin: Int = ConfiguracionDominio.absorcionPorOmisionMin,
         duracionAccionInsulinaH: Double = ConfiguracionDominio.duracionAccionPorOmisionH,
         usaSensor: Bool = false,
+        registraInsulina: Bool = true,
         creadoTsUtc: Date = Date(),
         actualizadoTsUtc: Date = Date(),
         zonaHoraria: String = TimeZone.current.identifier,
@@ -69,6 +75,7 @@ nonisolated final class Perfil {
         self.tiempoAbsorcionPorOmisionMin = tiempoAbsorcionPorOmisionMin
         self.duracionAccionInsulinaH = duracionAccionInsulinaH
         self.usaSensor = usaSensor
+        self.registraInsulina = registraInsulina
         self.creadoTsUtc = creadoTsUtc
         self.actualizadoTsUtc = actualizadoTsUtc
         self.zonaHoraria = zonaHoraria
@@ -92,6 +99,7 @@ extension Perfil {
             tiempoAbsorcionPorOmisionMin: dato.tiempoAbsorcionPorOmisionMin,
             duracionAccionInsulinaH: dato.duracionAccionInsulinaH,
             usaSensor: dato.usaSensor,
+            registraInsulina: dato.registraInsulina,
             creadoTsUtc: dato.creadoTsUtc,
             actualizadoTsUtc: dato.actualizadoTsUtc,
             zonaHoraria: dato.zonaHoraria,
@@ -112,6 +120,7 @@ extension Perfil {
             tiempoAbsorcionPorOmisionMin: tiempoAbsorcionPorOmisionMin,
             duracionAccionInsulinaH: duracionAccionInsulinaH,
             usaSensor: usaSensor,
+            registraInsulina: registraInsulina,
             creadoTsUtc: creadoTsUtc,
             actualizadoTsUtc: actualizadoTsUtc,
             zonaHoraria: zonaHoraria,

@@ -18,7 +18,7 @@ nonisolated enum SeleccionDeNumero {
     ///
     /// 1. Se descarta lo que no sea un número entero.
     /// 2. Se descarta lo que esté fuera del rango fisiológico que ya conocen las reglas del
-    ///    paso 1. Una fecha «12» o una hora «0830» se caen solas aquí.
+    ///    paso 1. Una fecha «12» se cae sola aquí.
     /// 3. De lo que queda gana **el de mayor altura de caja**: en todo glucómetro el valor
     ///    es el número más grande de la pantalla. No el de mayor confianza; el más grande.
     /// 4. Si quedan dos del mismo tamaño, gana el de arriba.
@@ -38,6 +38,31 @@ nonisolated enum SeleccionDeNumero {
                 // para que la elección sea estable y no dependa del orden de llegada.
                 return izquierdo.caja.maxY < derecho.caja.maxY
             }
+    }
+
+    /// El número de un renglón leído, o `nil` si ese renglón no puede ser una glucosa en
+    /// mg/dL.
+    ///
+    /// Se queda con los dígitos de la cadena: un «112 mg/dL» leído junto sigue siendo 112.
+    /// Pero **antes** descarta dos formas que, ya sin su separador, caen dentro del rango y
+    /// se propondrían como lectura:
+    ///
+    /// - Un decimal. Un glucómetro en mmol/L que muestra «6.2» se leería como 62, que se ve
+    ///   como hipoglucemia cuando el valor de verdad son 112 mg/dL.
+    /// - Una hora. «5:26» se leería como 526.
+    static func valor(deTexto texto: String) -> Double? {
+        guard !texto.contains(":") else { return nil }
+
+        let caracteres = Array(texto)
+        for i in caracteres.indices.dropFirst().dropLast()
+        where (caracteres[i] == "." || caracteres[i] == ",")
+            && caracteres[i - 1].isNumber && caracteres[i + 1].isNumber {
+            return nil
+        }
+
+        let digitos = texto.filter(\.isNumber)
+        guard !digitos.isEmpty else { return nil }
+        return Double(digitos)
     }
 
     /// Entero y dentro del rango fisiológico. Los dos límites salen de

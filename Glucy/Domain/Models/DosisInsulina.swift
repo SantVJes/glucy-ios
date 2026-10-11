@@ -18,7 +18,9 @@ nonisolated final class DosisInsulina {
     var unidades: Double
 
     var tipo: TipoInsulina
-    var motivo: MotivoDosis
+    /// `nil` si la persona no lo dijo. Un motivo inventado entraría al histórico como si
+    /// alguien lo hubiera afirmado, y es peor que ninguno (RF-14).
+    var motivo: MotivoDosis?
     var origen: Origen
 
     /// Duración de acción vigente cuando se aplicó. Se guarda con la dosis para que el IOB
@@ -39,7 +41,7 @@ nonisolated final class DosisInsulina {
         zonaHoraria: String = TimeZone.current.identifier,
         unidades: Double,
         tipo: TipoInsulina,
-        motivo: MotivoDosis,
+        motivo: MotivoDosis? = nil,
         origen: Origen = .manual,
         duracionAccionH: Double = ConfiguracionDominio.duracionAccionPorOmisionH,
         escritaEnHealthKit: Bool = false,

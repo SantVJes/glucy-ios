@@ -19,6 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # La regla 7 —Glucy registra la insulina y nunca calcula ni sugiere una dosis— se
+      # comprueba leyendo el código, no ejecutándolo. Va primero porque tarda un segundo y
+      # porque, si falla, no tiene sentido compilar nada.
+      - name: Comprobar la regla 7 sobre el código
+        shell: bash
+        run: ./scripts/regla-7.sh
+
       # Mientras no exista el proyecto de Xcode el flujo se salta la compilación en lugar de
       # fallar. `compgen -G` se usa en vez de `ls` porque `ls a b` devuelve error si uno solo
       # de los dos patrones no encuentra nada, y eso hacía que la compilación se omitiera
