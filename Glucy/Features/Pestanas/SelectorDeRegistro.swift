@@ -21,6 +21,16 @@ enum TipoDeRegistro: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Su lugar en el selector, de izquierda a derecha. La pantalla se desliza hacia ese
+    /// mismo lado.
+    var posicion: Int {
+        Self.allCases.firstIndex(of: self) ?? 0
+    }
+
+    /// La píldora del selector y las pantallas de abajo se mueven con la misma curva: con
+    /// dos distintas se nota que una llega antes que la otra.
+    static let animacionDeCambio = Animation.snappy(duration: 0.3)
+
     var identificador: String {
         switch self {
         case .glucosa: "segmentoGlucosa"
@@ -55,6 +65,7 @@ struct SelectorDeRegistro: View {
         .overlay(
             Capsule().stroke(Tema.Colores.textoSecundario.opacity(0.25), lineWidth: 1)
         )
+        .sensoryFeedback(.selection, trigger: elegido)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Qué quieres registrar")
         .accessibilityIdentifier("selectorDeRegistro")
@@ -63,7 +74,7 @@ struct SelectorDeRegistro: View {
     private func segmento(_ tipo: TipoDeRegistro) -> some View {
         let estaElegido = tipo == elegido
         return Button {
-            withAnimation(reducirMovimiento ? nil : .snappy(duration: 0.25)) {
+            withAnimation(reducirMovimiento ? nil : TipoDeRegistro.animacionDeCambio) {
                 elegido = tipo
             }
         } label: {

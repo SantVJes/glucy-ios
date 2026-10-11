@@ -91,11 +91,14 @@ struct RegistroGlucosaView: View {
             // cruza la barra de navegación y VoiceOver seguiría leyendo la pantalla oculta.
             .accessibilityHidden(!visible)
         }
-        // El teclado numérico se abre solo al entrar: un campo que hay que tocar para
-        // empezar cuesta un gesto de más a las tres de la mañana. Con un valor ya escrito
-        // no: quien vuelve de Comida quiere ver lo que dejó, no un teclado encima.
-        .onChange(of: visible, initial: true) { _, seVe in
-            campoEnfocado = seVe && modelo.textoValor.isEmpty
+        // El teclado numérico se abre solo al entrar a la pestaña: un campo que hay que
+        // tocar para empezar cuesta un gesto de más a las tres de la mañana.
+        .onAppear { campoEnfocado = visible && modelo.textoValor.isEmpty }
+        // Al cambiar con el selector de arriba no: quien pasa de Comida a Glucosa quiere
+        // ver la pantalla, no media pantalla tapada por un teclado que no pidió. Y la que
+        // se oculta no se queda con él.
+        .onChange(of: visible) { _, seVe in
+            if !seVe { campoEnfocado = false }
         }
         .onChange(of: modelo.fallo) { _, nuevo in
             guard let nuevo else { return }

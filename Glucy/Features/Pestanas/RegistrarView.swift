@@ -18,7 +18,7 @@ struct RegistrarView: View {
                 ocr: dependencias.ocr,
                 visible: registro == .glucosa
             )
-            .soloSi(registro == .glucosa)
+            .pantalla(de: .glucosa, elegida: registro)
 
             RegistroComidaView(
                 registrar: dependencias.registrarComida,
@@ -26,7 +26,7 @@ struct RegistrarView: View {
                 ocr: dependencias.ocr,
                 visible: registro == .comida
             )
-            .soloSi(registro == .comida)
+            .pantalla(de: .comida, elegida: registro)
         }
         .safeAreaInset(edge: .top, spacing: 0) {
             SelectorDeRegistro(elegido: $registro)
@@ -40,8 +40,17 @@ struct RegistrarView: View {
 private extension View {
     /// Oculta sin desmontar: ni se ve ni se toca. Que VoiceOver no la lea lo resuelve cada
     /// pantalla con su `visible`.
-    func soloSi(_ visible: Bool) -> some View {
-        opacity(visible ? 1 : 0)
+    ///
+    /// La que no se ve espera corrida hacia su lado del selector, así que al elegirla entra
+    /// desde ahí y la otra se va hacia el suyo: la pantalla se mueve hacia donde se movió
+    /// la píldora. Es un desplazamiento corto y no de pantalla entera, que con el teclado y
+    /// la barra inferior encima se ve pesado. Quien anima es el selector, y con «reducir
+    /// movimiento» no anima nada.
+    func pantalla(de tipo: TipoDeRegistro, elegida: TipoDeRegistro) -> some View {
+        let visible = tipo == elegida
+        let lado: CGFloat = tipo.posicion < elegida.posicion ? -1 : 1
+        return opacity(visible ? 1 : 0)
+            .offset(x: visible ? 0 : lado * Tema.Espacio.unidad * 6)
             .allowsHitTesting(visible)
     }
 }
