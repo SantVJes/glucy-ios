@@ -44,10 +44,9 @@ struct RegistroGlucosaView: View {
                 .onTapGesture { campoEnfocado = false }
             }
             // La acción principal va anclada al borde inferior y **por encima del
-            // teclado**: el teclado numérico se abre solo al entrar, y si el botón se
-            // quedara dentro del scroll quedaría tapado justo por lo que la persona acaba
-            // de usar para escribir. Un dato y una acción por pantalla, y la acción
-            // siempre alcanzable.
+            // teclado**: si el botón se quedara dentro del scroll quedaría tapado justo
+            // por lo que la persona acaba de usar para escribir. Un dato y una acción por
+            // pantalla, y la acción siempre alcanzable.
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: Tema.Espacio.unidad * 2) {
                     if modelo.ultimaGuardada != nil { franjaGuardada }
@@ -91,12 +90,10 @@ struct RegistroGlucosaView: View {
             // cruza la barra de navegación y VoiceOver seguiría leyendo la pantalla oculta.
             .accessibilityHidden(!visible)
         }
-        // El teclado numérico se abre solo al entrar a la pestaña: un campo que hay que
-        // tocar para empezar cuesta un gesto de más a las tres de la mañana.
-        .onAppear { campoEnfocado = visible && modelo.textoValor.isEmpty }
-        // Al cambiar con el selector de arriba no: quien pasa de Comida a Glucosa quiere
-        // ver la pantalla, no media pantalla tapada por un teclado que no pidió. Y la que
-        // se oculta no se queda con él.
+        // El teclado no se abre solo, ni al entrar a la pestaña ni al volver de Comida:
+        // tapa media pantalla a quien solo venía a ver, y las otras vías de captura quedan
+        // debajo. Aparece cuando la persona toca el campo. Lo único que se hace aquí es
+        // soltarlo cuando la pantalla se oculta.
         .onChange(of: visible) { _, seVe in
             if !seVe { campoEnfocado = false }
         }
