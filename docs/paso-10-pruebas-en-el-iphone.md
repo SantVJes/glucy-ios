@@ -179,7 +179,7 @@ van las que sí servían.
 func testEnModoAvionTodoSeGuardaYLaColaLoCuenta() throws {
     try XCTSkipUnless(
         ProcessInfo.processInfo.environment["GLUCY_MODO_AVION"] == "1",
-        "Pon el modo avión y corre con GLUCY_MODO_AVION=1"
+        "Apaga el wifi y los datos móviles y corre con GLUCY_MODO_AVION=1"
     )
     …
 }
@@ -187,7 +187,7 @@ func testEnModoAvionTodoSeGuardaYLaColaLoCuenta() throws {
 
 | Variable | Qué tiene que estar puesto en el teléfono | Qué afirma |
 | --- | --- | --- |
-| `GLUCY_MODO_AVION=1` | modo avión encendido | casilla 14: registra glucosa, comida **manual** y dosis; las tres salen en Inicio o en Historial y `pendientesEnCola` cuenta tres. Casilla 15: `campoCodigoDeBarras` con un código válido lleva a `botonFotoDeEtiqueta` y de ahí a `campoCarbohidratos`, y **no** aparece ningún `falloComida` que hable de error de conexión |
+| `GLUCY_MODO_AVION=1` | **wifi y datos móviles apagados**, no el modo avión | casilla 14: registra glucosa, comida **manual** y dosis; las tres salen en Inicio o en Historial y `pendientesEnCola` cuenta tres. Casilla 15: `campoCodigoDeBarras` con un código válido lleva a `botonFotoDeEtiqueta` y de ahí a `campoCarbohidratos`, y **no** aparece ningún `falloComida` que hable de error de conexión |
 | `GLUCY_REDUCIR_MOVIMIENTO=1` | «Reducir movimiento» encendido | casilla 13: el `splash` desaparece entre dos fotogramas. Se afirma lo afirmable: que `splash` existe al arrancar y que a los 0.6 s ya no existe y las pestañas sí. Que no haya desvanecido es la captura |
 | `GLUCY_SALUD_REVOCADA=1` | perfil con sensor y el permiso de glucosa **negado** en la app Salud | casilla 19 (P-09): la app arranca, llega a las pestañas, `avisoSinSensor` está visible y no hay ningún diálogo de error |
 | `GLUCY_SENSOR_CALLADO=1` | perfil con sensor y la app del sensor cerrada hace más de 15 min | casilla 21: `textoSinDatosDelSensor` existe, su texto **no** contiene «conexión», y `botonReintentarSensor` se puede tocar |
@@ -201,9 +201,12 @@ lugar de marcar la casilla.
 
 Dos avisos de mecánica:
 
-- Con el **modo avión encendido** las pruebas siguen corriendo: `xcodebuild` habla con el
-  teléfono por el cable, no por red. Lo que no funciona con el avión es la base de Open Food
-  Facts, que es justo lo que se quiere comprobar.
+- **El modo avión corta también la conexión de Xcode con el teléfono**, y la prueba se muere a
+  media corrida. Este documento decía lo contrario —que `xcodebuild` hablaba por el cable— y
+  estaba mal; se comprobó el 13/10/2026 en el iPhone. Lo que se apaga son **el wifi y los
+  datos móviles**, que para la app es lo mismo: no hay red y la base de Open Food Facts no
+  responde, que es justo lo que se quiere comprobar. El modo avión de verdad queda como una
+  mirada a mano, una vez.
 - La base en memoria (`-GlucyBaseEnMemoria`) hace que el alta se recorra cada vez. Para
   `GLUCY_SALUD_CON_DATOS` eso es un problema, porque hace falta un perfil **con sensor**: esa
   prueba recorre el alta eligiendo «Con sensor» y aceptando la hoja de Salud. Hay que agregar
@@ -264,7 +267,8 @@ adaptan a la app, no al revés.
 4. **Bloque de capturas**: `CapturasUITests` dos veces, una con la letra normal y otra con
    `AccessibilityXXXL`.
 5. **Bloque por estado**: para cada una de las cinco variables del apartado 5, pedir el estado
-   en una línea («Enciende el modo avión y pulsa Enter; escribe `s` para saltarla»), y correr
+   en una línea («Apaga el wifi y los datos móviles y pulsa Enter; escribe `s` para
+   saltarla»), y correr
    solo esa prueba con su variable puesta. Saltarse una tiene que ser posible y quedar
    anotado.
 6. Sacar las capturas del `.xcresult` a una carpeta, y **hacer una copia en gris de cada una**
@@ -308,7 +312,7 @@ resumen.
 
 - **No mete XCUITest en la integración continua.** Un simulador en un runner compartido ya
   costó una tarde de corridas colgadas, y estas pruebas necesitan un teléfono y una persona
-  que encienda el modo avión. Esto se corre a mano antes de etiquetar, y la CI sigue siendo
+  que apague el wifi. Esto se corre a mano antes de etiquetar, y la CI sigue siendo
   `GlucyTests` en el simulador.
 - **No cambia ninguna vista** más allá de agregar los cuatro identificadores del apartado 7.
 - **No toca `Theme.swift`**, ni ningún `@Model`, ni ninguna etapa de migración.
@@ -414,7 +418,7 @@ https://claude.ai/code/session_01U7KrWasYkZhWRhqUnQcJ86
 > cambian de forma.
 >
 > Cuando termines, corre el script completo conmigo aquí para que yo vaya poniendo el modo
-> avión, el filtro de gris y lo demás cuando me lo pida. Después **actualiza el apartado 9 de
+> wifi, el filtro de gris y lo demás cuando me lo pida. Después **actualiza el apartado 9 de
 > `docs/paso-10-cierre.md`**: marca cada casilla que quedó comprobada diciendo **cómo** se
 > comprobó, y deja sin marcar las que no, con su motivo. Y sube la rama y **abre el pull
 > request contra `develop`** con el cuerpo del apartado 11
