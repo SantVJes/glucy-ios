@@ -61,6 +61,7 @@ struct AltaView: View {
             Text("Paso \(paso.rawValue) de \(PasoDeAlta.allCases.count)")
                 .font(Tema.Tipografia.etiqueta)
                 .foregroundStyle(Tema.Colores.textoSecundario)
+                .accessibilityIdentifier("pasoDelAlta")
             ProgressView(value: Double(paso.rawValue), total: Double(PasoDeAlta.allCases.count))
                 .tint(Tema.Colores.azulPrimario)
                 .accessibilityHidden(true)

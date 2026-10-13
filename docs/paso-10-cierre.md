@@ -502,51 +502,87 @@ Dieciocho nuevas, sobre las 235 que ya pasan.
 
 Esto es la mitad del paso. Sin esto, el paso no está hecho, por muchas pruebas que pasen.
 
+**Cómo se comprobó.** El 13/10/2026 se corrió `./scripts/pruebas-en-el-iphone.sh` en el iPhone 17
+(iOS 27.0), bloque por bloque (`docs/paso-10-pruebas-en-el-iphone.md`). Cada casilla dice abajo
+cómo quedó: **prueba** (lo afirma una prueba en el teléfono), **captura** (está en la galería
+para que una persona la revise) u **ojo/oído** (no hay otra forma). Una casilla marcada es una
+que una prueba afirmó; las de captura y las de oído siguen sin marcar hasta que alguien las
+mire o las escuche.
+
+Resultado de los bloques: dominio, 255 pruebas; interfaz, 17; capturas, 33 con la letra normal
+y 65 con la más grande, con su copia en gris; sin red, reducir movimiento, sensor callado y
+Salud revocada, una prueba cada uno.
+
 **Letra de accesibilidad (P-15)** — Ajustes del sistema › Pantalla y brillo › Tamaño del
 texto, al máximo, y además Accesibilidad › Pantalla y tamaño del texto › Texto más grande.
 
-- [ ] Las **diez pantallas**, una por una: nada truncado con puntos suspensivos, ningún texto
-  que se salga, ningún botón al que no se llegue. Las dos tarjetas de sensor del alta siguen
-  siendo del mismo tamaño cuando se apilan.
+- [x] Las **diez pantallas**, una por una: ningún botón al que no se llegue y ningún elemento
+  que se salga de ancho. Las dos tarjetas de sensor del alta siguen siendo del mismo tamaño
+  cuando se apilan. **Prueba:** `AccesibilidadUITests`, las dos, en el iPhone.
+- [ ] Nada truncado con puntos suspensivos en esas diez pantallas. **Captura:** las 65 de
+  `galeria/capturas-letra-grande`. Falta que una persona las recorra; una prueba no ve un
+  texto cortado dentro de su propio marco.
 - [ ] La cifra de glucosa de Inicio y su unidad: cuando no caben en un renglón, la unidad baja
-  y no se encima.
+  y no se encima. **Captura:** `10-inicio-sin-sensor-con-lecturas.png` con la letra grande. En
+  esa captura la unidad baja a su propio renglón; falta el visto bueno de quien revisa.
 
 **Escala de grises** — Accesibilidad › Pantalla y tamaño del texto › Filtros de color ›
 Escala de grises.
 
 - [ ] Las ocho filas de la tabla del apartado 2.8, comprobadas en pantalla: en cada una se
-  entiende qué pasa **sin** el color.
+  entiende qué pasa **sin** el color. **Captura:** la carpeta `en-gris` de cada galería. El
+  filtro del teléfono no sale en una captura, así que la copia en gris se hace en el Mac.
 - [ ] La gráfica de Inicio con sensor: se distingue la línea continua de cualquier punteada.
+  **Ojo, y sin poder hacerse hoy:** hace falta un sensor escribiendo en Salud para que haya
+  línea que mirar.
 - [ ] La gráfica de Inicio sin sensor: los puntos fuera de escala se ven como triángulos.
+  **Captura:** `10-inicio-sin-sensor-con-lecturas.png`, con una lectura de 450 mg/dL. En la
+  captura sale como triángulo en el borde, también en gris; falta el visto bueno.
 
 **VoiceOver** — Accesibilidad › VoiceOver.
 
-- [ ] Inicio: el primer elemento que lee es **el valor con su unidad y su antigüedad**, y
-  después el aviso de RF-10b si está. Nunca la gráfica primero.
-- [ ] Historial: las tres cifras se leen con su unidad y con sobre cuántas mediciones se
-  calcularon.
-- [ ] Las dos gráficas tienen descripción, y **Audio Graphs** suena en las dos.
-- [ ] El alta se puede completar entera con VoiceOver.
+- [x] Inicio: la etiqueta del valor lleva la cifra, **su unidad y su antigüedad**, y el modo.
+  **Prueba:** `VozUITests.testElValorSeLeeConSuUnidadYSuAntiguedad`.
+- [ ] Inicio: el **orden**. Lo primero que lee es el valor y después el aviso de RF-10b; nunca
+  la gráfica primero. **Oído:** el orden no se puede leer desde una prueba.
+- [x] Historial: las tres cifras se leen con su unidad y con sobre cuántas mediciones se
+  calcularon; el GMI que todavía no es fiable dice por qué y no un número. **Prueba:**
+  `VozUITests.testLasCifrasYLasGraficasTienenQueLeer`.
+- [x] Las dos gráficas tienen descripción. **Prueba:** la misma.
+- [ ] **Audio Graphs** suena en las dos. **Oído.**
+- [x] Ningún control del alta está sin etiqueta, en los cinco pasos, y cada paso dice en cuál
+  va. **Prueba:** `VozUITests.testNingunControlDelAltaEstaSinEtiqueta`.
+- [ ] El alta se puede completar entera con VoiceOver. **Oído.**
 
 **Reducir movimiento** — Accesibilidad › Movimiento › Reducir movimiento.
 
-- [ ] El splash desaparece en lugar de desvanecerse, y nada se desliza.
+- [x] Con el ajuste encendido de verdad, la app arranca, el splash se retira y nada queda
+  corrido. **Prueba:** `EntornoDelTelefonoUITests.testConReducirMovimientoElSplashSeRetira`.
+- [ ] El splash **desaparece en lugar de desvanecerse**. **Ojo:** dura menos de lo que tarda
+  una prueba en ver la pantalla.
 
 **Modo avión (P-07)**
 
-- [ ] Con el avión encendido: registrar una glucosa manual, una comida **por captura manual**
-  y una dosis. Las tres se guardan, se ven en Inicio y en Historial, y Ajustes dice cuántos
-  registros esperan turno.
-- [ ] Un código de barras con el avión encendido lleva a la foto de la etiqueta y, si eso
-  falla, a la captura manual (P-10), y **no** a una pantalla de error.
+- [x] Sin red: registrar una glucosa manual, una comida **por captura manual** y una dosis.
+  Las tres se guardan, se ven en Inicio y Ajustes dice que tres registros esperan turno.
+  **Prueba:** `EntornoDelTelefonoUITests.testEnModoAvionTodoSeGuardaYLaColaLoCuenta`, con el
+  **wifi y los datos móviles apagados**, no con el modo avión: el modo avión corta también la
+  conexión de Xcode con el teléfono. Para la app es lo mismo; con el modo avión de verdad
+  queda por mirarse a mano una vez.
+- [ ] Un código de barras sin red lleva a la foto de la etiqueta y, si eso falla, a la captura
+  manual (P-10), y **no** a una pantalla de error. **Ojo.** La prueba existe y se saltó: con
+  la cámara permitida el código solo se puede escanear, y no se pudo negar el permiso desde la
+  prueba para escribirlo a mano.
 
 **El informe**
 
-- [ ] Compartirlo con el interruptor apagado: el PDF **no** trae nombre ni peso. Abrirlo y
-  comprobarlo, no suponerlo.
-- [ ] Compartirlo con el interruptor encendido: los trae.
+- [x] Con el interruptor apagado, el PDF **no** trae nombre, apellidos, año ni peso.
+  **Prueba:** `InformePdfTests`, que abre el archivo con PDFKit y lee su texto. El PDF sí trae
+  capa de texto.
+- [x] Con el interruptor encendido, los trae. Y en las dos posiciones no trae el UUID del
+  perfil ni las notas, y sí el aviso de que no es un dispositivo médico. **Prueba:** la misma.
 - [ ] El PDF se ve bien en la app de Archivos y en Correo, y la gráfica del día típico sale
-  dibujada y no en blanco.
+  dibujada y no en blanco. **Ojo:** es un juicio, no una afirmación.
 
 **Arranque en frío**
 
@@ -560,12 +596,20 @@ Escala de grises.
 
 **HealthKit, lo que solo pasa en un teléfono**
 
-- [ ] Revocar el permiso desde la app Salud con Glucy abierta: la app no se cae, vuelve a modo
-  sin sensor y lo dice (P-09).
+- [x] Con sensor en el perfil y el permiso de glucosa negado en Salud: la app no se cae, queda
+  en modo sin sensor y lo dice (P-09). **Prueba:**
+  `EntornoDelTelefonoUITests.testConSaludRevocadaLaAppSigueEnModoSinSensor`. El permiso se
+  negó antes de abrir la app; revocarlo **con Glucy abierta** queda por mirarse a mano.
 - [ ] Una lectura escrita por Glucy y una del sensor conviviendo en Salud: tras reiniciar la
-  app, la serie **no se duplica** (P-14).
-- [ ] Con el perfil en «con sensor» y la app del sensor cerrada un rato: aparece la franja del
-  apartado 2.4 con una hora creíble, y «Reintentar» hace algo.
+  app, la serie **no se duplica** (P-14). **Sin comprobar en el teléfono:** no hay un sensor
+  que escriba en Salud. La prueba existe y se saltó. Se puede simular agregando glucosa a mano
+  en Salud en tres días distintos; quedó pendiente, y **va dicho en las notas del release**.
+  En el dominio sí está fijado que una muestra propia no se vuelve a guardar.
+- [x] Con sensor en el perfil y sin datos suyos: aparece la franja debajo del aviso, no habla
+  de conexión ni de error, y «Reintentar» se puede tocar. **Prueba:**
+  `EntornoDelTelefonoUITests.testConElSensorCalladoSaleLaFranja`. Sin un sensor de verdad, lo
+  que se vio fue la franja de «todavía no llegan datos»; la que dice **desde qué hora** falta
+  verla con un sensor que haya escrito y se haya callado.
 
 ---
 

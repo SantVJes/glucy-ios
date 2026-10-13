@@ -131,6 +131,7 @@ struct InformeView: View {
                 RoundedRectangle(cornerRadius: Tema.Radio.campo)
                     .stroke(Tema.Colores.textoSecundario, lineWidth: 1)
             )
+            .accessibilityIdentifier("avisoDelInforme")
     }
 
     // MARK: - Piezas
