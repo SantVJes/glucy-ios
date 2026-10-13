@@ -76,6 +76,25 @@ final class ContenedorDependencias {
         CalcularInsulinaActiva(dosis: dosis)
     }
 
+    var calcularCarbohidratosActivos: CalcularCarbohidratosActivos {
+        CalcularCarbohidratosActivos(comidas: comidas)
+    }
+
+    /// Todo lo que dibuja la pantalla de inicio, ya resuelto.
+    var consultarInicio: ConsultarInicio {
+        ConsultarInicio(
+            lecturas: lecturas,
+            modo: ConsultarModo(lecturas: lecturas),
+            carbohidratosActivos: calcularCarbohidratosActivos,
+            insulinaActiva: calcularInsulinaActiva
+        )
+    }
+
+    /// Los indicadores del periodo y el día típico (RF-16).
+    var consultarHistorial: ConsultarHistorial {
+        ConsultarHistorial(lecturas: lecturas, perfil: perfil)
+    }
+
     var ajustesDeInsulina: ConsultarAjustesDeInsulina {
         ConsultarAjustesDeInsulina(perfil: perfil)
     }
