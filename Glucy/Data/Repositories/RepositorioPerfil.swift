@@ -12,4 +12,7 @@ nonisolated protocol RepositorioPerfil: Sendable {
     func guardar(_ dato: PerfilDato) async throws
 
     func existe() async throws -> Bool
+
+    /// Borra el perfil. Solo lo llama el borrado de la cuenta.
+    func eliminarTodo() async throws
 }

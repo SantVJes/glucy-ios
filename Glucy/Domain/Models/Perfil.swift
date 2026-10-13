@@ -39,6 +39,32 @@ nonisolated final class Perfil {
     /// principal es quien sí la usa.
     var registraInsulina: Bool = true
 
+    /// Cuándo la persona aceptó, en UTC. `nil` significa **que no ha aceptado**, y mientras
+    /// sea `nil` la app no entra: la LFPDPPP exige consentimiento expreso para datos de salud
+    /// y un booleano sin fecha no sirve para demostrar cuándo se dio.
+    var consentimientoTsUtc: Date?
+
+    /// En qué unidad quiere ver sus cifras. Adentro **todo se guarda en mg/dL**; esto solo
+    /// cambia cómo se muestran y cómo se interpreta lo que teclea.
+    ///
+    /// Es opcional en la tabla, y `nil` quiere decir mg/dL: la etapa ligera no rellena un
+    /// enum en las filas que ya existían, y al leer un perfil migrado la app se caía. Fuera
+    /// de `Data/` nadie ve el opcional: `PerfilDato` siempre trae una unidad.
+    var unidadPreferida: UnidadGlucosa?
+
+    /// El nombre comercial de su insulina rápida, tal como ella lo escriba. Es texto libre a
+    /// propósito: una lista cerrada se queda corta en cuanto cambie de marca o de país.
+    /// `nil` en quien no se aplica insulina.
+    var tipoInsulinaRapida: String?
+
+    /// Nace en `false`: nada sale del teléfono hasta que la persona lo decida (F-1). En la
+    /// fase 1 no hay servidor todavía, así que encenderlo solo llena la cola.
+    var sincronizacionActiva: Bool = false
+
+    /// Si la app pide Face ID o Touch ID al abrirse. Nace **apagado**: una app de salud que
+    /// se bloquea sola el primer día, sin que nadie lo pidiera, se desinstala.
+    var bloqueoBiometrico: Bool = false
+
     var creadoTsUtc: Date
     var actualizadoTsUtc: Date
     /// Identificador de `TimeZone`, por ejemplo `America/Mexico_City` (regla 5).
@@ -59,6 +85,11 @@ nonisolated final class Perfil {
         duracionAccionInsulinaH: Double = ConfiguracionDominio.duracionAccionPorOmisionH,
         usaSensor: Bool = false,
         registraInsulina: Bool = true,
+        consentimientoTsUtc: Date? = nil,
+        unidadPreferida: UnidadGlucosa = .mgDl,
+        tipoInsulinaRapida: String? = nil,
+        sincronizacionActiva: Bool = false,
+        bloqueoBiometrico: Bool = false,
         creadoTsUtc: Date = Date(),
         actualizadoTsUtc: Date = Date(),
         zonaHoraria: String = TimeZone.current.identifier,
@@ -76,6 +107,11 @@ nonisolated final class Perfil {
         self.duracionAccionInsulinaH = duracionAccionInsulinaH
         self.usaSensor = usaSensor
         self.registraInsulina = registraInsulina
+        self.consentimientoTsUtc = consentimientoTsUtc
+        self.unidadPreferida = unidadPreferida
+        self.tipoInsulinaRapida = tipoInsulinaRapida
+        self.sincronizacionActiva = sincronizacionActiva
+        self.bloqueoBiometrico = bloqueoBiometrico
         self.creadoTsUtc = creadoTsUtc
         self.actualizadoTsUtc = actualizadoTsUtc
         self.zonaHoraria = zonaHoraria
@@ -100,6 +136,11 @@ extension Perfil {
             duracionAccionInsulinaH: dato.duracionAccionInsulinaH,
             usaSensor: dato.usaSensor,
             registraInsulina: dato.registraInsulina,
+            consentimientoTsUtc: dato.consentimientoTsUtc,
+            unidadPreferida: dato.unidadPreferida,
+            tipoInsulinaRapida: dato.tipoInsulinaRapida,
+            sincronizacionActiva: dato.sincronizacionActiva,
+            bloqueoBiometrico: dato.bloqueoBiometrico,
             creadoTsUtc: dato.creadoTsUtc,
             actualizadoTsUtc: dato.actualizadoTsUtc,
             zonaHoraria: dato.zonaHoraria,
@@ -121,6 +162,11 @@ extension Perfil {
             duracionAccionInsulinaH: duracionAccionInsulinaH,
             usaSensor: usaSensor,
             registraInsulina: registraInsulina,
+            consentimientoTsUtc: consentimientoTsUtc,
+            unidadPreferida: unidadPreferida ?? .mgDl,
+            tipoInsulinaRapida: tipoInsulinaRapida,
+            sincronizacionActiva: sincronizacionActiva,
+            bloqueoBiometrico: bloqueoBiometrico,
             creadoTsUtc: creadoTsUtc,
             actualizadoTsUtc: actualizadoTsUtc,
             zonaHoraria: zonaHoraria,

@@ -23,4 +23,7 @@ nonisolated protocol RepositorioDosis: Sendable {
     func ultima() async throws -> DosisInsulinaDato?
 
     func marcarEscritaEnHealthKit(uuid: UUID) async throws
+
+    /// Borra todas las filas. Solo lo llama el borrado de la cuenta.
+    func eliminarTodo() async throws
 }

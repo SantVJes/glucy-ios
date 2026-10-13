@@ -20,4 +20,8 @@ actor RepositorioPerfilFalso: RepositorioPerfil {
     func existe() async throws -> Bool {
         guardado != nil
     }
+
+    func eliminarTodo() async throws {
+        guardado = nil
+    }
 }

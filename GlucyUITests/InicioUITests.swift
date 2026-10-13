@@ -10,8 +10,7 @@ final class InicioUITests: XCTestCase {
     /// P-04, RF-10b: el aviso está y no hay gesto que lo quite. Es la única manera de probar
     /// «no descartable»: que no exista con qué descartarlo.
     func testElAvisoSinSensorNoSePuedeCerrar() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = XCUIApplication.yaDentro()
 
         let aviso = app.descendants(matching: .any)["avisoSinSensor"]
         XCTAssertTrue(aviso.waitForExistence(timeout: 10), "No apareció el aviso del modo sin sensor")
@@ -36,10 +35,9 @@ final class InicioUITests: XCTestCase {
         XCTAssertTrue(aviso.waitForExistence(timeout: 5), "El aviso no volvió con la pestaña")
     }
 
-    /// Inicio e Historial ya no enseñan el estado vacío del paso 3; Ajustes todavía sí.
+    /// Las cuatro pestañas tienen ya su pantalla.
     func testLasPestanasYaTienenPantalla() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = XCUIApplication.yaDentro()
 
         XCTAssertTrue(
             app.descendants(matching: .any)["avisoSinSensor"].waitForExistence(timeout: 10),
@@ -53,8 +51,8 @@ final class InicioUITests: XCTestCase {
 
         app.tabBars.buttons["Ajustes"].tap()
         XCTAssertTrue(
-            app.staticTexts["Aquí van a estar tus umbrales y tu perfil."].waitForExistence(timeout: 5),
-            "Ajustes dejó de enseñar su estado pendiente"
+            app.staticTexts["glucyNoCalculaDosis"].waitForExistence(timeout: 5),
+            "Ajustes no enseña su pantalla"
         )
     }
 }

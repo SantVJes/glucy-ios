@@ -24,7 +24,7 @@ nonisolated enum SeleccionDeCarbohidratos {
     /// 2. Se descarta el que además nombre los azúcares o la fibra.
     /// 3. Se toma el número de ese renglón; y si no trae —las tablas en columnas ponen el
     ///    nombre a la izquierda y la cifra a la derecha, en observaciones distintas— el del
-    ///    renglón que esté a su misma altura y a su derecha.
+    ///    renglón que esté en su mismo renglón y a su derecha.
     /// 4. Si no hay nada, `nil`, y eso es la captura manual (RF-13).
     ///
     /// **La confianza no participa** (D-11): lo que salga de aquí se enseña y se confirma,
@@ -51,7 +51,7 @@ nonisolated enum SeleccionDeCarbohidratos {
         return nil
     }
 
-    /// El número de la celda más cercana que esté a la misma altura y a la derecha.
+    /// El número de la celda más cercana que esté en el mismo renglón y a la derecha.
     private static func numeroALaDerecha(de renglon: TextoLeido, entre renglones: [TextoLeido]) -> Double? {
         renglones
             .filter { otro in
@@ -66,7 +66,7 @@ nonisolated enum SeleccionDeCarbohidratos {
             .first
     }
 
-    /// Se consideran del mismo renglón cuando comparten más de la mitad de la altura de la
+    /// Se consideran del mismo renglón cuando comparten más de la mitad del alto de la
     /// caja más baja. Con menos que eso, una celda del renglón de arriba o del de abajo
     /// —los azúcares— pasaría por vecina.
     private static func seSolapanEnVertical(_ una: CGRect, _ otra: CGRect) -> Bool {

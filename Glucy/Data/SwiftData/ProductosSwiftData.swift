@@ -34,6 +34,11 @@ actor ProductosSwiftData: RepositorioProductos {
         try modelContext.save()
     }
 
+    func eliminarTodo() throws {
+        try modelContext.delete(model: ProductoCache.self)
+        try modelContext.save()
+    }
+
     private func fila(_ codigo: String) throws -> ProductoCache? {
         var descriptor = FetchDescriptor<ProductoCache>(
             predicate: #Predicate { $0.codigoBarras == codigo }

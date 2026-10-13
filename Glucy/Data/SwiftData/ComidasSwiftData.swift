@@ -77,4 +77,9 @@ actor ComidasSwiftData: RepositorioComidas {
         fila.escritaEnHealthKit = true
         try modelContext.save()
     }
+
+    func eliminarTodo() throws {
+        try modelContext.delete(model: Comida.self)
+        try modelContext.save()
+    }
 }

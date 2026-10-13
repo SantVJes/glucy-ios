@@ -9,8 +9,7 @@ final class RegistroInsulinaUITests: XCTestCase {
     }
 
     private func abrirInsulina() -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launch()
+        let app = XCUIApplication.yaDentro()
 
         let registrar = app.tabBars.buttons["Registrar"]
         XCTAssertTrue(registrar.waitForExistence(timeout: 10), "No apareció la pestaña Registrar")

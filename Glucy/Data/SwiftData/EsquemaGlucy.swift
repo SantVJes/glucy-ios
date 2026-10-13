@@ -54,6 +54,19 @@ nonisolated enum EsquemaGlucyV4: VersionedSchema {
     static var versionIdentifier: Schema.Version { Schema.Version(4, 0, 0) }
 
     static var models: [any PersistentModel.Type] {
+        [EsquemaGlucyV4.Perfil.self, LecturaGlucosa.self, Comida.self, DosisInsulina.self,
+         EventoContexto.self, Alerta.self, PrediccionCache.self, ProductoCache.self,
+         ColaSincronizacion.self, ColaXapi.self]
+    }
+}
+
+/// Las mismas diez, con los cinco campos que el formulario F-1 pide y el perfil no tenía: el
+/// consentimiento con su fecha, la unidad preferida, el nombre de la insulina rápida, el
+/// interruptor de sincronización y el del candado.
+nonisolated enum EsquemaGlucyV5: VersionedSchema {
+    static var versionIdentifier: Schema.Version { Schema.Version(5, 0, 0) }
+
+    static var models: [any PersistentModel.Type] {
         [Perfil.self, LecturaGlucosa.self, Comida.self, DosisInsulina.self,
          EventoContexto.self, Alerta.self, PrediccionCache.self, ProductoCache.self,
          ColaSincronizacion.self, ColaXapi.self]
@@ -68,15 +81,17 @@ nonisolated enum EsquemaGlucyV4: VersionedSchema {
 /// semanas de datos de una persona real, es un desastre que no se puede deshacer.
 nonisolated enum PlanMigracionGlucy: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [EsquemaGlucyV1.self, EsquemaGlucyV2.self, EsquemaGlucyV3.self, EsquemaGlucyV4.self]
+        [EsquemaGlucyV1.self, EsquemaGlucyV2.self, EsquemaGlucyV3.self, EsquemaGlucyV4.self,
+         EsquemaGlucyV5.self]
     }
 
-    /// Ligeras las tres: los campos nuevos son opcionales o traen valor por omisión, y un
+    /// Ligeras las cuatro: los campos nuevos son opcionales o traen valor por omisión, y un
     /// campo que pasa a opcional no pierde lo que tenía, así que SwiftData puede migrar sin
     /// que nadie escriba cómo rellenar las filas existentes.
     static var stages: [MigrationStage] {
         [.lightweight(fromVersion: EsquemaGlucyV1.self, toVersion: EsquemaGlucyV2.self),
          .lightweight(fromVersion: EsquemaGlucyV2.self, toVersion: EsquemaGlucyV3.self),
-         .lightweight(fromVersion: EsquemaGlucyV3.self, toVersion: EsquemaGlucyV4.self)]
+         .lightweight(fromVersion: EsquemaGlucyV3.self, toVersion: EsquemaGlucyV4.self),
+         .lightweight(fromVersion: EsquemaGlucyV4.self, toVersion: EsquemaGlucyV5.self)]
     }
 }

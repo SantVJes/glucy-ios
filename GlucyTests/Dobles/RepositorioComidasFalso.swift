@@ -45,4 +45,8 @@ actor RepositorioComidasFalso: RepositorioComidas {
     func marcarEscritaEnHealthKit(uuid: UUID) async throws {
         marcadasEnHealthKit.append(uuid)
     }
+
+    func eliminarTodo() async throws {
+        guardadas.removeAll()
+    }
 }

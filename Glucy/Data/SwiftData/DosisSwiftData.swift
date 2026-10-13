@@ -72,4 +72,9 @@ actor DosisSwiftData: RepositorioDosis {
         fila.escritaEnHealthKit = true
         try modelContext.save()
     }
+
+    func eliminarTodo() throws {
+        try modelContext.delete(model: DosisInsulina.self)
+        try modelContext.save()
+    }
 }

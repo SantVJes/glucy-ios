@@ -45,7 +45,29 @@ actor HealthKitFalso: ServicioHealthKit {
         falloDeEscritura = error
     }
 
-    func pedirPermisos() async throws {}
+    /// Cuántas veces se pidió permiso. El alta «sin sensor» no lo pide ni una.
+    private(set) var vecesPedidoPermiso = 0
+    private var falloDePermiso: (any Error)?
+
+    func fallarPermisos(con error: any Error) {
+        falloDePermiso = error
+    }
+
+    func pedirPermisos() async throws {
+        vecesPedidoPermiso += 1
+        if let falloDePermiso { throw falloDePermiso }
+    }
+
+    /// Cuántas veces se pidió borrar de Salud todo lo que escribió Glucy.
+    private(set) var vecesBorradoLoPropio = 0
+
+    func eliminarTodoLoPropio() async throws {
+        vecesBorradoLoPropio += 1
+        if let falloDeEscritura { throw falloDeEscritura }
+        escritas.removeAll()
+        carbohidratosEnSalud.removeAll()
+        insulinaEnSalud.removeAll()
+    }
 
     func muestrasNuevas(desde ancla: Data?) async throws -> LoteMuestras {
         anclasRecibidas.append(ancla)

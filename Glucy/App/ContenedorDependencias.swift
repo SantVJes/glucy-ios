@@ -23,14 +23,20 @@ final class ContenedorDependencias {
     /// que existe Open Food Facts.
     let servicioProductos: any ServicioProductos
     let productos: any RepositorioProductos
+    private let ancla: AnclaHealthKit
+    /// La biometría, detrás de su protocolo. Nadie fuera de `Data/Seguridad/` sabe que
+    /// existe LocalAuthentication.
+    let candado: any Candado
 
     init(
         contenedor: ModelContainer,
         salud: any ServicioHealthKit = HealthKitReal(),
         ancla: AnclaHealthKit = AnclaHealthKit(),
         ocr: any ServicioOCR = VisionOCR(),
-        servicioProductos: any ServicioProductos = OpenFoodFactsHTTP()
+        servicioProductos: any ServicioProductos = OpenFoodFactsHTTP(),
+        candado: any Candado = CandadoBiometrico()
     ) {
+        self.candado = candado
         perfil = PerfilSwiftData(modelContainer: contenedor)
         let lecturas = LecturasSwiftData(modelContainer: contenedor)
         self.lecturas = lecturas
@@ -41,8 +47,9 @@ final class ContenedorDependencias {
         self.ocr = ocr
         self.servicioProductos = servicioProductos
         productos = ProductosSwiftData(modelContainer: contenedor)
+        self.ancla = ancla
         sincronizarSensor = SincronizarLecturasDelSensor(
-            servicio: salud, lecturas: lecturas, ancla: ancla
+            servicio: salud, lecturas: lecturas, ancla: ancla, perfil: perfil
         )
     }
 
@@ -97,6 +104,35 @@ final class ContenedorDependencias {
 
     var ajustesDeInsulina: ConsultarAjustesDeInsulina {
         ConsultarAjustesDeInsulina(perfil: perfil)
+    }
+
+    /// La única puerta que escribe el consentimiento.
+    var completarAlta: CompletarAlta {
+        CompletarAlta(perfil: perfil, salud: salud)
+    }
+
+    var guardarAjustes: GuardarAjustes {
+        GuardarAjustes(perfil: perfil)
+    }
+
+    var consultarEntrada: ConsultarEntrada {
+        ConsultarEntrada(perfil: perfil)
+    }
+
+    var consultarColaPendiente: ConsultarColaPendiente {
+        ConsultarColaPendiente(cola: cola)
+    }
+
+    var consultarCuantoHay: ConsultarCuantoHay {
+        ConsultarCuantoHay(lecturas: lecturas, comidas: comidas, dosis: dosis)
+    }
+
+    /// El borrado de la cuenta: lo local y lo que Glucy escribió en Salud.
+    var borrarTodo: BorrarTodo {
+        BorrarTodo(
+            perfil: perfil, lecturas: lecturas, comidas: comidas, dosis: dosis, cola: cola,
+            productos: productos, salud: salud, ancla: ancla
+        )
     }
 
     /// El producto de un código de barras: primero la caché, después la red.

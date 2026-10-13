@@ -92,6 +92,11 @@ nonisolated protocol ServicioHealthKit: Sendable {
     /// Borra de Salud la dosis que Glucy escribió con ese UUID, y solo esa.
     func eliminarInsulina(uuid: UUID) async throws
 
+    /// Borra de Salud **solo** las muestras que escribió Glucy, distinguidas por
+    /// `HKSource.default()`. Lo del sensor comercial no se toca: no es nuestro, y borrarlo
+    /// dejaría a la persona sin su serie en Salud por haber borrado su cuenta de Glucy.
+    func eliminarTodoLoPropio() async throws
+
     /// La unidad que la persona eligió en Salud. Solo para avisarle si no es mg/dL.
     func unidadPreferida() async throws -> UnidadGlucosa
 }

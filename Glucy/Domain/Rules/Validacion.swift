@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Un rechazo nunca es un descarte silencioso: lleva su motivo para poder decirlo en
 /// pantalla y para que el dato quede en cuarentena en lugar de desaparecer.
-nonisolated enum Rechazo: Equatable, Sendable {
+nonisolated enum Rechazo: Error, Equatable, Sendable {
     case fueraDeRango(valor: Double)
     case marcaDeTiempoFutura
     case ocrSinConfirmar
@@ -13,6 +13,18 @@ nonisolated enum Rechazo: Equatable, Sendable {
     case porcionesNoPositivas
     case unidadesNoPositivas
     case unidadesFueraDeResolucion(valor: Double)
+    /// Por debajo de `edadMinima` el proyecto no tiene consentimiento ni validación que lo
+    /// respalde.
+    case edadInsuficiente
+    /// Sin consentimiento expreso no se guarda ningún dato de salud (LFPDPPP).
+    case sinConsentimiento
+    case perfilNoValido(CampoDePerfil)
+}
+
+/// A qué campo del perfil hay que llevar a la persona para que corrija.
+nonisolated enum CampoDePerfil: Equatable, Sendable {
+    case nombre, apellidos, anioNacimiento, peso, umbralHipo, umbralHiper
+    case tipoInsulina, duracionAccion, absorcion
 }
 
 /// Validación de lo que entra al teléfono. El backend la repite en la fase 2: un servidor
@@ -100,6 +112,54 @@ nonisolated enum Validacion {
         // contaría entera como insulina activa antes de haberse aplicado.
         if tsUtc > ahora {
             return .marcaDeTiempoFutura
+        }
+        return nil
+    }
+
+    /// Devuelve `nil` si el perfil se puede guardar, o el primer motivo del rechazo.
+    ///
+    /// Es la misma revisión en el alta y en Ajustes: lo que no se puede dar de alta tampoco
+    /// se puede dejar así después (formulario F-1).
+    static func validarPerfil(
+        nombre: String,
+        apellidos: String,
+        anioNacimiento: Int,
+        pesoKg: Double?,
+        umbralHipo: Double,
+        umbralHiper: Double,
+        tipoInsulinaRapida: String?,
+        duracionAccionH: Double,
+        tiempoAbsorcionMin: Int,
+        ahora: Date
+    ) -> Rechazo? {
+        guard ReglasDePerfil.esNombreValido(nombre, maximo: ConfiguracionDominio.nombreMaximo) else {
+            return .perfilNoValido(.nombre)
+        }
+        guard ReglasDePerfil.esNombreValido(apellidos, maximo: ConfiguracionDominio.apellidosMaximo) else {
+            return .perfilNoValido(.apellidos)
+        }
+        if let rechazo = ReglasDePerfil.validarAnio(anioNacimiento, ahora: ahora) {
+            return rechazo
+        }
+        if let pesoKg,
+           !(ConfiguracionDominio.pesoMinimoKg...ConfiguracionDominio.pesoMaximoKg).contains(pesoKg) {
+            return .perfilNoValido(.peso)
+        }
+        guard ConfiguracionDominio.umbralHipoConfigurable.contains(umbralHipo) else {
+            return .perfilNoValido(.umbralHipo)
+        }
+        guard ConfiguracionDominio.umbralHiperConfigurable.contains(umbralHiper) else {
+            return .perfilNoValido(.umbralHiper)
+        }
+        if let tipoInsulinaRapida,
+           tipoInsulinaRapida.count > ConfiguracionDominio.tipoInsulinaMaximo {
+            return .perfilNoValido(.tipoInsulina)
+        }
+        guard ConfiguracionDominio.duracionAccionConfigurableH.contains(duracionAccionH) else {
+            return .perfilNoValido(.duracionAccion)
+        }
+        guard ConfiguracionDominio.absorcionConfigurableMin.contains(tiempoAbsorcionMin) else {
+            return .perfilNoValido(.absorcion)
         }
         return nil
     }

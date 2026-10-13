@@ -15,4 +15,13 @@ nonisolated enum UnidadGlucosa: String, Codable, CaseIterable, Sendable {
         case .mmolL: valor * ConfiguracionDominio.factorMmolLAMgDl
         }
     }
+
+    /// Un valor guardado, en la unidad en la que la persona lo quiere ver. Solo para
+    /// enseñarlo: lo que se guarda sigue siendo mg/dL.
+    func desdeMgDl(_ mgDl: Double) -> Double {
+        switch self {
+        case .mgDl: mgDl
+        case .mmolL: mgDl / ConfiguracionDominio.factorMmolLAMgDl
+        }
+    }
 }

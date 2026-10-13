@@ -61,7 +61,7 @@ struct ConsultarModoTests {
     func sinSensorNoAlerta() async throws {
         let salud = HealthKitFalso()
         let ancla = AnclaHealthKit(dominio: "glucy.pruebas.\(UUID().uuidString)")
-        defer { UserDefaults.standard.removePersistentDomain(forName: ancla.dominio!) }
+        defer { ancla.borrar() }
 
         let resultado = await SincronizarLecturasDelSensor(
             servicio: salud, lecturas: RepositorioLecturasFalso(), ancla: ancla
