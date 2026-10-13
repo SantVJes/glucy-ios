@@ -49,7 +49,9 @@ struct RegistroInsulinaView: View {
         // Fijo arriba del formulario, fuera del desplazamiento: no se va al bajar y no
         // tiene forma de cerrarse.
         .safeAreaInset(edge: .top, spacing: 0) {
-            if !tamanoLetra.isAccessibilitySize {
+            // Solo mientras la pantalla se ve: lo que va en un borde de la zona segura no
+            // hereda el `accessibilityHidden` de la pantalla.
+            if visible, !tamanoLetra.isAccessibilitySize {
                 avisoDeLaFrontera
                     .padding(.horizontal, Tema.Espacio.margenLateral)
                     .padding(.vertical, Tema.Espacio.unidad * 2)
@@ -57,6 +59,7 @@ struct RegistroInsulinaView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
+            if visible {
             VStack(spacing: Tema.Espacio.unidad * 2) {
                 if modelo.ultimaGuardada != nil { franjaGuardada }
 
@@ -83,6 +86,7 @@ struct RegistroInsulinaView: View {
             .padding(.horizontal, Tema.Espacio.margenLateral)
             .padding(.vertical, Tema.Espacio.unidad * 2)
             .background(Tema.Colores.fondo)
+            }
         }
         .background(Tema.Colores.fondo)
         .accessibilityHidden(!visible)

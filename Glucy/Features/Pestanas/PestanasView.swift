@@ -33,7 +33,9 @@ struct PestanasView: View {
                 .tabItem { Label("Registrar", systemImage: "plus.circle") }
                 .tag(Pestana.registrar)
 
-            HistorialView(consultar: dependencias.consultarHistorial)
+            HistorialView(
+                consultar: dependencias.consultarHistorial, armarInforme: dependencias.armarInforme
+            )
                 .tabItem { Label("Historial", systemImage: "chart.xyaxis.line") }
                 .tag(Pestana.historial)
 

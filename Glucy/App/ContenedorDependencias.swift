@@ -93,7 +93,8 @@ final class ContenedorDependencias {
             lecturas: lecturas,
             modo: ConsultarModo(lecturas: lecturas),
             carbohidratosActivos: calcularCarbohidratosActivos,
-            insulinaActiva: calcularInsulinaActiva
+            insulinaActiva: calcularInsulinaActiva,
+            perfil: perfil
         )
     }
 
@@ -117,6 +118,14 @@ final class ContenedorDependencias {
 
     var consultarEntrada: ConsultarEntrada {
         ConsultarEntrada(perfil: perfil)
+    }
+
+    /// Lo que lleva el informe para el médico (RF-16).
+    var armarInforme: ArmarInforme {
+        ArmarInforme(
+            historial: consultarHistorial, lecturas: lecturas, comidas: comidas, dosis: dosis,
+            perfil: perfil
+        )
     }
 
     var consultarColaPendiente: ConsultarColaPendiente {

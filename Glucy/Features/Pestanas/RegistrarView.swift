@@ -10,6 +10,7 @@ struct RegistrarView: View {
     /// Arranca sin insulina y la agrega al leer el perfil: a quien la ocultó no se le dibuja
     /// ni un instante (RF-14).
     @State private var opciones = TipoDeRegistro.disponibles(registraInsulina: false)
+    @State private var usaSensor = false
 
     var body: some View {
         // Las pantallas están siempre montadas y la que no toca solo se oculta. Con un
@@ -20,6 +21,7 @@ struct RegistrarView: View {
                 registrar: dependencias.registrarManual,
                 registrarPorFoto: dependencias.registrarPorFoto,
                 ocr: dependencias.ocr,
+                usaSensor: usaSensor,
                 visible: registro == .glucosa
             )
             .pantalla(de: .glucosa, elegida: registro)
@@ -54,6 +56,7 @@ struct RegistrarView: View {
                 registraInsulina: await dependencias.ajustesDeInsulina.registraInsulina()
             )
             if !opciones.contains(registro) { registro = .glucosa }
+            usaSensor = (try? await dependencias.guardarAjustes.actuales())?.usaSensor ?? false
         }
     }
 }

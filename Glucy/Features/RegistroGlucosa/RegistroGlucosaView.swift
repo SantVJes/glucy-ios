@@ -11,6 +11,8 @@ struct RegistroGlucosaView: View {
 
     /// La pestaña «Registrar» mantiene montadas todas sus pantallas y oculta las que no
     /// tocan, así que `onAppear` no dice cuándo se está viendo esta.
+    /// Lo que la persona declaró en su perfil. Solo cambia el texto de la tarjeta del sensor.
+    private let usaSensor: Bool
     private let visible: Bool
 
     /// La cifra crece con la letra del sistema: un tamaño fijo no se mueve con Dynamic Type
@@ -21,8 +23,10 @@ struct RegistroGlucosaView: View {
         registrar: RegistrarLecturaManual,
         registrarPorFoto: RegistrarLecturaPorFoto? = nil,
         ocr: (any ServicioOCR)? = nil,
+        usaSensor: Bool = false,
         visible: Bool = true
     ) {
+        self.usaSensor = usaSensor
         self.visible = visible
         _modelo = State(initialValue: RegistroGlucosaViewModel(
             registrar: registrar, registrarPorFoto: registrarPorFoto, ocr: ocr
@@ -48,6 +52,10 @@ struct RegistroGlucosaView: View {
             // por lo que la persona acaba de usar para escribir. Un dato y una acción por
             // pantalla, y la acción siempre alcanzable.
             .safeAreaInset(edge: .bottom) {
+                // Solo mientras la pantalla se ve. Lo que va en un borde de la zona segura no
+                // hereda el `accessibilityHidden` de la pantalla, y VoiceOver leería el
+                // «Guardar» de una pantalla oculta encima del de la que sí se ve.
+                if visible {
                 VStack(spacing: Tema.Espacio.unidad * 2) {
                     if modelo.ultimaGuardada != nil { franjaGuardada }
 
@@ -75,6 +83,7 @@ struct RegistroGlucosaView: View {
                 .padding(.horizontal, Tema.Espacio.margenLateral)
                 .padding(.vertical, Tema.Espacio.unidad * 2)
                 .background(Tema.Colores.fondo)
+                }
             }
             .background(Tema.Colores.fondo)
             .toolbar {
@@ -138,9 +147,10 @@ struct RegistroGlucosaView: View {
         .padding(.top, Tema.Espacio.interior)
     }
 
-    /// Las tres vías se ven desde el primer día, aunque hoy solo funcione una: la persona
-    /// tiene que saber que existen. Las otras dos dicen que todavía no están listas, en
-    /// gris, y se pueden tocar sin que pase nada.
+    /// Las tres vías se ven siempre: la persona tiene que saber que existen. Dos se usan
+    /// aquí. La del sensor es solo informativa, porque del sensor no se captura nada a mano:
+    /// sus lecturas entran solas por Salud (RF-06). Un botón apagado haría dudar de las
+    /// otras dos.
     private var vias: some View {
         VStack(spacing: Tema.Espacio.unidad * 2) {
             ViaCaptura(
@@ -161,9 +171,13 @@ struct RegistroGlucosaView: View {
             .accessibilityIdentifier("viaFoto")
             ViaCaptura(
                 titulo: "Del sensor",
-                descripcion: "Todavía no está lista",
-                activa: false
+                descripcion: usaSensor
+                    ? "Tus lecturas entran solas desde Salud."
+                    : "Puedes conectar tu sensor en Ajustes.",
+                activa: false,
+                icono: "dot.radiowaves.left.and.right"
             )
+            .accessibilityIdentifier("viaSensor")
         }
     }
 
@@ -333,7 +347,8 @@ struct RegistroGlucosaView: View {
         .frame(minHeight: Tema.Medida.areaTocable)
         .background(Tema.Colores.enRango)
         .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.campo))
-        .accessibilityIdentifier("franjaGuardada")
+        // Sin identificador en la franja: puesto sobre un contenedor baja a sus hijos y le
+        // pisa el suyo a «Deshacer».
         .task(id: modelo.ultimaGuardada?.uuid) {
             // La franja se va sola a los cinco segundos; la lectura ya está guardada.
             try? await Task.sleep(for: .seconds(5))
@@ -349,10 +364,13 @@ private struct ViaCaptura: View {
     let titulo: String
     let descripcion: String
     let activa: Bool
+    /// La que solo informa lleva su propio símbolo en lugar del círculo de elegir: así no
+    /// parece una opción que no se deja marcar.
+    var icono: String? = nil
 
     var body: some View {
         HStack(spacing: Tema.Espacio.interior) {
-            Image(systemName: activa ? "largecircle.fill.circle" : "circle")
+            Image(systemName: icono ?? (activa ? "largecircle.fill.circle" : "circle"))
                 .foregroundStyle(activa ? Tema.Colores.azulPrimario : Tema.Colores.textoSecundario)
                 .accessibilityHidden(true)
 

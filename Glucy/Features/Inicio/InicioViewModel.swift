@@ -17,6 +17,9 @@ final class InicioViewModel {
     private(set) var actualizando = false
     /// Arranca en `false`: a quien ocultó la insulina no se le dibuja ni un instante (RF-14).
     private(set) var registraInsulina = false
+    /// Cuánto tardó el valor en estar listo desde el lanzamiento. Solo se llena cuando la
+    /// prueba del arranque lo pide; en la app de todos los días es siempre `nil`.
+    private(set) var segundosHastaElValor: Double?
 
     private let consultar: ConsultarInicio
     private let sincronizar: SincronizarLecturasDelSensor
@@ -51,10 +54,33 @@ final class InicioViewModel {
             lecturaHealthKitActiva: pasada.saludRespondio, ahora: ahora
         ) {
             estado = nuevo
+            anotarElArranque()
         }
     }
 
+    private func anotarElArranque() {
+        #if DEBUG
+        guard MedicionDeArranque.activa, segundosHastaElValor == nil, estado?.ultima != nil else { return }
+        segundosHastaElValor = MedicionDeArranque.segundosDesdeElLanzamiento()
+        #endif
+    }
+
     // MARK: - Lo que la pantalla pregunta
+
+    /// La franja del sensor. Solo sale para quien dijo tener sensor y lleva un rato sin
+    /// recibir nada; quien no lo tiene no la ve nunca.
+    ///
+    /// Dice la hora de la última lectura y no «hace 40 minutos»: la hora se puede cruzar con
+    /// lo que la persona estaba haciendo. Y no habla de conexión, porque no hay ninguna en
+    /// juego: es la app del fabricante la que dejó de escribir en Salud.
+    var textoSinDatosDelSensor: String? {
+        guard case let .sinDatos(desde) = estado?.estadoDelSensor else { return nil }
+        guard let desde else {
+            return "Todavía no llegan datos de tu sensor. Revisa que la app de tu sensor esté abierta."
+        }
+        let hora = desde.formatted(date: .omitted, time: .shortened)
+        return "Sin datos de tu sensor desde las \(hora). Revisa que la app de tu sensor esté abierta."
+    }
 
     /// Mientras no se sepa con certeza que el modo es sensor, el aviso está. El único
     /// estado que lo quita es el que sí puede alertar (RF-10b, caso P-04).
