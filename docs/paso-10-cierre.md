@@ -31,9 +31,9 @@ https://claude.ai/artifact/JjwUJfsZunXFGvQZyrG8pX
 
 ## 0. Antes de abrir Claude Code
 
-1. **Fusiona el PR #8** (`develop` → `main`) si sigue abierto. Este paso termina con una
-   etiqueta sobre `main`, y una etiqueta sobre un `main` que va ocho pasos atrasado no
-   sirve de nada.
+1. **Deja el PR #8** (`develop` → `main`) donde está, abierto. Es el que se va a convertir en
+   el release al final de este paso (apartado 10); si lo fusionas ahora tendrás que abrir otro.
+   Lo que sí conviene es comprobar que su CI está verde.
 2. Ponte en `develop` y actualiza: `git switch develop && git pull origin develop`.
 3. Comprueba que arrancas de 235 pruebas en verde:
    `xcodebuild -scheme Glucy -destination 'platform=iOS Simulator,name=iPhone 17' test`.
@@ -578,9 +578,13 @@ gh pr create --base develop --head feature/cierre-fase-1
 Cuando ese PR esté fusionado en `develop` **y la CI verde**, y las doce casillas del apartado
 9 estén marcadas, se cierra la fase:
 
+El PR que lleva `develop` a `main` **ya existe**: es el **#8**, abierto desde el 3 de octubre.
+No se abre otro —GitHub no admite dos con la misma rama de origen y de destino—, se le cambia
+el título y se fusiona:
+
 ```bash
-# develop → main, con su propio PR, que es el que se etiqueta
-gh pr create --base main --head develop --title "release: v0.1.0, la app autónoma de la fase 1"
+gh pr edit 8 --title "release: v0.1.0, la app autónoma de la fase 1"
+gh pr merge 8 --merge
 # una vez fusionado:
 git switch main && git pull origin main
 git tag -a v0.1.0 -m "v0.1.0 — app autónoma: captura por tres vías, gráficas, indicadores y alta"
