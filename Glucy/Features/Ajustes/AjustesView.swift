@@ -147,11 +147,12 @@ struct AjustesView: View {
             interruptor(
                 "Registrar insulina",
                 explicacion: nil,
-                encendido: ajustes.registraInsulina,
+                encendido: Binding(
+                    get: { ajustes.registraInsulina },
+                    set: { nuevo in Task { await modelo.cambiar { $0.registraInsulina = nuevo } } }
+                ),
                 identificador: "ajusteRegistraInsulina"
-            ) { nuevo in
-                Task { await modelo.cambiar { $0.registraInsulina = nuevo } }
-            }
+            )
 
             campo("Tu insulina rápida", texto: $modelo.textoInsulina, identificador: "ajusteTipoInsulina")
             ControlDePasos(
@@ -201,11 +202,12 @@ struct AjustesView: View {
             interruptor(
                 "Leer mi sensor desde Salud",
                 explicacion: nil,
-                encendido: ajustes.usaSensor,
+                encendido: Binding(
+                    get: { ajustes.usaSensor },
+                    set: { nuevo in Task { await modelo.ponerSensor(nuevo) } }
+                ),
                 identificador: "ajusteUsaSensor"
-            ) { nuevo in
-                Task { await modelo.ponerSensor(nuevo) }
-            }
+            )
 
             if ajustes.usaSensor {
                 Text(LocalizedStringKey(
@@ -248,11 +250,12 @@ struct AjustesView: View {
             interruptor(
                 "Sincronizar mis registros",
                 explicacion: nil,
-                encendido: ajustes.sincronizacionActiva,
+                encendido: Binding(
+                    get: { ajustes.sincronizacionActiva },
+                    set: { nuevo in Task { await modelo.cambiar { $0.sincronizacionActiva = nuevo } } }
+                ),
                 identificador: "ajusteSincronizacion"
-            ) { nuevo in
-                Task { await modelo.cambiar { $0.sincronizacionActiva = nuevo } }
-            }
+            )
 
             Text(modelo.textoPendientes)
                 .font(Tema.Tipografia.valorFila)
@@ -303,11 +306,12 @@ struct AjustesView: View {
                 "Pedir Face ID al abrir",
                 explicacion: "Esto no cifra nada: tu iPhone ya cifra tus datos. Solo evita que "
                     + "alguien que tome tu teléfono desbloqueado vea tu historial.",
-                encendido: ajustes.bloqueoBiometrico,
+                encendido: Binding(
+                    get: { ajustes.bloqueoBiometrico },
+                    set: { nuevo in Task { await modelo.ponerCandado(nuevo) } }
+                ),
                 identificador: "ajusteCandado"
-            ) { nuevo in
-                Task { await modelo.ponerCandado(nuevo) }
-            }
+            )
         }
     }
 
@@ -370,12 +374,11 @@ struct AjustesView: View {
     private func interruptor(
         _ titulo: String,
         explicacion: String?,
-        encendido: Bool,
-        identificador: String,
-        alCambiar: @escaping @MainActor (Bool) -> Void
+        encendido: Binding<Bool>,
+        identificador: String
     ) -> some View {
         VStack(alignment: .leading, spacing: Tema.Espacio.unidad) {
-            Toggle(isOn: Binding(get: { encendido }, set: alCambiar)) {
+            Toggle(isOn: encendido) {
                 Text(titulo)
                     .font(Tema.Tipografia.textoLectura)
                     .foregroundStyle(Tema.Colores.textoPrincipal)
