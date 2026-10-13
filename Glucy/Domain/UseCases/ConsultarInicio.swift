@@ -17,6 +17,8 @@ nonisolated struct EstadoInicio: Sendable, Equatable {
     /// Si la app puede anticipar una hipoglucemia. En modo sin sensor es `false` y la
     /// pantalla lo declara (RF-10b).
     let puedeAlertarHipoglucemia: Bool
+    /// Si el sensor que la persona dijo tener está escribiendo. No es el modo.
+    let estadoDelSensor: EstadoDelSensor
 }
 
 /// Junta lo que la pantalla de inicio necesita y decide lo que hay que decidir: qué ventana
@@ -30,6 +32,9 @@ nonisolated struct ConsultarInicio: Sendable {
     let modo: ConsultarModo
     let carbohidratosActivos: CalcularCarbohidratosActivos
     let insulinaActiva: CalcularInsulinaActiva
+    /// Para saber si la persona dijo tener sensor. Sin él, el sensor cuenta como no
+    /// configurado.
+    var perfil: (any RepositorioPerfil)? = nil
 
     /// - Parameter lecturaHealthKitActiva: si la última consulta a Salud respondió. Ver
     ///   `ConsultarModo`.
@@ -60,6 +65,12 @@ nonisolated struct ConsultarInicio: Sendable {
         case .sinSensor: puntos.map { [$0] }
         }
 
+        // La última que entró por Salud, venga marcada como sensor o como HealthKit.
+        let delSensor = [
+            try await lecturas.ultima(origen: .sensor), try await lecturas.ultima(origen: .healthkit),
+        ].compactMap { $0?.tsUtc }.max()
+        let usaSensor = (try? await perfil?.actual())?.usaSensor ?? false
+
         return EstadoInicio(
             modo: estadoModo.modo,
             antiguedadMin: ultima.map { ahora.timeIntervalSince($0.tsUtc) / 60 },
@@ -68,7 +79,10 @@ nonisolated struct ConsultarInicio: Sendable {
             ventana: desde...ahora,
             carbohidratosActivosG: try await carbohidratosActivos.ejecutar(ahora: ahora),
             insulinaActivaUI: try await insulinaActiva.ejecutar(ahora: ahora),
-            puedeAlertarHipoglucemia: estadoModo.puedeAlertarHipoglucemia
+            puedeAlertarHipoglucemia: estadoModo.puedeAlertarHipoglucemia,
+            estadoDelSensor: DecisionModo.estadoDelSensor(
+                usaSensor: usaSensor, tsUltimaDelSensor: delSensor, ahora: ahora
+            )
         )
     }
 }

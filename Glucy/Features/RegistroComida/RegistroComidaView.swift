@@ -52,7 +52,10 @@ struct RegistroComidaView: View {
                 .padding(.bottom, Tema.Espacio.margenLateral)
             }
             .scrollDismissesKeyboard(.interactively)
-            .safeAreaInset(edge: .bottom) { barraInferior }
+            // Solo mientras la pantalla se ve: lo que va en un borde de la zona segura no
+            // hereda el `accessibilityHidden`, y VoiceOver leería el «Guardar» de una
+            // pantalla oculta.
+            .safeAreaInset(edge: .bottom) { if visible { barraInferior } }
             .background(Tema.Colores.fondo)
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -405,7 +408,7 @@ struct RegistroComidaView: View {
         .frame(minHeight: Tema.Medida.areaTocable)
         .background(Tema.Colores.enRango)
         .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.campo))
-        .accessibilityIdentifier("franjaComidaGuardada")
+        // Sin identificador en la franja: le pisaría el suyo a «Deshacer».
         .task(id: modelo.ultimaGuardada?.uuid) {
             try? await Task.sleep(for: .seconds(5))
             modelo.olvidarConfirmacion()

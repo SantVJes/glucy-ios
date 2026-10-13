@@ -41,8 +41,7 @@ final class HistorialViewModel {
 
     /// Cuando no se llega a los tres días: qué falta y cuánto se lleva. Ningún cero.
     var textoDiasQueLlevas: String {
-        let dias = estado?.diasConLecturas ?? 0
-        return dias == 1 ? "Llevas 1 día con mediciones." : "Llevas \(dias) días con mediciones."
+        TextosDeIndicadores.diasQueLlevas(estado?.diasConLecturas ?? 0)
     }
 
     var textoTiempoEnRango: String? {
@@ -71,8 +70,7 @@ final class HistorialViewModel {
 
     var pieGmi: String {
         guard estado?.gmiEsFiable == true else {
-            return "Esta estimación necesita al menos \(ConfiguracionDominio.diasMinimosGmi) "
-                + "días de mediciones para significar algo."
+            return TextosDeIndicadores.gmiNoFiable
         }
         return "estimación de tu A1c · \(sobreCuantas)"
     }
@@ -108,8 +106,7 @@ final class HistorialViewModel {
     // MARK: - Formato
 
     private var sobreCuantas: String {
-        let n = estado?.indicadores?.n ?? 0
-        return n == 1 ? "sobre 1 medición" : "sobre \(n) mediciones"
+        TextosDeIndicadores.sobre(estado?.indicadores?.n ?? 0)
     }
 
     private func textoDias(_ dias: Int) -> String {

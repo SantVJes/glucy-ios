@@ -43,6 +43,8 @@ struct InicioView: View {
                     } else {
                         valor
                         if modelo.mostrarAvisoSinSensor { avisoSinSensor }
+                        // Debajo del aviso cuando salen los dos.
+                        if let texto = modelo.textoSinDatosDelSensor { franjaDelSensor(texto) }
                         tarjetaDeLaGrafica
                         loQueSigueActivo
                         accesosRapidos
@@ -84,7 +86,6 @@ struct InicioView: View {
                         .foregroundStyle(
                             modelo.actualizando ? Tema.Colores.textoSecundario : Tema.Colores.azulProfundo
                         )
-                        .accessibilityIdentifier("valorActual")
                     Text("mg/dL")
                         .font(Tema.Tipografia.textoLectura)
                         .foregroundStyle(Tema.Colores.textoSecundario)
@@ -112,6 +113,9 @@ struct InicioView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(modelo.valorHablado ?? "Cargando tu última lectura")
+        // Solo se llama así cuando ya hay un valor que leer, no mientras carga.
+        .accessibilityIdentifier(modelo.textoValor == nil ? "valorCargando" : "valorActual")
+        .accessibilityValue(modelo.segundosHastaElValor.map { String(format: "%.3f", $0) } ?? "")
         // Primero el valor, después el aviso y después la gráfica.
         .accessibilitySortPriority(2)
     }
@@ -159,6 +163,45 @@ struct InicioView: View {
         // VoiceOver lo lee justo después del valor y antes de la gráfica.
         .accessibilitySortPriority(1)
         .accessibilityIdentifier("avisoSinSensor")
+    }
+
+    /// El sensor que la persona dijo tener lleva un rato sin escribir. El ámbar va solo en
+    /// el borde y en el icono; lo que informa son el triángulo, la hora y el botón.
+    private func franjaDelSensor(_ texto: String) -> some View {
+        VStack(alignment: .leading, spacing: Tema.Espacio.unidad * 3) {
+            HStack(alignment: .top, spacing: Tema.Espacio.unidad * 3) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.title3)
+                    .foregroundStyle(Tema.Colores.alertaAmbar)
+                    .accessibilityHidden(true)
+                Text(texto)
+                    .font(Tema.Tipografia.etiqueta)
+                    .foregroundStyle(Tema.Colores.textoPrincipal)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("textoSinDatosDelSensor")
+                Spacer(minLength: 0)
+            }
+            Button {
+                Task { await modelo.ponerAlDia() }
+            } label: {
+                Text("Reintentar")
+                    .font(Tema.Tipografia.valorFila)
+                    .foregroundStyle(Tema.Colores.azulPrimario)
+                    .frame(maxWidth: .infinity, minHeight: Tema.Medida.areaTocable)
+                    .background(Tema.Colores.azulClaro)
+                    .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.campo))
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("botonReintentarSensor")
+        }
+        .padding(Tema.Espacio.interior)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Tema.Colores.superficie)
+        .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.bloqueInterno))
+        .overlay(
+            RoundedRectangle(cornerRadius: Tema.Radio.bloqueInterno)
+                .stroke(Tema.Colores.alertaAmbar, lineWidth: 2)
+        )
     }
 
     private var tarjetaDeLaGrafica: some View {

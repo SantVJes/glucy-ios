@@ -49,6 +49,13 @@ struct AjustesView: View {
                         privacidad
                         seguridad(ajustes)
                         borrar
+                        Text("Glucy no es un dispositivo médico certificado y no debe usarse como "
+                            + "única fuente para una decisión terapéutica. Informa; no prescribe ni "
+                            + "administra, y nunca calcula ni sugiere una dosis de insulina.")
+                            .font(Tema.Tipografia.etiqueta)
+                            .foregroundStyle(Tema.Colores.textoSecundario)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("avisoNoEsDispositivoMedico")
                     }
                 }
                 .padding(.horizontal, Tema.Espacio.margenLateral)

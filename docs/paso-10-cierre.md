@@ -550,8 +550,13 @@ Escala de grises.
 
 **Arranque en frío**
 
-- [ ] Cerrar la app del todo, esperar, abrirla: el valor actual está en pantalla en menos de
+- [x] Cerrar la app del todo, esperar, abrirla: el valor actual está en pantalla en menos de
   dos segundos. Anotar el número medido en las notas del release.
+  **Medido el 13/10/2026 en el iPhone 17 (iOS 27.0) con `ArranqueUITests`: 1.14 s, 1.06 s y
+  1.12 s en tres corridas seguidas, 1.11 s de promedio**, desde que el sistema crea el proceso
+  hasta que la app tiene el valor. Perfil sin sensor y una sola lectura en la base. Cada
+  corrida cierra la app y la vuelve a abrir enseguida, así que no es un arranque después de
+  reiniciar el teléfono: ese falta mirarlo a ojo.
 
 **HealthKit, lo que solo pasa en un teléfono**
 

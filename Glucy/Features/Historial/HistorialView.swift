@@ -9,7 +9,11 @@ struct HistorialView: View {
 
     @Environment(\.dynamicTypeSize) private var tamanoLetra
 
-    init(consultar: ConsultarHistorial) {
+    private let armarInforme: ArmarInforme
+    @State private var compartiendoInforme = false
+
+    init(consultar: ConsultarHistorial, armarInforme: ArmarInforme) {
+        self.armarInforme = armarInforme
         _modelo = State(initialValue: HistorialViewModel(consultar: consultar))
     }
 
@@ -25,6 +29,9 @@ struct HistorialView: View {
                     } else if modelo.cargado {
                         faltanDias
                     }
+                    // Al final: la persona acaba de ver sus cifras, y ese es el momento en
+                    // que piensa en enseñárselas a su médico.
+                    if modelo.cargado, !modelo.sinRespuesta { botonDelInforme }
                 }
                 .padding(.horizontal, Tema.Espacio.margenLateral)
                 .padding(.vertical, Tema.Espacio.margenLateral)
@@ -35,6 +42,10 @@ struct HistorialView: View {
         }
         // Cada vez que se entra a la pestaña: puede haber lecturas nuevas.
         .task { await modelo.ponerAlDia() }
+        .sheet(isPresented: $compartiendoInforme) {
+            // El periodo es el que ya está elegido arriba: no se vuelve a preguntar.
+            CompartirInformeView(armar: armarInforme, periodoDias: modelo.periodoDias)
+        }
     }
 
     // MARK: - Partes
@@ -137,6 +148,24 @@ struct HistorialView: View {
         .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.tarjetaGrande))
     }
 
+    private var botonDelInforme: some View {
+        Button {
+            compartiendoInforme = true
+        } label: {
+            Label("Informe para mi médico", systemImage: "doc.text")
+                .font(Tema.Tipografia.tituloTarjeta)
+                .foregroundStyle(Tema.Colores.azulPrimario)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, Tema.Espacio.unidad * 2)
+                .frame(maxWidth: .infinity, minHeight: Tema.Medida.botonPrincipal)
+                .background(Tema.Colores.azulClaro)
+                .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.campo))
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("botonInformeParaMiMedico")
+    }
+
     /// Menos de tres días con mediciones: ninguna cifra, y la verdad de por qué.
     private var faltanDias: some View {
         VStack(spacing: Tema.Espacio.entreTarjetas) {
@@ -147,7 +176,7 @@ struct HistorialView: View {
 
             Text(modelo.sinRespuesta
                 ? "No pude leer tus lecturas. Vuelve a intentarlo en un momento."
-                : "Necesito al menos tres días de datos para calcular tu tiempo en rango.")
+                : TextosDeIndicadores.faltanDias)
                 .font(Tema.Tipografia.textoLectura)
                 .foregroundStyle(Tema.Colores.textoPrincipal)
                 .multilineTextAlignment(.center)
