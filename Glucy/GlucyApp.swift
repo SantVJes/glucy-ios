@@ -15,7 +15,7 @@ struct GlucyApp: App {
 
     init() {
         do {
-            contenedor = try ContenedorGlucy.crear()
+            contenedor = try ContenedorGlucy.crear(enMemoria: Self.baseEnMemoria)
         } catch {
             // Sin base local no hay app: el teléfono es el dueño del dato (regla 1) y todo
             // lo demás se apoya en esto. Caerse aquí, al arrancar, es preferible a caerse
@@ -28,16 +28,30 @@ struct GlucyApp: App {
         // muestra nueva no se dibuja ninguna pantalla, y el observador tiene que quedar
         // registrado en el arranque o esa entrega se pierde (RF-06).
         //
-        // Pedir el permiso al arrancar es provisional: el onboarding del paso 9 lo va a
-        // pedir con su explicación y permitirá saltárselo. Si ya se contestó, iOS no vuelve
-        // a mostrar la hoja.
+        // Ya no pide ningún permiso: eso lo hace la tarjeta «Con sensor» del alta, con su
+        // explicación, y se puede saltar.
         let sincronizar = dependencias.sincronizarSensor
         Task { await sincronizar.iniciar() }
     }
 
+    /// Las pruebas de interfaz arrancan con una base en memoria: recorren el alta desde
+    /// cero cada vez y no tocan los datos de quien las corre en su propio teléfono. Solo
+    /// existe en la compilación de desarrollo.
+    private static var baseEnMemoria: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-GlucyBaseEnMemoria")
+        #else
+        false
+        #endif
+    }
+
     var body: some Scene {
         WindowGroup {
-            PestanasView()
+            RaizView(modelo: RaizViewModel(
+                consultar: dependencias.consultarEntrada,
+                candado: dependencias.candado,
+                sincronizar: dependencias.sincronizarSensor
+            ))
         }
         .modelContainer(contenedor)
         .environment(dependencias)

@@ -88,6 +88,26 @@ nonisolated enum ConfiguracionDominio {
     /// respalde, así que la app no se usa.
     static let edadMinima = 15
 
+    /// Un año de nacimiento que da más que esto es un dedo que se fue de tecla, no una
+    /// persona.
+    static let edadMaxima = 120
+
+    /// Los largos del formulario F-1.
+    static let nombreMaximo = 40
+    static let apellidosMaximo = 60
+    static let tipoInsulinaMaximo = 40
+
+    // MARK: - Arranque y candado
+
+    /// El splash se va en cuanto se leyó el perfil, pero no antes de esto: más corto
+    /// parpadea. No es una espera de adorno; el arranque en frío tiene que dejar ver el
+    /// valor actual en menos de dos segundos.
+    static let splashMinimoS = 0.4
+
+    /// Cuánto puede estar la app en segundo plano sin que el candado vuelva a pedirse.
+    /// Contestar un mensaje y volver no debe costar otro Face ID.
+    static let graciaDelCandadoS = 60.0
+
     // MARK: - Indicadores
 
     /// GMI = `gmiIntercepto + gmiPendiente × promedio` (fórmula del consenso).

@@ -23,4 +23,7 @@ nonisolated protocol RepositorioComidas: Sendable {
     func ultimaConCodigo(_ codigo: String) async throws -> ComidaDato?
 
     func marcarEscritaEnHealthKit(uuid: UUID) async throws
+
+    /// Borra todas las filas. Solo lo llama el borrado de la cuenta.
+    func eliminarTodo() async throws
 }

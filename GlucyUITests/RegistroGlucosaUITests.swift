@@ -9,8 +9,7 @@ final class RegistroGlucosaUITests: XCTestCase {
     }
 
     func testRegistrarUnaLecturaAMano() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = XCUIApplication.yaDentro()
 
         // La app abre en cuatro pestañas; Registrar es la segunda.
         let registrar = app.tabBars.buttons["Registrar"]

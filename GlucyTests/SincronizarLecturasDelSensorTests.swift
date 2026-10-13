@@ -8,16 +8,14 @@ struct SincronizarLecturasDelSensorTests {
 
     private let ahora = Date(timeIntervalSince1970: 1_758_240_000)
 
-    /// Un dominio de `UserDefaults` por prueba, para que el ancla de una no se cuele en otra
-    /// ni en la de la app.
+    /// Un dominio por prueba, para que el ancla de una no se cuele en otra ni en la de la
+    /// app.
     private func anclaDePrueba() -> AnclaHealthKit {
         AnclaHealthKit(dominio: "glucy.pruebas.\(UUID().uuidString)")
     }
 
     private func borrar(_ ancla: AnclaHealthKit) {
-        if let dominio = ancla.dominio {
-            UserDefaults.standard.removePersistentDomain(forName: dominio)
-        }
+        ancla.borrar()
     }
 
     private func muestra(
@@ -198,5 +196,47 @@ struct SincronizarLecturasDelSensorTests {
         #expect(await salud.anclasRecibidas == [nil, guardada])
         #expect(segunda.guardadas == 1)
         #expect(await repositorio.guardadas.count == 3)
+    }
+
+    /// RF-07 — apagar la lectura del sensor en Ajustes, o elegir «sin sensor» en el alta, es
+    /// de verdad dejar de leer: no se consulta Salud y el modo es sin sensor. Lo que ya
+    /// estaba guardado se queda.
+    @Test("RF-07: quien eligió «sin sensor» no lee de Salud, y su historial se queda")
+    func sinSensorNoSeLeeDeSalud() async throws {
+        let salud = HealthKitFalso()
+        let repositorio = RepositorioLecturasFalso()
+        let ancla = anclaDePrueba()
+        defer { borrar(ancla) }
+        await salud.agregar([muestra(mgDl: 134, haceMin: 3)])
+        try await repositorio.guardar(LecturaGlucosaDato(mgDl: 120, tsUtc: ahora, origen: .manual))
+
+        func pasada(usaSensor: Bool?) async -> ResultadoSincronizacion {
+            let perfil = RepositorioPerfilFalso(usaSensor.map {
+                PerfilDato(
+                    fechaNacimiento: ReglasDePerfil.fechaDeAnio(1990), tipoUsuario: .tipo1,
+                    usaSensor: $0, consentimientoTsUtc: ahora
+                )
+            })
+            return await SincronizarLecturasDelSensor(
+                servicio: salud, lecturas: repositorio, ancla: ancla, perfil: perfil
+            ).ejecutar(ahora: ahora)
+        }
+
+        // Sin sensor, y también antes del alta, cuando todavía no hay perfil.
+        for usaSensor in [false, nil] {
+            let resultado = await pasada(usaSensor: usaSensor)
+            #expect(resultado.guardadas == 0)
+            #expect(!resultado.saludRespondio)
+            #expect(resultado.estado.modo == .sinSensor)
+        }
+        #expect(await salud.anclasRecibidas.isEmpty)
+        #expect(await repositorio.guardadas.count == 1)
+
+        // Al encenderlo, entra lo del sensor y no se pierde nada de lo anterior.
+        let conSensor = await pasada(usaSensor: true)
+        #expect(conSensor.guardadas == 1)
+        #expect(conSensor.saludRespondio)
+        #expect(conSensor.estado.modo == .sensor)
+        #expect(await repositorio.guardadas.count == 2)
     }
 }

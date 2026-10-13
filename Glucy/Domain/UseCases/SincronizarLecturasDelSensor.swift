@@ -20,18 +20,26 @@ nonisolated struct SincronizarLecturasDelSensor: Sendable {
     let servicio: any ServicioHealthKit
     let lecturas: any RepositorioLecturas
     let ancla: AnclaHealthKit
+    /// Para saber si la persona quiere que se lea su sensor. Sin él se lee siempre, que es
+    /// como lo usan las pruebas de la lectura.
+    var perfil: (any RepositorioPerfil)? = nil
 
     /// Tope de lotes por pasada, para que un ancla que HealthKit nunca diera por terminada
     /// no deje la pasada corriendo para siempre. Con lotes de 500 son años de sensor.
     private static let lotesMaximosPorPasada = 1_000
 
-    /// Pide los permisos, registra el observador y hace la primera pasada. Se llama al
-    /// arrancar, también cuando iOS despierta la app en segundo plano: el observador tiene
-    /// que estar registrado antes de que termine el arranque o la entrega se pierde.
+    /// Registra el observador y hace la primera pasada. Se llama al arrancar, también
+    /// cuando iOS despierta la app en segundo plano: el observador tiene que estar
+    /// registrado antes de que termine el arranque o la entrega se pierde.
+    ///
+    /// **No pide ningún permiso.** Eso lo hace la tarjeta «Con sensor» del alta, después de
+    /// explicar para qué, y se puede saltar (RF-06).
     ///
     /// Nada de esto lanza. Sin permiso o sin Salud la app sigue, en modo sin sensor.
     func iniciar() async {
-        try? await servicio.pedirPermisos()
+        // Quien no quiere que se lea su sensor no tiene observador: no hay nada que esperar
+        // de Salud, y no se le toca ni para preguntar.
+        if let perfil, (try? await perfil.actual())?.usaSensor != true { return }
         let caso = self
         try? await servicio.observarGlucosa {
             _ = await caso.ejecutar()
@@ -48,6 +56,12 @@ nonisolated struct SincronizarLecturasDelSensor: Sendable {
         var guardadas = 0
         var descartadas = 0
         var respondio = servicio.disponible
+        // Quien eligió «Sin sensor», o lo apagó en Ajustes, no quiere que se lea su sensor:
+        // no se consulta Salud y el modo es sin sensor. Su historial se queda como está
+        // (RF-07).
+        if let perfil, (try? await perfil.actual())?.usaSensor != true {
+            respondio = false
+        }
 
         if respondio {
             do {

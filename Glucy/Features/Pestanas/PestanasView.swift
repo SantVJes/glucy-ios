@@ -6,10 +6,10 @@ enum Pestana: Hashable {
 }
 
 /// La carcasa de la app: cuatro pestañas, profundidad máxima dos niveles.
-///
-/// **Ajustes** todavía enseña su estado vacío con su texto: nunca un cero ni una pantalla en
-/// blanco.
 struct PestanasView: View {
+    /// Después de borrar la cuenta la raíz vuelve al splash y al alta.
+    let alBorrarCuenta: () -> Void
+
     @Environment(ContenedorDependencias.self) private var dependencias
     @State private var pestana = Pestana.inicio
     /// Arranca en glucosa, que es lo que se registra con más prisa.
@@ -37,10 +37,15 @@ struct PestanasView: View {
                 .tabItem { Label("Historial", systemImage: "chart.xyaxis.line") }
                 .tag(Pestana.historial)
 
-            PendienteView(
-                titulo: "Ajustes",
-                mensaje: "Aquí van a estar tus umbrales y tu perfil.",
-                icono: "gearshape"
+            AjustesView(
+                guardar: dependencias.guardarAjustes,
+                pendientes: dependencias.consultarColaPendiente,
+                completarAlta: dependencias.completarAlta,
+                sincronizar: dependencias.sincronizarSensor,
+                candado: dependencias.candado,
+                cuantoHay: dependencias.consultarCuantoHay,
+                borrarTodo: dependencias.borrarTodo,
+                alBorrarCuenta: alBorrarCuenta
             )
             .tabItem { Label("Ajustes", systemImage: "gearshape") }
             .tag(Pestana.ajustes)

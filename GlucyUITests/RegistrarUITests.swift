@@ -8,8 +8,7 @@ final class RegistrarUITests: XCTestCase {
     }
 
     func testCambiarDeRegistroNoBorraLoEscrito() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = XCUIApplication.yaDentro()
 
         let registrar = app.tabBars.buttons["Registrar"]
         XCTAssertTrue(registrar.waitForExistence(timeout: 10), "No apareció la pestaña Registrar")
@@ -33,8 +32,7 @@ final class RegistrarUITests: XCTestCase {
 
     /// Entrar a la pestaña no abre el teclado: aparece cuando se toca el campo.
     func testEntrarARegistrarNoAbreElTeclado() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = XCUIApplication.yaDentro()
 
         let registrar = app.tabBars.buttons["Registrar"]
         XCTAssertTrue(registrar.waitForExistence(timeout: 10), "No apareció la pestaña Registrar")
@@ -51,8 +49,7 @@ final class RegistrarUITests: XCTestCase {
 
     /// Volver a Glucosa con el selector no abre el teclado: nadie lo pidió.
     func testVolverAGlucosaNoAbreElTeclado() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = XCUIApplication.yaDentro()
 
         let registrar = app.tabBars.buttons["Registrar"]
         XCTAssertTrue(registrar.waitForExistence(timeout: 10), "No apareció la pestaña Registrar")

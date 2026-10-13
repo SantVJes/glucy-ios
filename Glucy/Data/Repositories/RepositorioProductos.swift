@@ -10,4 +10,7 @@ nonisolated protocol RepositorioProductos: Sendable {
     /// Si el código ya estaba, se reemplaza: dos consultas del mismo producto caen en la
     /// misma fila.
     func guardar(_ dato: ProductoCacheDato) async throws
+
+    /// Borra todas las filas. Solo lo llama el borrado de la cuenta.
+    func eliminarTodo() async throws
 }

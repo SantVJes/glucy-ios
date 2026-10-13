@@ -101,4 +101,9 @@ actor LecturasSwiftData: RepositorioLecturas {
         }
         try modelContext.save()
     }
+
+    func eliminarTodo() throws {
+        try modelContext.delete(model: LecturaGlucosa.self)
+        try modelContext.save()
+    }
 }

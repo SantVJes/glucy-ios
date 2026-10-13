@@ -9,16 +9,16 @@ final class RegistroInsulinaUITests: XCTestCase {
     }
 
     private func abrirInsulina() -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launch()
-
-        let registrar = app.tabBars.buttons["Registrar"]
-        XCTAssertTrue(registrar.waitForExistence(timeout: 10), "No apareció la pestaña Registrar")
-        registrar.tap()
+        let app = XCUIApplication.yaDentro()
 
         let insulina = app.buttons["segmentoInsulina"]
-        XCTAssertTrue(insulina.waitForExistence(timeout: 5), "El selector no ofrece Insulina")
-        insulina.tap()
+        app.tocar(
+            app.tabBars.buttons["Registrar"], hastaVer: insulina, "El selector no ofrece Insulina"
+        )
+        app.tocar(
+            insulina, hastaVer: app.buttons["botonMasMediaUnidad"],
+            "No apareció la pantalla de insulina"
+        )
         return app
     }
 

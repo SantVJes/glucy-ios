@@ -161,6 +161,15 @@ nonisolated final class HealthKitReal: ServicioHealthKit, @unchecked Sendable {
         try await eliminar(de: tipoInsulina, uuid: uuid)
     }
 
+    func eliminarTodoLoPropio() async throws {
+        guard disponible else { throw ErrorHealthKit.noDisponible }
+        // Por la fuente y nada más: glucosa, carbohidratos e insulina que escribió Glucy.
+        let propias = HKQuery.predicateForObjects(from: HKSource.default())
+        for tipo in [tipoGlucosa, tipoCarbohidratos, tipoInsulina] {
+            _ = try await store.deleteObjects(of: tipo, predicate: propias)
+        }
+    }
+
     private func eliminar(de tipo: HKQuantityType, uuid: UUID) async throws {
         guard disponible else { throw ErrorHealthKit.noDisponible }
 

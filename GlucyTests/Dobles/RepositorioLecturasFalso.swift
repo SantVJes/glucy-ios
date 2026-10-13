@@ -61,4 +61,8 @@ actor RepositorioLecturasFalso: RepositorioLecturas {
         guardadas.removeAll { $0.uuid == uuid }
         eliminadas.append(uuid)
     }
+
+    func eliminarTodo() async throws {
+        guardadas.removeAll()
+    }
 }

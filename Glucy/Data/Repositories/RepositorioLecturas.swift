@@ -39,4 +39,7 @@ nonisolated protocol RepositorioLecturas: Sendable {
     /// su fila en la cola subiría al backend un registro que en el teléfono ya no existe.
     /// No lanza si no encuentra nada: deshacer dos veces no es una falla.
     func eliminar(uuid: UUID) async throws
+
+    /// Borra todas las filas. Solo lo llama el borrado de la cuenta.
+    func eliminarTodo() async throws
 }

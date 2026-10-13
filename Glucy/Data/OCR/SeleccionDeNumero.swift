@@ -19,7 +19,7 @@ nonisolated enum SeleccionDeNumero {
     /// 1. Se descarta lo que no sea un número entero.
     /// 2. Se descarta lo que esté fuera del rango fisiológico que ya conocen las reglas del
     ///    paso 1. Una fecha «12» se cae sola aquí.
-    /// 3. De lo que queda gana **el de mayor altura de caja**: en todo glucómetro el valor
+    /// 3. De lo que queda gana **el de caja más alta**: en todo glucómetro el valor
     ///    es el número más grande de la pantalla. No el de mayor confianza; el más grande.
     /// 4. Si quedan dos del mismo tamaño, gana el de arriba.
     ///

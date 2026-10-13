@@ -34,7 +34,8 @@ extension FalloRegistro {
         case .fueraDeRango: self = .unidadesFueraDeRango
         case .unidadesFueraDeResolucion: self = .unidadesFueraDeResolucion
         case .marcaDeTiempoFutura: self = .horaFutura
-        case .ocrSinConfirmar, .duplicado, .absorcionFueraDeRango, .porcionesNoPositivas:
+        case .ocrSinConfirmar, .duplicado, .absorcionFueraDeRango, .porcionesNoPositivas,
+             .edadInsuficiente, .sinConsentimiento, .perfilNoValido:
             self = .dosisNoSePudoGuardar
         }
     }

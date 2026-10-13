@@ -50,7 +50,8 @@ extension FalloRegistro {
         // Los demás son de comidas y de dosis, y tienen su propia traducción en
         // `RegistrarComida` y en `RegistrarDosis`; una lectura no los puede producir.
         case .ocrSinConfirmar, .duplicado, .absorcionFueraDeRango, .porcionesNoPositivas,
-             .unidadesNoPositivas, .unidadesFueraDeResolucion:
+             .unidadesNoPositivas, .unidadesFueraDeResolucion, .edadInsuficiente,
+             .sinConsentimiento, .perfilNoValido:
             self = .noSePudoGuardar
         }
     }
