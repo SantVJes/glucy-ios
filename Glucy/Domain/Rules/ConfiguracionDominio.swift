@@ -22,6 +22,9 @@ nonisolated enum ConfiguracionDominio {
     static let glucosaMinima = 20.0          // mg/dL
     static let glucosaMaxima = 600.0         // mg/dL
 
+    /// mg/dL = mmol/L × 18.0182. Solo se usa al entrar: adentro todo es mg/dL.
+    static let factorMmolLAMgDl = 18.0182
+
     static let umbralHipoPorOmision = 70.0   // mg/dL
     static let umbralHiperPorOmision = 180.0 // mg/dL
 
@@ -38,6 +41,9 @@ nonisolated enum ConfiguracionDominio {
 
     /// Tiempo de absorción por omisión (D-8). Presets de 30 min (rápida) y 300 (lenta).
     static let absorcionPorOmisionMin = 180
+    /// Las otras dos opciones que se ofrecen al ajustar (RF-12b). No hay una cuarta.
+    static let absorcionRapidaMin = 30
+    static let absorcionLentaMin = 300
     static let absorcionConfigurableMin = 30...300
 
     static let carbsMinimos = 0.0            // g
@@ -82,9 +88,62 @@ nonisolated enum ConfiguracionDominio {
     /// respalde, así que la app no se usa.
     static let edadMinima = 15
 
+    /// Un año de nacimiento que da más que esto es un dedo que se fue de tecla, no una
+    /// persona.
+    static let edadMaxima = 120
+
+    /// Los largos del formulario F-1.
+    static let nombreMaximo = 40
+    static let apellidosMaximo = 60
+    static let tipoInsulinaMaximo = 40
+
+    // MARK: - Arranque y candado
+
+    /// El splash se va en cuanto se leyó el perfil, pero no antes de esto: más corto
+    /// parpadea. No es una espera de adorno; el arranque en frío tiene que dejar ver el
+    /// valor actual en menos de dos segundos.
+    static let splashMinimoS = 0.4
+
+    /// Cuánto puede estar la app en segundo plano sin que el candado vuelva a pedirse.
+    /// Contestar un mensaje y volver no debe costar otro Face ID.
+    static let graciaDelCandadoS = 60.0
+
     // MARK: - Indicadores
 
     /// GMI = `gmiIntercepto + gmiPendiente × promedio` (fórmula del consenso).
     static let gmiIntercepto = 3.31
     static let gmiPendiente = 0.02392
+
+    // MARK: - Historial
+
+    /// Por debajo de tres días distintos con lecturas, un porcentaje de tiempo en rango
+    /// describe un día suelto y se lee como si describiera la semana (Documento 1, punto 8).
+    static let diasMinimosIndicadores = 3
+
+    /// La fórmula del GMI se validó sobre series de al menos 14 días. Con menos, el número
+    /// sale igual y no significa nada, y es un dato que la persona puede llevar a consulta.
+    static let diasMinimosGmi = 14
+
+    /// Los tres periodos del historial (Documento 1, pantalla 6). No hay un cuarto.
+    static let periodosHistorialDias = [7, 14, 30]
+
+    /// Con una o dos lecturas en una hora, un cuartil no existe. La hora se queda vacía y la
+    /// pantalla dice cuántas faltan, en lugar de dibujar una banda que nadie midió.
+    static let lecturasMinimasPorHora = 3
+
+    // MARK: - Gráficas
+
+    /// Lo que la pantalla de inicio enseña en modo sensor: la serie es continua y tres
+    /// horas caben con cada muestra a la vista (RF-08).
+    static let ventanaInicioSensorH = 3.0
+
+    /// Lo que enseña en modo sin sensor: con unos pocos pinchazos al día, en tres horas no
+    /// habría casi nada que ver (RF-09).
+    static let ventanaInicioSinSensorDias = 7.0
+
+    /// La escala del eje Y, fija. Con escala automática la banda 70–180 cambia de tamaño en
+    /// cada actualización y de madrugada eso se lee como que la glucosa se movió. Es el
+    /// intervalo que reportan los sensores comerciales; lo que cae fuera se dibuja en el
+    /// borde con otra forma, y su valor verdadero se dice en texto.
+    static let escalaGraficaMgDl = 40.0...400.0
 }

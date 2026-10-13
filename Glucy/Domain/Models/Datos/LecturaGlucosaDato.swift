@@ -24,6 +24,15 @@ nonisolated struct LecturaGlucosaDato: Sendable, Equatable, Identifiable {
     let escritaEnHealthKit: Bool
     /// No sube al backend (regla 3).
     let nota: String?
+
+    /// Lo que el OCR propuso, antes de que la persona lo tocara (RF-05b). `nil` si la
+    /// lectura no vino de una foto.
+    let valorLeidoOcr: Double?
+    /// Si el valor guardado no es el que propuso el OCR.
+    let fueCorregido: Bool
+    /// De 0 a 1, tal como lo reportó el OCR. **No decide nada** (D-11).
+    let confianzaOcr: Double?
+
     let syncEstado: SyncEstado
 
     init(
@@ -37,6 +46,9 @@ nonisolated struct LecturaGlucosaDato: Sendable, Equatable, Identifiable {
         atipica: Bool = false,
         escritaEnHealthKit: Bool = false,
         nota: String? = nil,
+        valorLeidoOcr: Double? = nil,
+        fueCorregido: Bool = false,
+        confianzaOcr: Double? = nil,
         syncEstado: SyncEstado = .pendiente
     ) {
         self.uuid = uuid
@@ -49,6 +61,9 @@ nonisolated struct LecturaGlucosaDato: Sendable, Equatable, Identifiable {
         self.atipica = atipica
         self.escritaEnHealthKit = escritaEnHealthKit
         self.nota = nota
+        self.valorLeidoOcr = valorLeidoOcr
+        self.fueCorregido = fueCorregido
+        self.confianzaOcr = confianzaOcr
         self.syncEstado = syncEstado
     }
 }

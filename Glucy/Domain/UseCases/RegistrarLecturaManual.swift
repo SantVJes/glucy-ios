@@ -47,7 +47,12 @@ extension FalloRegistro {
         switch rechazo {
         case .fueraDeRango: self = .fueraDeRango
         case .marcaDeTiempoFutura: self = .horaFutura
-        case .ocrSinConfirmar, .duplicado: self = .noSePudoGuardar
+        // Los demás son de comidas y de dosis, y tienen su propia traducción en
+        // `RegistrarComida` y en `RegistrarDosis`; una lectura no los puede producir.
+        case .ocrSinConfirmar, .duplicado, .absorcionFueraDeRango, .porcionesNoPositivas,
+             .unidadesNoPositivas, .unidadesFueraDeResolucion, .edadInsuficiente,
+             .sinConsentimiento, .perfilNoValido:
+            self = .noSePudoGuardar
         }
     }
 }
@@ -59,6 +64,9 @@ extension FalloRegistro {
 /// algún día va a estar en otro valor (RF-05).
 nonisolated struct RegistrarLecturaManual: Sendable {
     let repositorio: any RepositorioLecturas
+    /// Copia en Salud. Opcional porque la captura no depende de ella: sin Salud, sin
+    /// permiso o en las pruebas del paso 3, la lectura se guarda igual (regla 1).
+    var salud: EscribirEnHealthKit? = nil
 
     /// Valida, pone el origen y guarda. Devuelve la lectura tal como quedó guardada.
     ///
@@ -91,6 +99,9 @@ nonisolated struct RegistrarLecturaManual: Sendable {
             nota: nota
         )
         try await repositorio.guardar(dato)
+        // Después de guardar y sin poder fallar el guardado: Salud es una copia, no la
+        // fuente (RF-15).
+        await salud?.ejecutar(dato)
         return dato
     }
 
@@ -100,5 +111,8 @@ nonisolated struct RegistrarLecturaManual: Sendable {
     /// rescata a quien se equivocó.
     func deshacer(_ dato: LecturaGlucosaDato) async throws {
         try await repositorio.eliminar(uuid: dato.uuid)
+        // Si ya se había escrito en Salud, se quita de ahí también: una lectura deshecha
+        // en Glucy que siguiera en Salud volvería a aparecer en cualquier otra app.
+        await salud?.deshacer(dato)
     }
 }

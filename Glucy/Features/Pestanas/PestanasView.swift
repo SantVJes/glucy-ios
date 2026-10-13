@@ -1,42 +1,56 @@
 import SwiftUI
 
+/// Las cuatro pestañas de la app.
+enum Pestana: Hashable {
+    case inicio, registrar, historial, ajustes
+}
+
 /// La carcasa de la app: cuatro pestañas, profundidad máxima dos niveles.
-///
-/// Existe desde este paso y no desde el paso 8 porque, si no, la pantalla de registro
-/// tendría que ser la raíz de la app y habría que desmontarla después.
-///
-/// En este paso solo **Registrar** hace algo. Las otras tres enseñan su estado vacío con su
-/// texto: nunca un cero ni una pantalla en blanco.
 struct PestanasView: View {
+    /// Después de borrar la cuenta la raíz vuelve al splash y al alta.
+    let alBorrarCuenta: () -> Void
+
     @Environment(ContenedorDependencias.self) private var dependencias
+    @State private var pestana = Pestana.inicio
+    /// Arranca en glucosa, que es lo que se registra con más prisa.
+    @State private var registro = TipoDeRegistro.glucosa
 
     var body: some View {
-        TabView {
-            PendienteView(
-                titulo: "Inicio",
-                mensaje: "Todavía no tengo lecturas tuyas.",
-                icono: "drop"
+        TabView(selection: $pestana) {
+            InicioView(
+                consultar: dependencias.consultarInicio,
+                sincronizar: dependencias.sincronizarSensor,
+                ajustes: dependencias.ajustesDeInsulina,
+                alAnotar: { tipo in
+                    registro = tipo
+                    pestana = .registrar
+                }
             )
             .tabItem { Label("Inicio", systemImage: "house") }
+            .tag(Pestana.inicio)
 
-            RegistroGlucosaView(
-                registrar: RegistrarLecturaManual(repositorio: dependencias.lecturas)
+            RegistrarView(registro: $registro)
+                .tabItem { Label("Registrar", systemImage: "plus.circle") }
+                .tag(Pestana.registrar)
+
+            HistorialView(
+                consultar: dependencias.consultarHistorial, armarInforme: dependencias.armarInforme
             )
-            .tabItem { Label("Registrar", systemImage: "plus.circle") }
+                .tabItem { Label("Historial", systemImage: "chart.xyaxis.line") }
+                .tag(Pestana.historial)
 
-            PendienteView(
-                titulo: "Historial",
-                mensaje: "Necesito al menos tres días de datos para calcular tu tiempo en rango.",
-                icono: "chart.xyaxis.line"
-            )
-            .tabItem { Label("Historial", systemImage: "chart.xyaxis.line") }
-
-            PendienteView(
-                titulo: "Ajustes",
-                mensaje: "Aquí van a estar tus umbrales y tu perfil.",
-                icono: "gearshape"
+            AjustesView(
+                guardar: dependencias.guardarAjustes,
+                pendientes: dependencias.consultarColaPendiente,
+                completarAlta: dependencias.completarAlta,
+                sincronizar: dependencias.sincronizarSensor,
+                candado: dependencias.candado,
+                cuantoHay: dependencias.consultarCuantoHay,
+                borrarTodo: dependencias.borrarTodo,
+                alBorrarCuenta: alBorrarCuenta
             )
             .tabItem { Label("Ajustes", systemImage: "gearshape") }
+            .tag(Pestana.ajustes)
         }
         .tint(Tema.Colores.azulPrimario)
     }

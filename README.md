@@ -65,10 +65,11 @@ proyecto.
 
 ## Aviso
 
-**Glucy no es un dispositivo médico certificado.** El sistema informa; nunca prescribe ni
-administra, y **jamás calcula ni sugiere una dosis de insulina**. No debe usarse como única
-fuente para una decisión terapéutica. Ante cualquier síntoma hay que medir, prediga lo que
-prediga la aplicación.
+**Glucy no es un dispositivo médico certificado y no debe usarse como única fuente para una
+decisión terapéutica. Informa; no prescribe ni administra, y nunca calcula ni sugiere una
+dosis de insulina.**
+
+Ante cualquier síntoma hay que medir, diga lo que diga la aplicación.
 
 ## Licencia y cómo citar
 

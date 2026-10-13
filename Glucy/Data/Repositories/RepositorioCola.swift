@@ -23,6 +23,10 @@ nonisolated protocol RepositorioCola: Sendable {
     func marcarError(uuid: UUID, motivo: String) async throws
 
     func contarPendientes() async throws -> Int
+
+    /// Vacía la cola. Solo lo llama el borrado de la cuenta: lo que esperaba turno para
+    /// subir ya no existe en el teléfono.
+    func eliminarTodo() async throws
 }
 
 /// Los nombres de tipo que viajan en la cola. En un solo lugar porque el backend de la

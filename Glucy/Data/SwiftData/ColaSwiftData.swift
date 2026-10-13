@@ -54,6 +54,13 @@ actor ColaSwiftData: RepositorioCola {
         return try modelContext.fetch(descriptor).filter { $0.estado == .pendiente }.count
     }
 
+    func eliminarTodo() throws {
+        try modelContext.delete(model: ColaSincronizacion.self)
+        // La otra cola, la de las sentencias de aprendizaje, también es de la persona.
+        try modelContext.delete(model: ColaXapi.self)
+        try modelContext.save()
+    }
+
     private func fila(uuid: UUID) throws -> ColaSincronizacion? {
         var descriptor = FetchDescriptor<ColaSincronizacion>(
             predicate: #Predicate { $0.uuid == uuid }

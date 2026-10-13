@@ -4,11 +4,27 @@ import Foundation
 ///
 /// Un rechazo nunca es un descarte silencioso: lleva su motivo para poder decirlo en
 /// pantalla y para que el dato quede en cuarentena en lugar de desaparecer.
-nonisolated enum Rechazo: Equatable, Sendable {
+nonisolated enum Rechazo: Error, Equatable, Sendable {
     case fueraDeRango(valor: Double)
     case marcaDeTiempoFutura
     case ocrSinConfirmar
     case duplicado(uuid: UUID)
+    case absorcionFueraDeRango(minutos: Int)
+    case porcionesNoPositivas
+    case unidadesNoPositivas
+    case unidadesFueraDeResolucion(valor: Double)
+    /// Por debajo de `edadMinima` el proyecto no tiene consentimiento ni validación que lo
+    /// respalde.
+    case edadInsuficiente
+    /// Sin consentimiento expreso no se guarda ningún dato de salud (LFPDPPP).
+    case sinConsentimiento
+    case perfilNoValido(CampoDePerfil)
+}
+
+/// A qué campo del perfil hay que llevar a la persona para que corrija.
+nonisolated enum CampoDePerfil: Equatable, Sendable {
+    case nombre, apellidos, anioNacimiento, peso, umbralHipo, umbralHiper
+    case tipoInsulina, duracionAccion, absorcion
 }
 
 /// Validación de lo que entra al teléfono. El backend la repite en la fase 2: un servidor
@@ -38,6 +54,112 @@ nonisolated enum Validacion {
         // decisión de modo.
         if tsUtc > ahora {
             return .marcaDeTiempoFutura
+        }
+        return nil
+    }
+
+    /// Devuelve `nil` si la comida se puede guardar, o el motivo del rechazo.
+    ///
+    /// - Parameter carbsG: los gramos totales, ya multiplicados por las porciones.
+    static func validarComida(
+        carbsG: Double,
+        tiempoAbsorcionMin: Int,
+        porciones: Double,
+        tsUtc: Date,
+        ahora: Date
+    ) -> Rechazo? {
+        guard (ConfiguracionDominio.carbsMinimos...ConfiguracionDominio.carbsMaximos)
+            .contains(carbsG) else {
+            return .fueraDeRango(valor: carbsG)
+        }
+        guard ConfiguracionDominio.absorcionConfigurableMin.contains(tiempoAbsorcionMin) else {
+            return .absorcionFueraDeRango(minutos: tiempoAbsorcionMin)
+        }
+        guard porciones > 0 else {
+            return .porcionesNoPositivas
+        }
+        // Una comida futura llegaría a `Carbohidratos.cob` con minutos negativos. Ahí el
+        // Swift devuelve los carbohidratos completos y `referencia/reglas_clinicas.py`
+        // lanza: la divergencia sigue existiendo, pero rechazando aquí la hora futura el
+        // caso ya no puede llegar al COB desde la app.
+        if tsUtc > ahora {
+            return .marcaDeTiempoFutura
+        }
+        return nil
+    }
+
+    /// Devuelve `nil` si la dosis se puede guardar, o el motivo del rechazo.
+    ///
+    /// Revisa que lo anotado sea una dosis posible de anotar, nada más: no opina sobre si
+    /// la cantidad es la adecuada (regla 7).
+    static func validarDosis(
+        unidades: Double,
+        tsUtc: Date,
+        ahora: Date
+    ) -> Rechazo? {
+        // Cero unidades no es una dosis: es un campo sin llenar.
+        guard unidades > ConfiguracionDominio.insulinaMinima else {
+            return .unidadesNoPositivas
+        }
+        guard unidades <= ConfiguracionDominio.insulinaMaxima else {
+            return .fueraDeRango(valor: unidades)
+        }
+        guard unidades.truncatingRemainder(dividingBy: ConfiguracionDominio.insulinaResolucionUI)
+            == 0 else {
+            return .unidadesFueraDeResolucion(valor: unidades)
+        }
+        // Una dosis futura llegaría a `Insulina.fraccionActiva` con minutos negativos y
+        // contaría entera como insulina activa antes de haberse aplicado.
+        if tsUtc > ahora {
+            return .marcaDeTiempoFutura
+        }
+        return nil
+    }
+
+    /// Devuelve `nil` si el perfil se puede guardar, o el primer motivo del rechazo.
+    ///
+    /// Es la misma revisión en el alta y en Ajustes: lo que no se puede dar de alta tampoco
+    /// se puede dejar así después (formulario F-1).
+    static func validarPerfil(
+        nombre: String,
+        apellidos: String,
+        anioNacimiento: Int,
+        pesoKg: Double?,
+        umbralHipo: Double,
+        umbralHiper: Double,
+        tipoInsulinaRapida: String?,
+        duracionAccionH: Double,
+        tiempoAbsorcionMin: Int,
+        ahora: Date
+    ) -> Rechazo? {
+        guard ReglasDePerfil.esNombreValido(nombre, maximo: ConfiguracionDominio.nombreMaximo) else {
+            return .perfilNoValido(.nombre)
+        }
+        guard ReglasDePerfil.esNombreValido(apellidos, maximo: ConfiguracionDominio.apellidosMaximo) else {
+            return .perfilNoValido(.apellidos)
+        }
+        if let rechazo = ReglasDePerfil.validarAnio(anioNacimiento, ahora: ahora) {
+            return rechazo
+        }
+        if let pesoKg,
+           !(ConfiguracionDominio.pesoMinimoKg...ConfiguracionDominio.pesoMaximoKg).contains(pesoKg) {
+            return .perfilNoValido(.peso)
+        }
+        guard ConfiguracionDominio.umbralHipoConfigurable.contains(umbralHipo) else {
+            return .perfilNoValido(.umbralHipo)
+        }
+        guard ConfiguracionDominio.umbralHiperConfigurable.contains(umbralHiper) else {
+            return .perfilNoValido(.umbralHiper)
+        }
+        if let tipoInsulinaRapida,
+           tipoInsulinaRapida.count > ConfiguracionDominio.tipoInsulinaMaximo {
+            return .perfilNoValido(.tipoInsulina)
+        }
+        guard ConfiguracionDominio.duracionAccionConfigurableH.contains(duracionAccionH) else {
+            return .perfilNoValido(.duracionAccion)
+        }
+        guard ConfiguracionDominio.absorcionConfigurableMin.contains(tiempoAbsorcionMin) else {
+            return .perfilNoValido(.absorcion)
         }
         return nil
     }

@@ -25,6 +25,16 @@ nonisolated struct PerfilDato: Sendable, Equatable, Identifiable {
     let tiempoAbsorcionPorOmisionMin: Int
     let duracionAccionInsulinaH: Double
     let usaSensor: Bool
+    /// RF-14: quien no se aplica insulina puede ocultar su registro.
+    let registraInsulina: Bool
+    /// Cuándo aceptó, en UTC. `nil` es que no ha aceptado, y sin eso la app no entra.
+    let consentimientoTsUtc: Date?
+    /// Solo cambia cómo se muestran las cifras; adentro todo es mg/dL.
+    let unidadPreferida: UnidadGlucosa
+    /// Texto libre. `nil` en quien no se aplica insulina.
+    let tipoInsulinaRapida: String?
+    let sincronizacionActiva: Bool
+    let bloqueoBiometrico: Bool
     let creadoTsUtc: Date
     let actualizadoTsUtc: Date
     /// Identificador de `TimeZone` (regla 5).
@@ -43,6 +53,12 @@ nonisolated struct PerfilDato: Sendable, Equatable, Identifiable {
         tiempoAbsorcionPorOmisionMin: Int = ConfiguracionDominio.absorcionPorOmisionMin,
         duracionAccionInsulinaH: Double = ConfiguracionDominio.duracionAccionPorOmisionH,
         usaSensor: Bool = false,
+        registraInsulina: Bool = true,
+        consentimientoTsUtc: Date? = nil,
+        unidadPreferida: UnidadGlucosa = .mgDl,
+        tipoInsulinaRapida: String? = nil,
+        sincronizacionActiva: Bool = false,
+        bloqueoBiometrico: Bool = false,
         creadoTsUtc: Date = Date(),
         actualizadoTsUtc: Date = Date(),
         zonaHoraria: String = TimeZone.current.identifier,
@@ -59,6 +75,12 @@ nonisolated struct PerfilDato: Sendable, Equatable, Identifiable {
         self.tiempoAbsorcionPorOmisionMin = tiempoAbsorcionPorOmisionMin
         self.duracionAccionInsulinaH = duracionAccionInsulinaH
         self.usaSensor = usaSensor
+        self.registraInsulina = registraInsulina
+        self.consentimientoTsUtc = consentimientoTsUtc
+        self.unidadPreferida = unidadPreferida
+        self.tipoInsulinaRapida = tipoInsulinaRapida
+        self.sincronizacionActiva = sincronizacionActiva
+        self.bloqueoBiometrico = bloqueoBiometrico
         self.creadoTsUtc = creadoTsUtc
         self.actualizadoTsUtc = actualizadoTsUtc
         self.zonaHoraria = zonaHoraria

@@ -33,6 +33,12 @@ actor PerfilSwiftData: RepositorioPerfil {
             existente.tiempoAbsorcionPorOmisionMin = dato.tiempoAbsorcionPorOmisionMin
             existente.duracionAccionInsulinaH = dato.duracionAccionInsulinaH
             existente.usaSensor = dato.usaSensor
+            existente.registraInsulina = dato.registraInsulina
+            existente.consentimientoTsUtc = dato.consentimientoTsUtc
+            existente.unidadPreferida = dato.unidadPreferida
+            existente.tipoInsulinaRapida = dato.tipoInsulinaRapida
+            existente.sincronizacionActiva = dato.sincronizacionActiva
+            existente.bloqueoBiometrico = dato.bloqueoBiometrico
             existente.actualizadoTsUtc = dato.actualizadoTsUtc
             existente.zonaHoraria = dato.zonaHoraria
             existente.syncEstado = .local
@@ -48,5 +54,10 @@ actor PerfilSwiftData: RepositorioPerfil {
 
     func existe() throws -> Bool {
         try modelContext.fetchCount(FetchDescriptor<Perfil>()) > 0
+    }
+
+    func eliminarTodo() throws {
+        try modelContext.delete(model: Perfil.self)
+        try modelContext.save()
     }
 }

@@ -1,5 +1,17 @@
 import Foundation
 
+/// El estado del sensor que Inicio dibuja. Distinto del modo: «no tengo sensor» y «mi sensor
+/// no escribe desde las 8:05» no son lo mismo, y solo la segunda tiene algo que hacer.
+nonisolated enum EstadoDelSensor: Sendable, Equatable {
+    /// El perfil no usa sensor. No hay nada que avisar: quien no tiene sensor no tiene un
+    /// sensor roto.
+    case noConfigurado
+    case alDia
+    /// Con sensor configurado y la última lectura más vieja que la frescura. `desde` es
+    /// `nil` cuando todavía no ha llegado ninguna.
+    case sinDatos(desde: Date?)
+}
+
 /// La regla que evita predecir con datos rancios (RF-06c).
 nonisolated enum DecisionModo {
 
@@ -21,6 +33,25 @@ nonisolated enum DecisionModo {
         guard lecturaHealthKitActiva, let tsUltimaSensor else { return .sinSensor }
         let antiguedadMin = ahora.timeIntervalSince(tsUltimaSensor) / 60
         return antiguedadMin <= frescuraMin ? .sensor : .sinSensor
+    }
+
+    /// Si el sensor que la persona dijo tener está escribiendo.
+    ///
+    /// El umbral es `frescuraSensorMin`, **el mismo** que decide el modo: dos números para
+    /// la misma idea terminan divergiendo.
+    ///
+    /// - Parameter tsUltimaDelSensor: la última lectura que entró por Salud. Un pinchazo
+    ///   reciente no cuenta: no prueba que el sensor escriba.
+    static func estadoDelSensor(
+        usaSensor: Bool,
+        tsUltimaDelSensor: Date?,
+        ahora: Date,
+        frescuraMin: Double = ConfiguracionDominio.frescuraSensorMin
+    ) -> EstadoDelSensor {
+        guard usaSensor else { return .noConfigurado }
+        guard let tsUltimaDelSensor else { return .sinDatos(desde: nil) }
+        let antiguedadMin = ahora.timeIntervalSince(tsUltimaDelSensor) / 60
+        return antiguedadMin <= frescuraMin ? .alDia : .sinDatos(desde: tsUltimaDelSensor)
     }
 
     /// En modo sin sensor la app **no** puede anticipar hipoglucemias y tiene que decirlo

@@ -85,3 +85,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Lo que deja scripts/pruebas-en-el-iphone.sh: resultados y capturas del teléfono.
+salida/
