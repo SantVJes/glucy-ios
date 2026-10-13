@@ -78,8 +78,15 @@ final class AccesibilidadUITests: XCTestCase {
              "tipoUsuario_resistencia_insulina", "campoAnioNacimiento"],
             en: app, pantalla: "Alta, paso 2"
         )
+        // Con esta letra el campo puede quedar pegado a la barra de «Continuar»: si el toque
+        // no abre el teclado, se sube un poco y se vuelve a tocar, como haría una persona.
         let campoAnio = app.textFields["campoAnioNacimiento"]
-        campoAnio.tap()
+        for _ in 0..<4 {
+            campoAnio.tap()
+            if app.keyboards.firstMatch.waitForExistence(timeout: 2) { break }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(app.keyboards.firstMatch.exists, "Alta, paso 2: el campo del año no abre el teclado")
         campoAnio.typeText("1960")
         // Con el año ya puesto, se elige el tipo: tocarlo baja el teclado.
         app.swipeDown(velocity: .slow)
