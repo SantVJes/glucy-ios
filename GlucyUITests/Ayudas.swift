@@ -19,41 +19,53 @@ extension XCUIApplication {
         return app
     }
 
+    /// Toca `boton` y espera a que aparezca `siguiente`. Si no aparece, vuelve a tocar.
+    ///
+    /// En un teléfono de verdad, un toque sintetizado mientras la pantalla todavía se está
+    /// moviendo —el splash que se desvanece, el teclado que baja, la pestaña que cambia— a
+    /// veces no llega. Una persona volvería a tocar; la prueba también.
+    func tocar(
+        _ boton: XCUIElement, hastaVer siguiente: XCUIElement, _ mensaje: String,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
+        for _ in 0..<3 {
+            if boton.exists, boton.isHittable, boton.isEnabled { boton.tap() }
+            if siguiente.waitForExistence(timeout: 6) { return }
+        }
+        XCTFail(mensaje, file: file, line: line)
+    }
+
     /// Recorre los cinco pasos del alta eligiendo «Me mido con glucómetro».
     func completarAltaSinSensor(tipo: String = "tipoUsuario_tipo1", anio: String = "1990") {
         // Paso 1: el nombre y los apellidos se dejan en blanco, que son opcionales.
         let paso1 = buttons["botonContinuarPaso1"]
         XCTAssertTrue(paso1.waitForExistence(timeout: 15), "No apareció el alta")
-        paso1.tap()
+        let opcion = buttons[tipo]
+        tocar(paso1, hastaVer: opcion, "No apareció la opción \(tipo)")
 
         // Paso 2: tipo de usuario y año de nacimiento.
-        let opcion = buttons[tipo]
-        XCTAssertTrue(opcion.waitForExistence(timeout: 5), "No apareció la opción \(tipo)")
         opcion.tap()
         let campoAnio = textFields["campoAnioNacimiento"]
         campoAnio.tap()
         campoAnio.typeText(anio)
-        buttons["botonContinuarPaso2"].tap()
+        let paso2 = buttons["botonContinuarPaso2"]
+        XCTAssertTrue(
+            paso2.wait(for: \.isEnabled, toEqual: true, timeout: 5),
+            "Con el tipo y el año puestos no se pudo continuar"
+        )
+        let sinSensor = buttons["tarjetaSinSensor"]
+        tocar(paso2, hastaVer: sinSensor, "No aparecieron las tarjetas de sensor")
 
         // Paso 3: sin sensor. No pide nada.
-        let sinSensor = buttons["tarjetaSinSensor"]
-        XCTAssertTrue(sinSensor.waitForExistence(timeout: 5), "No aparecieron las tarjetas de sensor")
         sinSensor.tap()
-        buttons["botonContinuarPaso3"].tap()
+        let paso4 = buttons["botonContinuarPaso4"]
+        tocar(buttons["botonContinuarPaso3"], hastaVer: paso4, "No apareció el paso de parámetros")
 
         // Paso 4: todo trae su valor por omisión.
-        let paso4 = buttons["botonContinuarPaso4"]
-        XCTAssertTrue(paso4.waitForExistence(timeout: 5), "No apareció el paso de parámetros")
-        paso4.tap()
+        let acepto = buttons["botonAcepto"]
+        tocar(paso4, hastaVer: acepto, "No apareció el consentimiento")
 
         // Paso 5: el consentimiento.
-        let acepto = buttons["botonAcepto"]
-        XCTAssertTrue(acepto.waitForExistence(timeout: 5), "No apareció el consentimiento")
-        acepto.tap()
-
-        XCTAssertTrue(
-            tabBars.buttons["Inicio"].waitForExistence(timeout: 10),
-            "El alta no llevó a las pestañas"
-        )
+        tocar(acepto, hastaVer: tabBars.buttons["Inicio"], "El alta no llevó a las pestañas")
     }
 }
