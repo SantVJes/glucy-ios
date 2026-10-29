@@ -13,7 +13,7 @@ nonisolated struct ResumenSincronizacion: Sendable, Equatable {
     /// Lo que sigue esperando turno al terminar.
     var pendientes = 0
     /// Filas de la cola cuyo tipo todavía no tiene endpoint en el servidor (C-10, C-11).
-    /// Se quedan pendientes a propósito; no se marcan como error porque no fallaron.
+    /// Se marcan con su motivo, no se dejan pendientes: ver `sinEndpoint`.
     var sinDestino = 0
     /// Filas cuyo registro ya no existe en el teléfono: se sacaron de la cola.
     var huerfanas = 0

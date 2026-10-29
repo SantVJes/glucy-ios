@@ -22,7 +22,7 @@ nonisolated protocol EstadoDeRed: Sendable {
 /// ventana: entre que el monitor dice «wifi» y que el lote sale pueden pasar segundos y
 /// cambiar la red. Eso no se puede evitar y no hace daño: el lote fallaría y se quedaría en
 /// la cola, que es exactamente lo que tenía que pasar.
-final class MonitorDeRed: EstadoDeRed, @unchecked Sendable {
+nonisolated final class MonitorDeRed: EstadoDeRed, @unchecked Sendable {
     private let monitor = NWPathMonitor(requiredInterfaceType: .wifi)
     private let cola = DispatchQueue(label: "mx.glucy.red")
     /// Lo protege `candado`; de ahí el `@unchecked Sendable`.

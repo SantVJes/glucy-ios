@@ -56,7 +56,7 @@ struct SincronizarConBackendTests {
         let repoDosis = RepositorioDosisFalso()
 
         for (indice, dato) in lista.enumerated() {
-            try? await repoLecturas.guardar(dato)
+            _ = try? await repoLecturas.guardar(dato)
             _ = await cola.sembrar(
                 tipo: TipoRegistro.lecturaGlucosa,
                 uuidRegistro: dato.uuid,
@@ -64,11 +64,11 @@ struct SincronizarConBackendTests {
             )
         }
         for dato in listaComidas {
-            try? await repoComidas.guardar(dato)
+            _ = try? await repoComidas.guardar(dato)
             _ = await cola.sembrar(tipo: TipoRegistro.comida, uuidRegistro: dato.uuid)
         }
         for dato in listaDosis {
-            try? await repoDosis.guardar(dato)
+            _ = try? await repoDosis.guardar(dato)
             _ = await cola.sembrar(tipo: TipoRegistro.dosisInsulina, uuidRegistro: dato.uuid)
         }
 
@@ -343,7 +343,7 @@ struct SincronizarConBackendTests {
             creado: ahora.addingTimeInterval(-3600)
         )
         let repoLecturas = RepositorioLecturasFalso()
-        try? await repoLecturas.guardar(dato)
+        _ = try? await repoLecturas.guardar(dato)
         _ = await cola.sembrar(tipo: TipoRegistro.lecturaGlucosa, uuidRegistro: dato.uuid)
 
         let cliente = BackendFalso()

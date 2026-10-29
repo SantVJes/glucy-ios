@@ -221,7 +221,10 @@ final class AjustesViewModel {
     }
 
     /// De tú, sin tecnicismos y sin número de error. Lo técnico ya quedó en la cola.
-    static func mensaje(de motivo: ErrorBackend, subidos: Int) -> String {
+    ///
+    /// `nonisolated` porque es una función de sus dos argumentos y de nada más: atarla al
+    /// actor principal obligaría a cada prueba del texto a entrar en él sin razón.
+    nonisolated static func mensaje(de motivo: ErrorBackend, subidos: Int) -> String {
         let llevados = subidos > 0 ? "Se subieron \(subidos) registros antes. " : ""
         switch motivo {
         case .sinRed:
