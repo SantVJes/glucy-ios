@@ -22,6 +22,7 @@ struct AjustesView: View {
         candado: any Candado,
         cuantoHay: ConsultarCuantoHay,
         borrarTodo: BorrarTodo,
+        subirAlBackend: SincronizarConBackend? = nil,
         alBorrarCuenta: @escaping () -> Void
     ) {
         self.cuantoHay = cuantoHay
@@ -29,7 +30,7 @@ struct AjustesView: View {
         self.alBorrarCuenta = alBorrarCuenta
         _modelo = State(initialValue: AjustesViewModel(
             guardar: guardar, pendientes: pendientes, completarAlta: completarAlta,
-            sincronizar: sincronizar, candado: candado
+            sincronizar: sincronizar, candado: candado, subirAlBackend: subirAlBackend
         ))
     }
 
@@ -269,8 +270,39 @@ struct AjustesView: View {
                 .foregroundStyle(Tema.Colores.textoPrincipal)
                 .accessibilityIdentifier("pendientesEnCola")
 
-            pie("Todavía no hay servidor: aunque enciendas la sincronización, por ahora nada sale "
-                + "de tu teléfono. Los registros esperan en la cola.")
+            if let errores = modelo.textoErrores {
+                // Lleva icono además del color: el color nunca es el único portador.
+                Label(errores, systemImage: "exclamationmark.triangle.fill")
+                    .font(Tema.Tipografia.etiqueta)
+                    .foregroundStyle(Tema.Colores.alertaAmbar)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("erroresEnCola")
+            }
+
+            if modelo.hayBackend {
+                if ajustes.sincronizacionActiva {
+                    // El único camino que sube con datos móviles (caso P-08).
+                    BotonPrincipal(
+                        titulo: "Sincronizar ahora",
+                        ocupado: modelo.ocupado,
+                        identificador: "botonSincronizarAhora"
+                    ) {
+                        Task { await modelo.sincronizarAhora() }
+                    }
+                }
+                if let resultado = modelo.textoUltimaVentana {
+                    Text(resultado)
+                        .font(Tema.Tipografia.etiqueta)
+                        .foregroundStyle(Tema.Colores.textoSecundario)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("resultadoSincronizacion")
+                }
+                pie("«Sincronizar ahora» es lo único que usa tus datos móviles, y solo cuando "
+                    + "tú lo tocas. Lo demás espera a que haya wifi.")
+            } else {
+                pie("Esta versión de la app no trae servidor configurado: aunque enciendas la "
+                    + "sincronización, nada sale de tu teléfono. Los registros esperan en la cola.")
+            }
         }
     }
 

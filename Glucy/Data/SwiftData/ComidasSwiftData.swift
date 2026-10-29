@@ -42,6 +42,17 @@ actor ComidasSwiftData: RepositorioComidas {
         try modelContext.fetchCount(FetchDescriptor<Comida>())
     }
 
+    func marcarSync(uuids: [UUID], estado: SyncEstado) throws {
+        guard !uuids.isEmpty else { return }
+        // Se filtra en memoria: comparar contra una colección dentro de un `#Predicate`
+        // compila pero falla en ejecución en más de una versión de SwiftData.
+        let porMarcar = Set(uuids)
+        let filas = try modelContext.fetch(FetchDescriptor<Comida>())
+            .filter { porMarcar.contains($0.uuid) }
+        for fila in filas { fila.syncEstado = estado }
+        try modelContext.save()
+    }
+
     func eliminar(uuid: UUID) throws {
         var descriptor = FetchDescriptor<Comida>(predicate: #Predicate { $0.uuid == uuid })
         descriptor.fetchLimit = 1

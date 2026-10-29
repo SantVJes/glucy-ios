@@ -46,4 +46,10 @@ actor RepositorioDosisFalso: RepositorioDosis {
     func eliminarTodo() async throws {
         guardadas.removeAll()
     }
+
+    private(set) var marcadasSync: [UUID: SyncEstado] = [:]
+
+    func marcarSync(uuids: [UUID], estado: SyncEstado) async throws {
+        for uuid in uuids { marcadasSync[uuid] = estado }
+    }
 }

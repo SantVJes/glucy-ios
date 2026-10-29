@@ -33,6 +33,13 @@ nonisolated protocol RepositorioLecturas: Sendable {
 
     func contar() async throws -> Int
 
+    /// Anota en qué estado quedó cada registro frente al backend.
+    ///
+    /// La cola dice qué falta subir; esto deja el rastro **en el registro**, que es lo que
+    /// sobrevive cuando su fila de la cola se borra, y lo que permite ver en el informe qué
+    /// se subió y qué no.
+    func marcarSync(uuids: [UUID], estado: SyncEstado) async throws
+
     /// Borra la lectura y, con ella, su fila de la cola.
     ///
     /// Existe por el «Deshacer» de la pantalla de registro: una lectura borrada que dejara

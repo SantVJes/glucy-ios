@@ -14,6 +14,13 @@ nonisolated protocol RepositorioDosis: Sendable {
 
     func contar() async throws -> Int
 
+    /// Anota en qué estado quedó cada registro frente al backend.
+    ///
+    /// La cola dice qué falta subir; esto deja el rastro **en el registro**, que es lo que
+    /// sobrevive cuando su fila de la cola se borra, y lo que permite ver en el informe qué
+    /// se subió y qué no.
+    func marcarSync(uuids: [UUID], estado: SyncEstado) async throws
+
     /// Para el «Deshacer» de la franja de confirmación. Se lleva también la fila de la
     /// cola: si se quedara, el backend recibiría una dosis que en el teléfono ya no existe.
     func eliminar(uuid: UUID) async throws

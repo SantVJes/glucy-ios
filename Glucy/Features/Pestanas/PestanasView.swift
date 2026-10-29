@@ -47,6 +47,7 @@ struct PestanasView: View {
                 candado: dependencias.candado,
                 cuantoHay: dependencias.consultarCuantoHay,
                 borrarTodo: dependencias.borrarTodo,
+                subirAlBackend: dependencias.subirAlBackend,
                 alBorrarCuenta: alBorrarCuenta
             )
             .tabItem { Label("Ajustes", systemImage: "gearshape") }
