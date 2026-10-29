@@ -118,4 +118,28 @@ struct BorrarTodoTests {
         #expect(await modelo.borrar())
         #expect(try await dependencias.consultarCuantoHay.ejecutar() == CuantoHay(lecturas: 0, comidas: 0, dosis: 0))
     }
+
+    /// El token es una credencial para una serie que en el servidor sigue existiendo:
+    /// dejarlo en el Keychain de un teléfono que ya no tiene la cuenta es dejar la llave
+    /// puesta.
+    @Test("Borrar la cuenta también borra el token del backend")
+    func borrarTambienBorraElToken() async throws {
+        let almacen = AlmacenFalso(token: "un.token.cualquiera")
+        let salud = HealthKitFalso()
+        let (dependencias, _) = try await appConDatos(salud: salud)
+        let borrar = BorrarTodo(
+            perfil: dependencias.perfil,
+            lecturas: dependencias.lecturas,
+            comidas: dependencias.comidas,
+            dosis: dependencias.dosis,
+            cola: dependencias.cola,
+            productos: dependencias.productos,
+            salud: salud,
+            almacenDeToken: almacen
+        )
+
+        #expect(almacen.token() != nil)
+        _ = try await borrar.ejecutar()
+        #expect(almacen.token() == nil)
+    }
 }

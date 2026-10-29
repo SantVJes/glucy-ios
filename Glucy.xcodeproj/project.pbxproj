@@ -375,6 +375,7 @@
 				DEVELOPMENT_TEAM = 428L48JNT7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_GlucyBackendURL = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Glucy usa la cámara para leer el número de tu glucómetro, el código de barras de un producto y su tabla nutrimental. Las fotos se procesan en tu teléfono y no se guardan ni se suben.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Glucy puede pedirte Face ID para abrir la app, para que tu historial de glucosa no quede a la vista de quien tome tu teléfono desbloqueado.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Glucy lee tu glucosa de Salud para mostrarte tu curva y anticipar bajadas. Nada de esto sale de tu teléfono.\n";
@@ -413,6 +414,7 @@
 				DEVELOPMENT_TEAM = 428L48JNT7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_GlucyBackendURL = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Glucy usa la cámara para leer el número de tu glucómetro, el código de barras de un producto y su tabla nutrimental. Las fotos se procesan en tu teléfono y no se guardan ni se suben.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Glucy puede pedirte Face ID para abrir la app, para que tu historial de glucosa no quede a la vista de quien tome tu teléfono desbloqueado.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Glucy lee tu glucosa de Salud para mostrarte tu curva y anticipar bajadas. Nada de esto sale de tu teléfono.\n";

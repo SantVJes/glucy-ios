@@ -11,6 +11,12 @@ final class AjustesViewModel {
     private(set) var ajustes: AjustesEditables?
     /// `nil` si la cola no se pudo leer: no se enseña un cero que nadie contó.
     private(set) var pendientesEnCola: Int?
+    /// Lo que quedó rechazado por el servidor, con su motivo guardado. Un dato rechazado sin
+    /// rastro es una falla invisible (RF-22).
+    private(set) var erroresEnCola: Int?
+    /// Lo que pasó en la última vez que se tocó «sincronizar ahora». `nil` si no se ha
+    /// tocado en esta sesión.
+    private(set) var ultimaVentana: ResumenSincronizacion?
     private(set) var fallo: String?
     /// Se intentó encender el sensor y no se pudo pedir el permiso. No es un error.
     private(set) var seguimosSinSensor = false
@@ -28,23 +34,31 @@ final class AjustesViewModel {
     private let completarAlta: CompletarAlta
     private let sincronizar: SincronizarLecturasDelSensor
     private let candado: any Candado
+    /// `nil` cuando la app se armó sin dirección de backend: entonces el botón no está, en
+    /// lugar de estar y no hacer nada.
+    private let subirAlBackend: SincronizarConBackend?
 
     init(
         guardar: GuardarAjustes,
         pendientes: ConsultarColaPendiente,
         completarAlta: CompletarAlta,
         sincronizar: SincronizarLecturasDelSensor,
-        candado: any Candado
+        candado: any Candado,
+        subirAlBackend: SincronizarConBackend? = nil
     ) {
         self.guardar = guardar
         self.pendientes = pendientes
         self.completarAlta = completarAlta
         self.sincronizar = sincronizar
         self.candado = candado
+        self.subirAlBackend = subirAlBackend
     }
+
+    var hayBackend: Bool { subirAlBackend != nil }
 
     func cargar() async {
         pendientesEnCola = await pendientes.ejecutar()
+        erroresEnCola = await pendientes.conError()
         guard let actuales = try? await guardar.actuales() else { return }
         ajustes = actuales
         ponerTextos(de: actuales)
@@ -172,6 +186,66 @@ final class AjustesViewModel {
         case ConfiguracionDominio.absorcionLentaMin: "Lenta · \(minutos) min"
         default: "Normal · \(minutos) min"
         }
+    }
+
+    // MARK: - Sincronización
+
+    /// «Sincronizar ahora». Es lo único que sube con datos móviles (caso P-08): una ventana
+    /// automática solo ocurre con wifi.
+    func sincronizarAhora() async {
+        guard let subirAlBackend else { return }
+        ocupado = true
+        defer { ocupado = false }
+        ultimaVentana = await subirAlBackend.ejecutar(forzadoPorUsuario: true)
+        await cargar()
+    }
+
+    /// Qué decir después de una ventana. Lleva números, no un «listo»: un «listo» no
+    /// distingue «no había nada que subir» de «no se pudo subir nada».
+    var textoUltimaVentana: String? {
+        guard let ultimaVentana else { return nil }
+        if let motivo = ultimaVentana.motivo {
+            return Self.mensaje(de: motivo, subidos: ultimaVentana.subidos)
+        }
+        if ultimaVentana.subidos == 0 && ultimaVentana.enCuarentena == 0 {
+            return "No había nada nuevo que subir."
+        }
+        var partes = ["Se subieron \(ultimaVentana.subidos) registros."]
+        if ultimaVentana.enCuarentena > 0 {
+            partes.append(
+                "\(ultimaVentana.enCuarentena) no se pudieron guardar en el servidor; "
+                    + "siguen en tu teléfono."
+            )
+        }
+        return partes.joined(separator: " ")
+    }
+
+    /// De tú, sin tecnicismos y sin número de error. Lo técnico ya quedó en la cola.
+    ///
+    /// `nonisolated` porque es una función de sus dos argumentos y de nada más: atarla al
+    /// actor principal obligaría a cada prueba del texto a entrar en él sin razón.
+    nonisolated static func mensaje(de motivo: ErrorBackend, subidos: Int) -> String {
+        let llevados = subidos > 0 ? "Se subieron \(subidos) registros antes. " : ""
+        switch motivo {
+        case .sinRed:
+            return llevados + "No hay conexión ahora mismo. Tus registros esperan en el teléfono."
+        case .servidorFallo, .respuestaIlegible:
+            return llevados + "El servidor no respondió bien. Tus registros esperan en el teléfono."
+        case .tokenRechazado:
+            return llevados + "Tu sesión con el servidor caducó. Vuelve a entrar para sincronizar."
+        case .sobreInvalido:
+            return llevados
+                + "El servidor no aceptó algunos registros. Siguen guardados en tu teléfono."
+        case .sinConfiguracion:
+            return "Todavía no hay servidor configurado en esta versión de la app."
+        }
+    }
+
+    var textoErrores: String? {
+        guard let erroresEnCola, erroresEnCola > 0 else { return nil }
+        return erroresEnCola == 1
+            ? "1 registro quedó sin subir y no se volverá a intentar solo."
+            : "\(erroresEnCola) registros quedaron sin subir y no se volverán a intentar solos."
     }
 
     var textoPendientes: String {

@@ -27,6 +27,17 @@ final class ContenedorDependencias {
     /// La biometría, detrás de su protocolo. Nadie fuera de `Data/Seguridad/` sabe que
     /// existe LocalAuthentication.
     let candado: any Candado
+    /// Dónde vive el backend, si vive en algún lado. Sin dirección la app funciona completa
+    /// y la cola simplemente no se vacía (regla 1).
+    let configuracionBackend: ConfiguracionBackend
+    /// El backend detrás de su protocolo, o `nil` si no hay dirección configurada.
+    let backend: (any ClienteBackend)?
+    /// El estado de la red, detrás de su protocolo. Nadie fuera de `Data/Sync/` sabe que
+    /// existe `NWPathMonitor`.
+    let red: any EstadoDeRed
+    /// Donde vive el token del backend. En el contenedor porque el borrado de la cuenta
+    /// también tiene que vaciarlo.
+    let almacenDeToken: any AlmacenDeToken
 
     init(
         contenedor: ModelContainer,
@@ -34,9 +45,25 @@ final class ContenedorDependencias {
         ancla: AnclaHealthKit = AnclaHealthKit(),
         ocr: any ServicioOCR = VisionOCR(),
         servicioProductos: any ServicioProductos = OpenFoodFactsHTTP(),
-        candado: any Candado = CandadoBiometrico()
+        candado: any Candado = CandadoBiometrico(),
+        configuracionBackend: ConfiguracionBackend = .desdeBundle(),
+        backend: (any ClienteBackend)? = nil,
+        red: any EstadoDeRed = MonitorDeRed(),
+        almacenDeToken: any AlmacenDeToken = Llavero()
     ) {
         self.candado = candado
+        self.configuracionBackend = configuracionBackend
+        self.red = red
+        self.almacenDeToken = almacenDeToken
+        // El monitor de red se arma siempre, porque la pantalla de Ajustes pregunta por el
+        // wifi aunque no haya servidor. El cliente, solo si hay a dónde hablar.
+        if let backend {
+            self.backend = backend
+        } else if configuracionBackend.estaConfigurado {
+            self.backend = GlucyHTTP(configuracion: configuracionBackend, almacen: almacenDeToken)
+        } else {
+            self.backend = nil
+        }
         perfil = PerfilSwiftData(modelContainer: contenedor)
         let lecturas = LecturasSwiftData(modelContainer: contenedor)
         self.lecturas = lecturas
@@ -132,6 +159,22 @@ final class ContenedorDependencias {
         ConsultarColaPendiente(cola: cola)
     }
 
+    /// Vaciar la cola hacia el backend. `nil` cuando no hay dirección configurada: así la
+    /// pantalla no enseña un botón que no haría nada.
+    var subirAlBackend: SincronizarConBackend? {
+        guard let backend else { return nil }
+        return SincronizarConBackend(
+            cola: cola,
+            lecturas: lecturas,
+            comidas: comidas,
+            dosis: dosis,
+            perfil: perfil,
+            cliente: backend,
+            red: red,
+            renglonesPorLote: configuracionBackend.renglonesPorLote
+        )
+    }
+
     var consultarCuantoHay: ConsultarCuantoHay {
         ConsultarCuantoHay(lecturas: lecturas, comidas: comidas, dosis: dosis)
     }
@@ -140,7 +183,7 @@ final class ContenedorDependencias {
     var borrarTodo: BorrarTodo {
         BorrarTodo(
             perfil: perfil, lecturas: lecturas, comidas: comidas, dosis: dosis, cola: cola,
-            productos: productos, salud: salud, ancla: ancla
+            productos: productos, salud: salud, ancla: ancla, almacenDeToken: almacenDeToken
         )
     }
 

@@ -54,6 +54,20 @@ actor ColaSwiftData: RepositorioCola {
         return try modelContext.fetch(descriptor).filter { $0.estado == .pendiente }.count
     }
 
+    func confirmar(uuids: [UUID]) throws {
+        guard !uuids.isEmpty else { return }
+        let porBorrar = Set(uuids)
+        let filas = try modelContext.fetch(FetchDescriptor<ColaSincronizacion>())
+            .filter { porBorrar.contains($0.uuid) }
+        for fila in filas { modelContext.delete(fila) }
+        try modelContext.save()
+    }
+
+    func contarConError() throws -> Int {
+        let descriptor = FetchDescriptor<ColaSincronizacion>()
+        return try modelContext.fetch(descriptor).filter { $0.estado == .error }.count
+    }
+
     func eliminarTodo() throws {
         try modelContext.delete(model: ColaSincronizacion.self)
         // La otra cola, la de las sentencias de aprendizaje, también es de la persona.

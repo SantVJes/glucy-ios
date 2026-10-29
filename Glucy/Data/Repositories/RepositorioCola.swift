@@ -24,6 +24,20 @@ nonisolated protocol RepositorioCola: Sendable {
 
     func contarPendientes() async throws -> Int
 
+    /// Saca de la cola las filas ya resueltas: el servidor las aceptó, o eran duplicados, o
+    /// su registro ya no existe en el teléfono.
+    ///
+    /// Se **borran** en lugar de quedarse en `confirmado`. La cola es una cola, no una
+    /// bitácora: ocho semanas de sensor son miles de filas, y dejarlas haría cada vez más
+    /// lento leer las pendientes. El rastro durable es el `syncEstado` del registro mismo.
+    ///
+    /// - Parameter uuids: los de **las filas de la cola**, no los de los registros.
+    func confirmar(uuids: [UUID]) async throws
+
+    /// Cuántas filas quedaron en error. Es el otro número de la pantalla de Ajustes: un dato
+    /// rechazado sin rastro es una falla invisible (RF-22).
+    func contarConError() async throws -> Int
+
     /// Vacía la cola. Solo lo llama el borrado de la cuenta: lo que esperaba turno para
     /// subir ya no existe en el teléfono.
     func eliminarTodo() async throws

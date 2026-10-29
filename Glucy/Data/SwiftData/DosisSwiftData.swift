@@ -40,6 +40,17 @@ actor DosisSwiftData: RepositorioDosis {
         try modelContext.fetchCount(FetchDescriptor<DosisInsulina>())
     }
 
+    func marcarSync(uuids: [UUID], estado: SyncEstado) throws {
+        guard !uuids.isEmpty else { return }
+        // Se filtra en memoria: comparar contra una colección dentro de un `#Predicate`
+        // compila pero falla en ejecución en más de una versión de SwiftData.
+        let porMarcar = Set(uuids)
+        let filas = try modelContext.fetch(FetchDescriptor<DosisInsulina>())
+            .filter { porMarcar.contains($0.uuid) }
+        for fila in filas { fila.syncEstado = estado }
+        try modelContext.save()
+    }
+
     func eliminar(uuid: UUID) throws {
         var descriptor = FetchDescriptor<DosisInsulina>(predicate: #Predicate { $0.uuid == uuid })
         descriptor.fetchLimit = 1

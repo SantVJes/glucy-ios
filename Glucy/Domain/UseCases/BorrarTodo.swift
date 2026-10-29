@@ -21,6 +21,8 @@ nonisolated struct BorrarTodo: Sendable {
     let salud: any ServicioHealthKit
     /// Hasta dónde se había leído de Salud. Opcional porque las pruebas no siempre la traen.
     var ancla: AnclaHealthKit? = nil
+    /// Donde vive el token del backend. Opcional porque las pruebas no tocan el Keychain.
+    var almacenDeToken: (any AlmacenDeToken)? = nil
 
     /// Borra todo lo local y, después, lo que Glucy escribió en Salud. Si Salud falla, **el
     /// borrado local se hace igual** y el resultado lo dice: un borrado a medias en silencio
@@ -40,6 +42,10 @@ nonisolated struct BorrarTodo: Sendable {
         try await perfil.eliminarTodo()
         // Quien vuelva a dar de alta su sensor tiene que recibir otra vez su historial.
         ancla?.borrar()
+        // El token también se va: es una credencial para una serie que en el servidor sigue
+        // existiendo, y dejarla en el Keychain de un teléfono que ya no tiene la cuenta es
+        // dejar la llave puesta.
+        try? almacenDeToken?.borrar()
 
         // Sin Salud en el dispositivo no hay nada que Glucy haya podido escribir ahí.
         guard salud.disponible else { return ResultadoDeBorrado(saludLimpia: true) }
