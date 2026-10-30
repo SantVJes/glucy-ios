@@ -199,9 +199,15 @@ struct VectorDeCaracteristicasTests {
         let vector = denso(serieDeCincoMinutos([100, 110, 120, 130, 140, 150, 160]))
         // Seis y no siete. Con el borde incluido, este promedio daría 130 donde el servidor
         // da 135, en cada fila y sin que nada falle.
-        #expect(vector["media_30"] == (110.0 + 120 + 130 + 140 + 150 + 160) / 6)
+        //
+        // Las dos sumas van en un `let` con su tipo escrito y no dentro del `#expect`: ahí
+        // dentro el comprobador de tipos tiene que resolver literales sin tipo a través de la
+        // macro y se rinde («unable to type-check this expression in reasonable time»).
+        let seisUltimas: Double = (110 + 120 + 130 + 140 + 150 + 160) / 6
+        let lasSiete: Double = (100 + 110 + 120 + 130 + 140 + 150 + 160) / 7
+        #expect(vector["media_30"] == seisUltimas)
         #expect(vector["media_30"] == 135)
-        #expect(vector["media_30"] != (100.0 + 110 + 120 + 130 + 140 + 150 + 160) / 7)
+        #expect(vector["media_30"] != lasSiete)
     }
 
     @Test("Sin lecturas en la ventana el promedio es NaN")
