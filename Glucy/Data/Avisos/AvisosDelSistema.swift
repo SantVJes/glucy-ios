@@ -61,6 +61,18 @@ nonisolated struct AvisosDelSistema: ServicioAvisos {
         // Para que iOS respete este nivel y el aviso atraviese un «No molestar» hace falta la
         // capacidad «Time Sensitive Notifications» en el objetivo de Xcode. Sin ella esta
         // línea no falla: el sistema la ignora y el aviso sale como uno normal.
+        //
+        // **Esa capacidad no está declarada, y no es un olvido.** Una cuenta de desarrollador
+        // personal —la gratuita, que es la del proyecto— no la soporta: al compilar, Xcode no
+        // puede crear el perfil y la app **no se instala en el teléfono**. Se probó el
+        // 30/10/2026 y el error lo dice con esas palabras. Declararla exige la membresía de
+        // pago del Apple Developer Program.
+        //
+        // Así que el aviso se entrega con prioridad normal y **un Modo de Concentración puede
+        // callarlo**, que es justo el caso de las tres de la mañana. Es una limitación del
+        // entorno de desarrollo, no del diseño, y va dicha así en el reporte:
+        // `docs/limitacion-del-aviso-con-prioridad-de-tiempo.md`. La línea se queda porque el
+        // día que haya cuenta de pago basta con agregar la capacidad.
         contenido.interruptionLevel = .timeSensitive
 
         let peticion = UNNotificationRequest(
