@@ -1,15 +1,15 @@
 import Foundation
 
-/// El estado de la pantalla de inicio.
-///
-/// **No decide nada**: el modo, la ventana de la gráfica y dónde se corta la línea vienen ya
-/// resueltos de `ConsultarInicio`. Aquí solo se pide, se guarda y se le da forma de texto.
 /// Un aviso listo para dibujarse: la frase y, aparte, qué clase de aviso es.
 nonisolated struct AvisoEnPantalla: Sendable, Equatable {
     let tipo: AvisoPrevisto
     let texto: String
 }
 
+/// El estado de la pantalla de inicio.
+///
+/// **No decide nada**: el modo, la ventana de la gráfica y dónde se corta la línea vienen ya
+/// resueltos de `ConsultarInicio`. Aquí solo se pide, se guarda y se le da forma de texto.
 @Observable
 final class InicioViewModel {
 

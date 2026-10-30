@@ -114,14 +114,14 @@ struct InicioView: View {
             // y la palabra «estimado» porque tiene que distinguirse de la de ahora sin
             // depender del tamaño ni del color.
             if let proyectada = modelo.cifraDeLaProyeccion {
-                Label(
-                    "Estimado: \(proyectada)",
-                    systemImage: "arrow.forward.to.line.compact"
-                )
-                .font(Tema.Tipografia.valorFila)
-                .foregroundStyle(Tema.Colores.azulProfundo)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("cifraDeLaProyeccion")
+                // `arrow.forward` y no un símbolo más expresivo: los nombres de SF Symbols
+                // cambian entre versiones y uno que no existe no falla al compilar, se dibuja
+                // como un hueco. Este existe desde iOS 14.
+                Label("Estimado: \(proyectada)", systemImage: "arrow.forward")
+                    .font(Tema.Tipografia.valorFila)
+                    .foregroundStyle(Tema.Colores.azulProfundo)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("cifraDeLaProyeccion")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

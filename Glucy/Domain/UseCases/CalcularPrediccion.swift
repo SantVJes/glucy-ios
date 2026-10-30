@@ -77,8 +77,9 @@ nonisolated struct CalcularPrediccion: Sendable {
     /// Uno por horizonte. Vacío si ninguno cargó, y entonces no hay predicción y se dice.
     let modelos: [any RepositorioModelo]
 
-    /// La ventana de serie que se lee. El rezago más largo es de 60 minutos y la media más
-    /// larga también, más la media muestra de tolerancia: con 90 sobra y sigue siendo barato.
+    /// Cuánta serie hace falta **antes de la base**. El rezago más largo es de 60 minutos y la
+    /// media más larga también, más la media muestra de tolerancia: con 90 sobra y sigue siendo
+    /// barato. La consulta le suma la frescura, porque la base puede tener quince minutos.
     static let ventanaSerieMin = 90.0
 
     /// - Parameter modo: lo decide `ConsultarModo` con la regla de frescura, y se pasa en lugar
@@ -92,27 +93,26 @@ nonisolated struct CalcularPrediccion: Sendable {
             return .failure(.sinModelo(detalle: "no se cargó ningún artefacto"))
         }
 
-        // Del sensor, no la última de cualquier origen: un pinchazo capturado hace un minuto
-        // no entra al juego denso, que se construye sobre la serie continua.
-        let delSensor = [
-            try await lecturas.ultima(origen: .sensor),
-            try await lecturas.ultima(origen: .healthkit),
-        ].compactMap { $0 }
-        // Y no una del futuro: HealthKit entrega lo que la app del fabricante escribió, y una
-        // marca de tiempo adelantada por un reloj mal puesto daría una predicción sobre un
-        // instante que ya pasó.
-        guard let base = delSensor.filter({ $0.tsUtc <= ahora })
-            .max(by: { $0.tsUtc < $1.tsUtc }), !base.atipica
-        else {
-            return .failure(.serieInsuficiente)
-        }
-
-        let serie = try await lecturas.entre(
-            desde: base.tsUtc.addingTimeInterval(-Self.ventanaSerieMin * 60), hasta: base.tsUtc
+        // La serie, de una sola consulta, y de ahí sale la base. `hasta: ahora` deja fuera
+        // cualquier lectura con fecha futura: HealthKit entrega lo que la app del fabricante
+        // escribió, y una marca adelantada por un reloj mal puesto daría una predicción sobre
+        // un instante que ya pasó.
+        //
+        // La ventana lleva la frescura sumada porque la base puede tener hasta quince minutos
+        // y el vector necesita noventa **antes de la base**, no antes del reloj.
+        let desde = ahora.addingTimeInterval(
+            -(Self.ventanaSerieMin + ConfiguracionDominio.frescuraSensorMin) * 60
         )
-        // Solo la serie continua. Mezclar pinchazos metería rezagos falsos: es lo que hace
-        // `solo_sensor` en el entrenamiento.
-        .filter { $0.origen == .sensor || $0.origen == .healthkit }
+        let serie = try await lecturas.entre(desde: desde, hasta: ahora)
+            // Solo la serie continua y sin atípicas. Mezclar pinchazos metería rezagos falsos:
+            // es lo que hace `solo_sensor` en el entrenamiento, y las atípicas las deja fuera
+            // `_validas` del pipeline.
+            .filter { ($0.origen == .sensor || $0.origen == .healthkit) && !$0.atipica }
+
+        // Viene ordenada de la más vieja a la más nueva, así que la base es la última. No es
+        // necesariamente la última lectura que la persona tomó: un pinchazo capturado hace un
+        // minuto no entra al juego denso, que se construye sobre la serie continua.
+        guard let base = serie.last else { return .failure(.serieInsuficiente) }
 
         let vector = VectorDeCaracteristicas.denso(
             serie: serie,

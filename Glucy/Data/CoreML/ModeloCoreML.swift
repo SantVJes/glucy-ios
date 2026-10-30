@@ -120,7 +120,9 @@ actor ModeloCoreML: RepositorioModelo {
             // mandar la fila con un hueco. Rellenarlo desvía hasta 19.8 mg/dL.
             dictionary: vector.mapValues { MLFeatureValue(double: $0) }
         )
-        let salida = try modelo.prediction(from: entradas)
+        // La sobrecarga asíncrona, que es la que iOS 17 añadió: la síncrona existe todavía,
+        // pero el compilador elige esta y pide el `await`.
+        let salida = try await modelo.prediction(from: entradas)
         guard let valor = salida.featureValue(for: Self.nombreDeLaSalida)?.doubleValue else {
             throw ErrorModelo.salidaInesperada(
                 detalle: "no vino \(Self.nombreDeLaSalida) en la respuesta del modelo"
