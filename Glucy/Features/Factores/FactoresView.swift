@@ -79,8 +79,8 @@ struct FactoresView: View {
             Text("Qué la movió")
                 .font(Tema.Tipografia.tituloTarjeta)
                 .foregroundStyle(Tema.Colores.textoPrincipal)
-            ForEach(modelo.renglones) { renglon in
-                self.renglon(renglon)
+            ForEach(modelo.renglones) { cada in
+                renglon(cada)
             }
         }
         .padding(Tema.Espacio.interior)

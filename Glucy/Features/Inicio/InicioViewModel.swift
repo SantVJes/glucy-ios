@@ -49,7 +49,7 @@ final class InicioViewModel {
         consultar: ConsultarInicio,
         sincronizar: SincronizarLecturasDelSensor,
         ajustes: ConsultarAjustesDeInsulina,
-        pedirAlServidor: PedirFactoresYExplicacion? = nil
+        pedirAlServidor: PedirFactoresYExplicacion? = nil,
         avisar: AvisarDeLaProyeccion? = nil
     ) {
         self.consultar = consultar

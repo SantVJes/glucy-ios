@@ -78,7 +78,7 @@ nonisolated struct FactoresSerializados: Codable, Sendable, Equatable {
     let factores: [Par]
     let shap: [ContribucionDeLaPrediccion]
 
-    nonisolated struct Par: Codable, Sendable, Equatable {
+    struct Par: Codable, Sendable, Equatable {
         let nombre: String
         let mgDl: Double
     }
