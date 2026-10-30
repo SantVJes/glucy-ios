@@ -147,6 +147,22 @@ nonisolated enum ConfiguracionDominio {
     /// borde con otra forma, y su valor verdadero se dice en texto.
     static let escalaGraficaMgDl = 40.0...400.0
 
+    // MARK: - Los dos caminos de la predicción (C-16)
+
+    /// A partir de cuánta diferencia entre el número del teléfono y el del servidor se
+    /// registra un desacuerdo.
+    ///
+    /// Un mg/dL: por debajo de eso la diferencia es redondeo —el teléfono cuantiza la entrada
+    /// a 32 bits y el servidor no— y por encima significa que los dos caminos no armaron la
+    /// misma fila. **Un desacuerdo silencioso no lo ve nadie** hasta que alguien compara dos
+    /// pantallas, y ya pasó una vez: `GET /predict` armaba la fila con el reloj.
+    static let desacuerdoQueSeRegistraMgDl = 1.0
+
+    /// Cuánto pueden separarse los dos instantes base para que los dos números se consideren
+    /// comparables. Medio minuto: si cada camino partió de una lectura distinta, la diferencia
+    /// no dice nada de la implementación y compararlos sería inventar un problema.
+    static let mismoInstanteBaseSeg = 30.0
+
     // MARK: - Avisos de hipoglucemia prevista (RF-10)
 
     /// Cuánto tiene que pasar para volver a avisar del mismo descenso.

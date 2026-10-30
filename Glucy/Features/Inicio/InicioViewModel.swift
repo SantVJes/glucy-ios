@@ -27,12 +27,21 @@ final class InicioViewModel {
     /// prueba del arranque lo pide; en la app de todos los días es siempre `nil`.
     private(set) var segundosHastaElValor: Double?
 
+    /// Lo que el servidor aportó sobre la primera predicción: los factores y la frase.
+    /// Empieza con lo que quedó guardado la última vez y se reemplaza si llega algo nuevo.
+    private(set) var delServidor: FactoresYExplicacion?
     /// Qué pasó con el último aviso. `nil` mientras no haya habido ninguno.
     private(set) var resultadoDelAviso: ResultadoDelAviso?
 
     private let consultar: ConsultarInicio
     private let sincronizar: SincronizarLecturasDelSensor
     private let ajustes: ConsultarAjustesDeInsulina
+    /// `nil` en las pruebas que no miran la explicación.
+    private let pedirAlServidor: PedirFactoresYExplicacion?
+    /// La petición en vuelo. Se cancela antes de empezar otra: la pantalla se recalcula cada
+    /// minuto y `POST /explain` tarda hasta tres segundos, así que dos pasadas seguidas
+    /// podrían dejar llegando la respuesta de la vieja después de la nueva.
+    private var tareaDelServidor: Task<Void, Never>?
     /// `nil` en las pruebas que no miran el aviso, y entonces no se avisa nada.
     private let avisar: AvisarDeLaProyeccion?
 
@@ -40,11 +49,13 @@ final class InicioViewModel {
         consultar: ConsultarInicio,
         sincronizar: SincronizarLecturasDelSensor,
         ajustes: ConsultarAjustesDeInsulina,
+        pedirAlServidor: PedirFactoresYExplicacion? = nil,
         avisar: AvisarDeLaProyeccion? = nil
     ) {
         self.consultar = consultar
         self.sincronizar = sincronizar
         self.ajustes = ajustes
+        self.pedirAlServidor = pedirAlServidor
         self.avisar = avisar
     }
 
@@ -68,8 +79,66 @@ final class InicioViewModel {
         ) {
             estado = nuevo
             anotarElArranque()
+            // Los factores y la frase arrancan primero porque no bloquean: se van a una
+            // tarea. El aviso va después, que es el que puede abrir un diálogo.
+            pedirLoDelServidor(nuevo)
             await avisarSiHaceFalta(nuevo, ahora: ahora)
         }
+    }
+
+    /// Los factores y la frase, **en segundo plano y sin bloquear nada**.
+    ///
+    /// `GET /predict` contesta en menos de 200 ms, pero `POST /explain` tarda de uno a tres
+    /// segundos: la cifra de la pantalla no puede esperarlos. Lo guardado se pinta de
+    /// inmediato, y lo que llegue lo reemplaza.
+    private func pedirLoDelServidor(_ estado: EstadoInicio) {
+        guard let pedirAlServidor,
+            case let .success(proyecciones) = estado.proyeccion,
+            let primera = proyecciones.first
+        else { return }
+
+        tareaDelServidor?.cancel()
+        tareaDelServidor = Task { [weak self] in
+            let guardado = await pedirAlServidor.loQueHayGuardado(
+                horizonteMin: primera.horizonteMin
+            )
+            guard !Task.isCancelled else { return }
+            if let guardado, self?.delServidor == nil { self?.delServidor = guardado }
+
+            let resultado = await pedirAlServidor.ejecutar(
+                proyecciones: proyecciones,
+                modo: estado.modo,
+                umbralHipo: estado.umbralHipo,
+                umbralHiper: ConfiguracionDominio.umbralHiperPorOmision,
+                cobG: estado.carbohidratosActivosG,
+                iobUI: estado.insulinaActivaUI
+            )
+            guard !Task.isCancelled else { return }
+            if case let .llego(aportes) = resultado, let aporte = aportes.first {
+                self?.delServidor = aporte
+            }
+        }
+    }
+
+    /// La frase en español llano, cuando hay. En inicio sale una sola línea: lo demás está en
+    /// la pantalla de factores, a un toque.
+    var fraseDeLaExplicacion: String? { delServidor?.explicacion }
+
+    /// Si vale la pena ofrecer la pantalla de factores. Sin factores que enseñar no se ofrece
+    /// un toque que lleva a una pantalla vacía.
+    var hayFactoresQueVer: Bool { !(delServidor?.paraLaPantalla.isEmpty ?? true) }
+
+    /// Lo que la pantalla de factores necesita, ya reunido.
+    func modeloDeLosFactores() -> FactoresViewModel {
+        var primera: Proyeccion?
+        if case let .success(proyecciones) = estado?.proyeccion {
+            primera = proyecciones.first
+        }
+        return FactoresViewModel(
+            aporte: delServidor,
+            valorPropioMgDl: primera?.valorMgDl,
+            objetivo: primera?.objetivo
+        )
     }
 
     /// El aviso sale **después** de que la pantalla ya tiene el estado, a propósito: si hay

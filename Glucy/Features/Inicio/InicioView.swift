@@ -23,12 +23,14 @@ struct InicioView: View {
         consultar: ConsultarInicio,
         sincronizar: SincronizarLecturasDelSensor,
         ajustes: ConsultarAjustesDeInsulina,
+        pedirAlServidor: PedirFactoresYExplicacion?,
         avisar: AvisarDeLaProyeccion?,
         alAnotar: @escaping (TipoDeRegistro) -> Void
     ) {
         self.alAnotar = alAnotar
         _modelo = State(initialValue: InicioViewModel(
-            consultar: consultar, sincronizar: sincronizar, ajustes: ajustes, avisar: avisar
+            consultar: consultar, sincronizar: sincronizar, ajustes: ajustes,
+            pedirAlServidor: pedirAlServidor, avisar: avisar
         ))
     }
 
@@ -260,6 +262,26 @@ struct InicioView: View {
                     .foregroundStyle(Tema.Colores.textoSecundario)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("pieDeLaGrafica")
+            }
+
+            // La frase y el toque hacia los factores. Una sola línea aquí: de madrugada no
+            // cabe una explicación, y quien quiera entender por qué entra a la otra pantalla.
+            if let frase = modelo.fraseDeLaExplicacion {
+                Text(frase)
+                    .font(Tema.Tipografia.etiqueta)
+                    .foregroundStyle(Tema.Colores.textoPrincipal)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("fraseDeLaExplicacion")
+            }
+            if modelo.hayFactoresQueVer {
+                NavigationLink {
+                    FactoresView(modelo: modelo.modeloDeLosFactores())
+                } label: {
+                    Text("Por qué")
+                        .font(Tema.Tipografia.valorFila)
+                }
+                .frame(minHeight: Tema.Medida.areaTocable, alignment: .leading)
+                .accessibilityIdentifier("verLosFactores")
             }
         }
         .padding(Tema.Espacio.interior)

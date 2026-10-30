@@ -48,6 +48,9 @@ final class ContenedorDependencias {
     /// Por qué no cargó alguno, para la pantalla de ajustes y para el reporte. Vacío cuando
     /// los dos cargaron.
     let modelosQueFallaron: [String]
+    /// La última predicción de cada horizonte con lo que el servidor aportó sobre ella, para
+    /// que la frase y los factores se pinten al instante en el siguiente arranque.
+    let prediccionCache: any RepositorioPrediccionCache
     /// Las alertas emitidas. Se guardan aunque la pantalla no las vuelva a leer: el registro
     /// es lo que permite medir el tiempo de anticipación y lo que impide que la app repita el
     /// mismo aviso cada minuto.
@@ -94,6 +97,7 @@ final class ContenedorDependencias {
         self.ocr = ocr
         self.servicioProductos = servicioProductos
         productos = ProductosSwiftData(modelContainer: contenedor)
+        prediccionCache = PrediccionCacheSwiftData(modelContainer: contenedor)
         alertas = AlertasSwiftData(modelContainer: contenedor)
         self.avisos = avisos
         self.ancla = ancla
@@ -156,6 +160,12 @@ final class ContenedorDependencias {
         CalcularPrediccion(
             lecturas: lecturas, comidas: comidas, dosis: dosis, perfil: perfil, modelos: modelos
         )
+    }
+
+    /// Los factores y la explicación, que vienen del servidor (la otra mitad de C-16).
+    /// Sin dirección configurada no hay a quién preguntar y la app funciona igual (regla 1).
+    var pedirFactoresYExplicacion: PedirFactoresYExplicacion {
+        PedirFactoresYExplicacion(backend: backend, cache: prediccionCache)
     }
 
     /// El aviso de hipoglucemia prevista (RF-10). Solo avisa de una baja, solo en modo
