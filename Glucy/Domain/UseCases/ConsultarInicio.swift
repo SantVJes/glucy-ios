@@ -22,6 +22,11 @@ nonisolated struct EstadoInicio: Sendable, Equatable {
     /// Las predicciones a 30 y 60 minutos, o el motivo de que no haya. El motivo se enseña:
     /// un número ausente sin explicación se lee como una falla de la app.
     let proyeccion: Result<[Proyeccion], SinProyeccion>
+    /// El umbral de hipoglucemia **del perfil**, el que estaba vigente al calcular. Va en el
+    /// estado porque el aviso de RF-10 lo registra junto con la alerta: quien movió su umbral
+    /// a 80 cambió qué cuenta como alerta, y sin guardarlo no se podría explicar después por
+    /// qué se avisó de un 75 el martes y no el lunes.
+    let umbralHipo: Double
 }
 
 /// Junta lo que la pantalla de inicio necesita y decide lo que hay que decidir: qué ventana
@@ -109,7 +114,8 @@ nonisolated struct ConsultarInicio: Sendable {
         let delSensor = [
             try await lecturas.ultima(origen: .sensor), try await lecturas.ultima(origen: .healthkit),
         ].compactMap { $0?.tsUtc }.max()
-        let usaSensor = (try? await perfil?.actual())?.usaSensor ?? false
+        let delPerfil = try? await perfil?.actual()
+        let usaSensor = delPerfil?.usaSensor ?? false
 
         return EstadoInicio(
             modo: estadoModo.modo,
@@ -123,7 +129,8 @@ nonisolated struct ConsultarInicio: Sendable {
             estadoDelSensor: DecisionModo.estadoDelSensor(
                 usaSensor: usaSensor, tsUltimaDelSensor: delSensor, ahora: ahora
             ),
-            proyeccion: proyeccion
+            proyeccion: proyeccion,
+            umbralHipo: delPerfil?.umbralHipo ?? ConfiguracionDominio.umbralHipoPorOmision
         )
     }
 }

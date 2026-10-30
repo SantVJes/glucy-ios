@@ -162,4 +162,22 @@ nonisolated enum ConfiguracionDominio {
     /// comparables. Medio minuto: si cada camino partió de una lectura distinta, la diferencia
     /// no dice nada de la implementación y compararlos sería inventar un problema.
     static let mismoInstanteBaseSeg = 30.0
+
+    // MARK: - Avisos de hipoglucemia prevista (RF-10)
+
+    /// Cuánto tiene que pasar para volver a avisar del mismo descenso.
+    ///
+    /// La pantalla se recalcula cada minuto, así que sin esta espera el mismo descenso
+    /// avisaría sesenta veces por hora. Y veinte minutos no es un número redondo cualquiera:
+    /// el criterio de aceptación del modelo es una tasa de falsas alarmas **≤ 15 %**, porque
+    /// «un modelo que avisa de más se apaga solo», y una alerta repetida se siente igual que
+    /// una falsa.
+    static let esperaEntreAvisosMin = 20.0
+
+    /// Cuánto tiene que empeorar la estimación para volver a avisar antes de esa espera.
+    ///
+    /// Pasar de «vas a 68» a «vas a 50» es información nueva y vale interrumpir otra vez;
+    /// pasar de 68 a 66 no. Quince mg/dL es del orden del error del propio modelo a 30
+    /// minutos (RMSE ≤ 20), así que por debajo de eso no hay un cambio del que fiarse.
+    static let empeoraParaVolverAAvisarMgDl = 15.0
 }

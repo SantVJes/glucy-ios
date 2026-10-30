@@ -51,6 +51,13 @@ final class ContenedorDependencias {
     /// La última predicción de cada horizonte con lo que el servidor aportó sobre ella, para
     /// que la frase y los factores se pinten al instante en el siguiente arranque.
     let prediccionCache: any RepositorioPrediccionCache
+    /// Las alertas emitidas. Se guardan aunque la pantalla no las vuelva a leer: el registro
+    /// es lo que permite medir el tiempo de anticipación y lo que impide que la app repita el
+    /// mismo aviso cada minuto.
+    let alertas: any RepositorioAlertas
+    /// Los avisos del sistema, detrás de su protocolo. Nadie fuera de `Data/Avisos/` sabe que
+    /// existen `UNUserNotificationCenter` ni el motor táctil.
+    let avisos: any ServicioAvisos
 
     init(
         contenedor: ModelContainer,
@@ -64,7 +71,8 @@ final class ContenedorDependencias {
         red: any EstadoDeRed = MonitorDeRed(),
         almacenDeToken: any AlmacenDeToken = Llavero(),
         // Se puede pasar otra lista en las pruebas; por omisión se cargan los del paquete.
-        modelos: [any RepositorioModelo]? = nil
+        modelos: [any RepositorioModelo]? = nil,
+        avisos: any ServicioAvisos = AvisosDelSistema()
     ) {
         self.candado = candado
         self.configuracionBackend = configuracionBackend
@@ -90,6 +98,8 @@ final class ContenedorDependencias {
         self.servicioProductos = servicioProductos
         productos = ProductosSwiftData(modelContainer: contenedor)
         prediccionCache = PrediccionCacheSwiftData(modelContainer: contenedor)
+        alertas = AlertasSwiftData(modelContainer: contenedor)
+        self.avisos = avisos
         self.ancla = ancla
         sincronizarSensor = SincronizarLecturasDelSensor(
             servicio: salud, lecturas: lecturas, ancla: ancla, perfil: perfil
@@ -156,6 +166,12 @@ final class ContenedorDependencias {
     /// Sin dirección configurada no hay a quién preguntar y la app funciona igual (regla 1).
     var pedirFactoresYExplicacion: PedirFactoresYExplicacion {
         PedirFactoresYExplicacion(backend: backend, cache: prediccionCache)
+    }
+
+    /// El aviso de hipoglucemia prevista (RF-10). Solo avisa de una baja, solo en modo
+    /// sensor, y no se repite.
+    var avisarDeLaProyeccion: AvisarDeLaProyeccion {
+        AvisarDeLaProyeccion(alertas: alertas, avisos: avisos)
     }
 
     /// Todo lo que dibuja la pantalla de inicio, ya resuelto.
