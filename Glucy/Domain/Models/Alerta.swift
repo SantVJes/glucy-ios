@@ -53,3 +53,35 @@ nonisolated final class Alerta {
         self.syncEstado = syncEstado
     }
 }
+
+extension Alerta {
+    convenience init(dato: AlertaDato) {
+        self.init(
+            uuid: dato.uuid,
+            tsUtc: dato.tsUtc,
+            zonaHoraria: dato.zonaHoraria,
+            valorMgDl: dato.valorMgDl,
+            umbralMgDl: dato.umbralMgDl,
+            horizonteMin: dato.horizonteMin,
+            modo: dato.modo,
+            entregada: dato.entregada,
+            reconocidaTsUtc: dato.reconocidaTsUtc,
+            syncEstado: dato.syncEstado
+        )
+    }
+
+    var dato: AlertaDato {
+        AlertaDato(
+            uuid: uuid,
+            tsUtc: tsUtc,
+            zonaHoraria: zonaHoraria,
+            valorMgDl: valorMgDl,
+            umbralMgDl: umbralMgDl,
+            horizonteMin: horizonteMin,
+            modo: modo,
+            entregada: entregada,
+            reconocidaTsUtc: reconocidaTsUtc,
+            syncEstado: syncEstado
+        )
+    }
+}

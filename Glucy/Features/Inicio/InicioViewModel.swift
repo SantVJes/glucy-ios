@@ -27,18 +27,25 @@ final class InicioViewModel {
     /// prueba del arranque lo pide; en la app de todos los días es siempre `nil`.
     private(set) var segundosHastaElValor: Double?
 
+    /// Qué pasó con el último aviso. `nil` mientras no haya habido ninguno.
+    private(set) var resultadoDelAviso: ResultadoDelAviso?
+
     private let consultar: ConsultarInicio
     private let sincronizar: SincronizarLecturasDelSensor
     private let ajustes: ConsultarAjustesDeInsulina
+    /// `nil` en las pruebas que no miran el aviso, y entonces no se avisa nada.
+    private let avisar: AvisarDeLaProyeccion?
 
     init(
         consultar: ConsultarInicio,
         sincronizar: SincronizarLecturasDelSensor,
-        ajustes: ConsultarAjustesDeInsulina
+        ajustes: ConsultarAjustesDeInsulina,
+        avisar: AvisarDeLaProyeccion? = nil
     ) {
         self.consultar = consultar
         self.sincronizar = sincronizar
         self.ajustes = ajustes
+        self.avisar = avisar
     }
 
     func ponerAlDia(ahora: Date = Date()) async {
@@ -61,7 +68,30 @@ final class InicioViewModel {
         ) {
             estado = nuevo
             anotarElArranque()
+            await avisarSiHaceFalta(nuevo, ahora: ahora)
         }
+    }
+
+    /// El aviso sale **después** de que la pantalla ya tiene el estado, a propósito: si hay
+    /// que pedir el permiso del sistema, el diálogo no retrasa la cifra que la persona abrió
+    /// la app para ver.
+    private func avisarSiHaceFalta(_ estado: EstadoInicio, ahora: Date) async {
+        guard let avisar, case let .success(proyecciones) = estado.proyeccion else { return }
+        resultadoDelAviso = try? await avisar.ejecutar(
+            proyecciones: proyecciones,
+            modo: estado.modo,
+            umbralHipo: estado.umbralHipo,
+            ahora: ahora
+        )
+    }
+
+    /// La línea que se enseña cuando la app vio venir una baja y el sistema no va a entregar
+    /// el aviso. Se dice en lugar de dejar a la persona esperando una alerta que no va a
+    /// llegar; no lleva ninguna indicación de tratamiento (regla 7).
+    var avisoQueNoVaASalir: String? {
+        guard case .some(.registradaSinPermiso) = resultadoDelAviso else { return nil }
+        return "Esta app no tiene permiso para avisarte. Puedes dárselo en Ajustes del "
+            + "iPhone, en Notificaciones."
     }
 
     private func anotarElArranque() {

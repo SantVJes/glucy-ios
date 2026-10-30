@@ -23,11 +23,12 @@ struct InicioView: View {
         consultar: ConsultarInicio,
         sincronizar: SincronizarLecturasDelSensor,
         ajustes: ConsultarAjustesDeInsulina,
+        avisar: AvisarDeLaProyeccion?,
         alAnotar: @escaping (TipoDeRegistro) -> Void
     ) {
         self.alAnotar = alAnotar
         _modelo = State(initialValue: InicioViewModel(
-            consultar: consultar, sincronizar: sincronizar, ajustes: ajustes
+            consultar: consultar, sincronizar: sincronizar, ajustes: ajustes, avisar: avisar
         ))
     }
 
@@ -240,6 +241,17 @@ struct InicioView: View {
 
             if let aviso = modelo.avisoDeLaProyeccion {
                 franjaDeLaProyeccion(aviso)
+            }
+
+            // Debajo de la franja: la app vio venir la baja y el sistema no va a entregar el
+            // aviso. Se dice en lugar de dejar a la persona esperando una alerta que no va a
+            // llegar.
+            if let sinPermiso = modelo.avisoQueNoVaASalir {
+                Text(sinPermiso)
+                    .font(Tema.Tipografia.etiqueta)
+                    .foregroundStyle(Tema.Colores.textoSecundario)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("avisoSinPermiso")
             }
 
             if modelo.cargado {
