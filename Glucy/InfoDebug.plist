@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Base del Info.plist SOLO en Debug (INFOPLIST_FILE de la configuración Debug). El resto de
+  las claves las sigue generando Xcode con los INFOPLIST_KEY_* del proyecto, que se fusionan
+  con este archivo; aquí va únicamente lo que no se puede escribir como una de esas claves,
+  porque es un diccionario.
+
+  App Transport Security bloquea `http://` por omisión, y con razón: una serie de glucosa en
+  claro por la wifi de una casa la lee cualquiera que esté en esa wifi. La excepción es
+  `NSAllowsLocalNetworking`, que abre SOLO la red local —nombres sin punto, `*.local` y las
+  direcciones privadas— y deja todo lo demás cerrado. Es lo que permite probar la predicción
+  del servidor y la explicación contra el backend corriendo en la Mac, sin certificado.
+
+  Está en Debug y nada más. En Release la app sigue exigiendo TLS, que es lo que dice el
+  documento de seguridad: TLS 1.3 obligatorio. Una excepción que viajara a Release volvería
+  opcional el cifrado del único canal por el que salen datos de salud.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

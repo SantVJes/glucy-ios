@@ -50,6 +50,7 @@ struct PestanasView: View {
                 cuantoHay: dependencias.consultarCuantoHay,
                 borrarTodo: dependencias.borrarTodo,
                 subirAlBackend: dependencias.subirAlBackend,
+                almacenDeToken: dependencias.almacenDeToken,
                 alBorrarCuenta: alBorrarCuenta
             )
             .tabItem { Label("Ajustes", systemImage: "gearshape") }

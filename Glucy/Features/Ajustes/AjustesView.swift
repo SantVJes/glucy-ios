@@ -23,6 +23,7 @@ struct AjustesView: View {
         cuantoHay: ConsultarCuantoHay,
         borrarTodo: BorrarTodo,
         subirAlBackend: SincronizarConBackend? = nil,
+        almacenDeToken: (any AlmacenDeToken)? = nil,
         alBorrarCuenta: @escaping () -> Void
     ) {
         self.cuantoHay = cuantoHay
@@ -30,7 +31,8 @@ struct AjustesView: View {
         self.alBorrarCuenta = alBorrarCuenta
         _modelo = State(initialValue: AjustesViewModel(
             guardar: guardar, pendientes: pendientes, completarAlta: completarAlta,
-            sincronizar: sincronizar, candado: candado, subirAlBackend: subirAlBackend
+            sincronizar: sincronizar, candado: candado, subirAlBackend: subirAlBackend,
+            almacenDeToken: almacenDeToken
         ))
     }
 
@@ -281,6 +283,7 @@ struct AjustesView: View {
             }
 
             if modelo.hayBackend {
+                if modelo.sePuedeGuardarToken { tokenDelServidor }
                 if ajustes.sincronizacionActiva {
                     // El único camino que sube con datos móviles (caso P-08).
                     BotonPrincipal(
@@ -424,6 +427,43 @@ struct AjustesView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Tema.Colores.superficie)
         .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.tarjetaGrande))
+    }
+
+    /// El token del servidor, pegado a mano.
+    ///
+    /// Está aquí y no en una pantalla escondida porque sin token el servidor contesta 401 a
+    /// todo y la sincronización se ve como una falla de la app. No se enseña el token
+    /// guardado: solo si hay uno. Va al Keychain, nunca a `UserDefaults`.
+    @ViewBuilder private var tokenDelServidor: some View {
+        VStack(alignment: .leading, spacing: Tema.Espacio.unidad * 2) {
+            Label(
+                modelo.hayToken
+                    ? "Hay un token guardado para este servidor."
+                    : "No hay token: el servidor va a rechazar todo lo que la app le mande.",
+                systemImage: modelo.hayToken ? "checkmark.circle.fill" : "exclamationmark.circle"
+            )
+            .font(Tema.Tipografia.etiqueta)
+            .foregroundStyle(
+                modelo.hayToken ? Tema.Colores.textoSecundario : Tema.Colores.alertaAmbar
+            )
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityIdentifier("estadoDelToken")
+
+            campo("Token del servidor", texto: $modelo.textoToken, identificador: "campoToken")
+
+            HStack(spacing: Tema.Espacio.unidad * 3) {
+                BotonPrincipal(titulo: "Guardar el token", identificador: "botonGuardarToken") {
+                    modelo.guardarToken()
+                }
+                if modelo.hayToken {
+                    Button("Borrarlo") { modelo.borrarToken() }
+                        .font(Tema.Tipografia.etiqueta)
+                        .foregroundStyle(Tema.Colores.textoSecundario)
+                        .frame(minHeight: Tema.Medida.areaTocable)
+                        .accessibilityIdentifier("botonBorrarToken")
+                }
+            }
+        }
     }
 
     private func campo(_ etiqueta: String, texto: Binding<String>, identificador: String) -> some View {
