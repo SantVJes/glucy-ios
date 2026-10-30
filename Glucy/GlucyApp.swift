@@ -30,6 +30,10 @@ struct GlucyApp: App {
         //
         // Ya no pide ningún permiso: eso lo hace la tarjeta «Con sensor» del alta, con su
         // explicación, y se puede saltar.
+        //
+        // El caso de uso ya trae colgada la vigilancia del aviso (RF-10): cuando esa entrega
+        // deja una muestra nueva, se predice y se decide si avisar, sin pantalla de por medio.
+        // Es lo que hace que anticipar media hora sirva de madrugada, con la app cerrada.
         let sincronizar = dependencias.sincronizarSensor
         Task { await sincronizar.iniciar() }
     }

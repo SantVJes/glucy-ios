@@ -16,7 +16,6 @@ final class ContenedorDependencias {
     /// Salud, detrás de su protocolo. Nadie fuera de `Data/HealthKit/` sabe que existe
     /// HealthKit.
     let salud: any ServicioHealthKit
-    let sincronizarSensor: SincronizarLecturasDelSensor
     /// El OCR, detrás de su protocolo. Nadie fuera de `Data/OCR/` sabe que existe Vision.
     let ocr: any ServicioOCR
     /// La base de productos, detrás de su protocolo. Nadie fuera de `Data/Network/` sabe
@@ -101,9 +100,6 @@ final class ContenedorDependencias {
         alertas = AlertasSwiftData(modelContainer: contenedor)
         self.avisos = avisos
         self.ancla = ancla
-        sincronizarSensor = SincronizarLecturasDelSensor(
-            servicio: salud, lecturas: lecturas, ancla: ancla, perfil: perfil
-        )
         if let modelos {
             self.modelos = modelos
             modelosQueFallaron = []
@@ -172,6 +168,34 @@ final class ContenedorDependencias {
     /// sensor, y no se repite.
     var avisarDeLaProyeccion: AvisarDeLaProyeccion {
         AvisarDeLaProyeccion(alertas: alertas, avisos: avisos)
+    }
+
+    /// La lectura del sensor, con la vigilancia del aviso ya colgada.
+    ///
+    /// La vigilancia se pone aquí y no en cada sitio que llama a `iniciar()` —el arranque, la
+    /// pantalla raíz y Ajustes al encender el sensor— porque olvidarla en uno solo dejaría un
+    /// observador registrado sin aviso, y eso no se nota en ninguna pantalla.
+    var sincronizarSensor: SincronizarLecturasDelSensor {
+        // El valor se saca antes del bloque: así lo que el bloque captura es una estructura
+        // `Sendable` y no el contenedor, que es una clase observable y no lo es.
+        let vigilar = vigilarLaProyeccion
+        return SincronizarLecturasDelSensor(
+            servicio: salud,
+            lecturas: lecturas,
+            ancla: ancla,
+            perfil: perfil,
+            alLlegarMuestrasNuevas: { resultado in
+                _ = await vigilar.ejecutar(estado: resultado.estado)
+            }
+        )
+    }
+
+    /// La vigilancia en segundo plano: lo que corre cuando iOS despierta la app porque la app
+    /// del sensor escribió una muestra y no hay ninguna pantalla dibujada (RF-10).
+    var vigilarLaProyeccion: VigilarLaProyeccion {
+        VigilarLaProyeccion(
+            predecir: calcularPrediccion, avisar: avisarDeLaProyeccion, perfil: perfil
+        )
     }
 
     /// Todo lo que dibuja la pantalla de inicio, ya resuelto.

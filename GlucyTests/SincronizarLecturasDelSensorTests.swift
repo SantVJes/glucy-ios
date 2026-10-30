@@ -239,4 +239,103 @@ struct SincronizarLecturasDelSensorTests {
         #expect(conSensor.estado.modo == .sensor)
         #expect(await repositorio.guardadas.count == 2)
     }
+
+    // MARK: - La entrega en segundo plano (RF-10)
+
+    /// Lo que la app hace al llegar una muestra nueva, anotado para poder contarlo. Es un
+    /// `actor` porque el bloque que se registra en Salud es `@Sendable` y puede correr en
+    /// cualquier hilo.
+    private actor Anotador {
+        private(set) var veces = 0
+        private(set) var modos: [ModoApp] = []
+
+        init() {}
+
+        func anotar(_ resultado: ResultadoSincronizacion) {
+            veces += 1
+            modos.append(resultado.estado.modo)
+        }
+    }
+
+    /// Las muestras de las dos pruebas de abajo van sobre el reloj de verdad y no sobre la
+    /// fecha fija de las demás. `iniciar()` no recibe `ahora` a propósito: en la app arranca
+    /// con el reloj del teléfono, y es lo que se quiere probar. Con la fecha fija, la muestra
+    /// tendría más de un año de antigüedad, no pasaría la regla de frescura y el modo saldría
+    /// sin sensor.
+    private func muestraDeAhora(mgDl: Double, haceMin: Double) -> MuestraGlucosa {
+        MuestraGlucosa(
+            uuid: UUID(), valor: mgDl, ts: Date().addingTimeInterval(-haceMin * 60),
+            esPropia: false
+        )
+    }
+
+    @Test("RF-10: cada entrega con muestras nuevas llama a lo que decide si avisar")
+    func cadaEntregaConMuestrasNuevasAvisa() async throws {
+        let salud = HealthKitFalso()
+        let repositorio = RepositorioLecturasFalso()
+        let ancla = anclaDePrueba()
+        defer { borrar(ancla) }
+        await salud.agregar([muestraDeAhora(mgDl: 120, haceMin: 5)])
+
+        let anotador = Anotador()
+        let caso = SincronizarLecturasDelSensor(
+            servicio: salud,
+            lecturas: repositorio,
+            ancla: ancla,
+            alLlegarMuestrasNuevas: { resultado in
+                await anotador.anotar(resultado)
+            }
+        )
+        await caso.iniciar()
+
+        // El observador queda registrado en el arranque: si no, la entrega se pierde y iOS no
+        // vuelve a despertar la app por esa muestra.
+        #expect(await salud.hayObservador)
+        // Y la pasada del arranque ya contó, porque cuando iOS **relanza** la app para
+        // entregar puede ser la única pasada que vea esa muestra.
+        #expect(await anotador.veces == 1)
+        // El modo se escribe aparte y no dentro del `#expect`: ahí dentro el comprobador de
+        // tipos tiene que resolver el literal del arreglo a través de la macro.
+        let modos: [ModoApp] = await anotador.modos
+        #expect(modos == [ModoApp.sensor])
+
+        // Llega otra muestra y iOS entrega.
+        await salud.agregar([muestraDeAhora(mgDl: 112, haceMin: 1)])
+        await salud.entregar()
+        #expect(await anotador.veces == 2)
+
+        // Una reentrega sin nada nuevo no vuelve a calcular: iOS reentrega la misma muestra, y
+        // una pasada que no guardó nada no cambió la predicción.
+        await salud.entregar()
+        #expect(await anotador.veces == 2)
+        #expect(await repositorio.guardadas.count == 2)
+    }
+
+    @Test("Quien no quiere que se lea su sensor no tiene observador ni vigilancia")
+    func sinSensorNoHayObservador() async throws {
+        let salud = HealthKitFalso()
+        let repositorio = RepositorioLecturasFalso()
+        let ancla = anclaDePrueba()
+        defer { borrar(ancla) }
+        await salud.agregar([muestraDeAhora(mgDl: 120, haceMin: 5)])
+        let perfil = RepositorioPerfilFalso(PerfilDato(
+            fechaNacimiento: ReglasDePerfil.fechaDeAnio(1990), tipoUsuario: .tipo1,
+            usaSensor: false, consentimientoTsUtc: ahora
+        ))
+
+        let anotador = Anotador()
+        let caso = SincronizarLecturasDelSensor(
+            servicio: salud,
+            lecturas: repositorio,
+            ancla: ancla,
+            perfil: perfil,
+            alLlegarMuestrasNuevas: { resultado in
+                await anotador.anotar(resultado)
+            }
+        )
+        await caso.iniciar()
+
+        #expect(await salud.hayObservador == false)
+        #expect(await anotador.veces == 0)
+    }
 }

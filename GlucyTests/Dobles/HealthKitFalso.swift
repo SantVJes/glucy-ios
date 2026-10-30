@@ -22,6 +22,9 @@ actor HealthKitFalso: ServicioHealthKit {
     /// Lo que va a lanzar cualquier escritura: Salud sin permiso de escritura o caída.
     private var falloDeEscritura: (any Error)?
 
+    /// El bloque que la app registró para cuando llegue una muestra nueva.
+    private var observador: (@Sendable () async -> Void)?
+
     /// Los carbohidratos y la insulina que hay en Salud, por su identificador de
     /// sincronización. Es un diccionario porque así se porta Salud: escribir otra vez con el
     /// mismo identificador reemplaza la muestra, no agrega otra.
@@ -81,7 +84,21 @@ actor HealthKitFalso: ServicioHealthKit {
         )
     }
 
-    func observarGlucosa(alLlegarMuestras: @escaping @Sendable () async -> Void) async throws {}
+    /// Se guarda el bloque en lugar de ignorarlo: es la única forma de probar lo que pasa
+    /// cuando iOS despierta la app porque llegó una muestra, que es el caso del aviso con la
+    /// app cerrada (RF-10).
+    func observarGlucosa(alLlegarMuestras: @escaping @Sendable () async -> Void) async throws {
+        observador = alLlegarMuestras
+    }
+
+    /// iOS entrega: llama al bloque que la app registró. Si nadie registró ninguno, no hace
+    /// nada, que es exactamente lo que pasaría de verdad.
+    func entregar() async {
+        guard let observador else { return }
+        await observador()
+    }
+
+    var hayObservador: Bool { observador != nil }
 
     func escribirGlucosa(_ dato: LecturaGlucosaDato) async throws {
         if let falloDeEscritura { throw falloDeEscritura }
