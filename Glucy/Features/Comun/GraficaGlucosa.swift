@@ -19,6 +19,20 @@ nonisolated struct PuntoGrafica: Sendable, Equatable, Identifiable {
     let serie: SerieGrafica
     /// Para poder desglosar por origen en la fase 6 (RF-32) sin tocar la gráfica.
     let origen: Origen
+
+    /// Un punto de la línea punteada, con un id que **no cambia entre consultas**.
+    ///
+    /// Los puntos medidos se identifican con el UUID de su lectura. Los predichos no tienen
+    /// fila propia, así que el id se arma con los minutos del horizonte: `0` para la lectura
+    /// desde la que se predijo y 30 o 60 para cada predicción. Con un `UUID()` nuevo en cada
+    /// pasada la gráfica se volvería a animar entera cada minuto, y dos puntos con el mismo id
+    /// dentro de un `ForEach` dibujan de más o de menos sin avisar.
+    static func proyectado(ts: Date, mgDl: Double, minutos: Int) -> PuntoGrafica {
+        let id = String(format: "00000000-0000-0000-0000-%012d", minutos)
+        return PuntoGrafica(
+            id: UUID(uuidString: id)!, ts: ts, mgDl: mgDl, serie: .proyectada, origen: .sensor
+        )
+    }
 }
 
 nonisolated enum TramosDeSerie {

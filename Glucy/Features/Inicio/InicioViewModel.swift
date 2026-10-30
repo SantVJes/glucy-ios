@@ -1,5 +1,11 @@
 import Foundation
 
+/// Un aviso listo para dibujarse: la frase y, aparte, qué clase de aviso es.
+nonisolated struct AvisoEnPantalla: Sendable, Equatable {
+    let tipo: AvisoPrevisto
+    let texto: String
+}
+
 /// El estado de la pantalla de inicio.
 ///
 /// **No decide nada**: el modo, la ventana de la gráfica y dónde se corta la línea vienen ya
@@ -119,22 +125,128 @@ final class InicioViewModel {
     var valorHablado: String? {
         guard let estado, let ultima = estado.ultima else { return nil }
         let letrero = Self.letrero(modo: estado.modo, antiguedadMin: estado.antiguedadMin, hablado: true)
-        return "\(Self.entero(ultima.mgDl)) miligramos por decilitro. \(letrero)"
+        // La estimación va aquí también, no solo en el resumen de la gráfica: va dibujada
+        // dentro de este bloque, y el bloque se lee con una sola etiqueta. Sin esto, quien usa
+        // VoiceOver no se enteraría de la cifra que la pantalla enseña más grande después del
+        // valor de ahora.
+        let estimado = primeraProyeccion.map {
+            " Estimado: \(Self.entero($0.valorMgDl)) miligramos por decilitro "
+                + "a las \(Self.hora($0.objetivo))."
+        } ?? ""
+        return "\(Self.entero(ultima.mgDl)) miligramos por decilitro. \(letrero)\(estimado)"
+    }
+
+    /// La del horizonte más corto, que es la que la pantalla enseña arriba.
+    private var primeraProyeccion: Proyeccion? {
+        guard case let .success(proyecciones) = estado?.proyeccion else { return nil }
+        return proyecciones.min(by: { $0.horizonteMin < $1.horizonteMin })
     }
 
     var pieDeLaGrafica: String {
         switch estado?.modo {
-        case .sensor: "Aún no puedo proyectar: eso llega cuando el modelo esté entrenado."
-        case .sinSensor, nil: "Cada punto es una medición tuya. Sin serie continua no hay curva que dibujar."
+        case .sensor: Self.pieConSensor(estado?.proyeccion)
+        case .sinSensor, nil:
+            "Cada punto es una medición tuya. Sin serie continua no hay curva que dibujar."
         }
+    }
+
+    /// «La línea punteada es una estimación: alrededor de 142 mg/dL a las 2:35 p.m. …»
+    ///
+    /// Siempre con **la hora** y nunca con «dentro de media hora»: el horizonte se cuenta
+    /// desde la lectura con la que se predijo, y si esa lectura tiene doce minutos, media hora
+    /// alcanza a dieciocho. Y siempre cerrando con que conviene medirse, que es lo único que
+    /// se puede decir sin dar una indicación de tratamiento (regla 7).
+    static func pieConSensor(_ proyeccion: Result<[Proyeccion], SinProyeccion>?) -> String {
+        guard let proyeccion else { return "" }
+        switch proyeccion {
+        case let .success(proyecciones) where !proyecciones.isEmpty:
+            let valores = proyecciones.map {
+                "\(entero($0.valorMgDl)) mg/dL a las \(hora($0.objetivo))"
+            }
+            return "La línea punteada es una estimación: alrededor de "
+                + valores.joined(separator: ", y de ")
+                + ". Conviene medirte para confirmarlo."
+        case .success:
+            return "No tengo con qué estimar todavía."
+        case .failure(.sinSensor):
+            // No debería llegar aquí —esto solo se llama en modo sensor— y si llega, lo que
+            // toca decir es lo que la regla 8 obliga a decir.
+            return "Sin sensor no puedo anticipar una glucosa baja."
+        case .failure(.serieInsuficiente):
+            return "Todavía no tengo suficientes lecturas seguidas para estimar."
+        case .failure(.sinModelo):
+            return "No puedo estimar ahora mismo. Tus registros y tus gráficas siguen igual."
+        case let .failure(.fueraDeRango(valor)):
+            // Se dice el número en lugar de callarlo: es un síntoma, y quien lo vea en una
+            // prueba de campo tiene que poder reportarlo.
+            return "La estimación salió fuera de lo posible (\(entero(valor)) mg/dL), "
+                + "así que no la enseño."
+        }
+    }
+
+    /// Lo que la estimación anticipa, con su tipo aparte del texto.
+    ///
+    /// El tipo va suelto porque la pantalla elige con él el icono y el color; deducirlo del
+    /// texto obligaría a leer la primera palabra, y entonces cambiar una frase cambiaría una
+    /// flecha sin que nadie lo note.
+    ///
+    /// La frase nombra lo que va a pasar y **no qué hacer** (regla 7). Lo único que pide es
+    /// medirse, que es una medición y no un tratamiento.
+    var avisoDeLaProyeccion: AvisoEnPantalla? {
+        guard case let .success(proyecciones) = estado?.proyeccion,
+              let primera = proyecciones.first(where: { $0.aviso != nil }),
+              let aviso = primera.aviso
+        else { return nil }
+        let que = aviso == .bajaPrevista ? "Baja prevista" : "Alta prevista"
+        return AvisoEnPantalla(
+            tipo: aviso,
+            texto: "\(que) a las \(Self.hora(primera.objetivo)): alrededor de "
+                + "\(Self.entero(primera.valorMgDl)) mg/dL. Mídete para confirmarlo."
+        )
+    }
+
+    /// La cifra de dentro de media hora, debajo de la de ahora: «→ 142 mg/dL a las 2:35 p.m.»
+    ///
+    /// Es la promesa del eslogan, «tu glucosa, media hora antes», y es lo único que la pantalla
+    /// enseña grande además del valor de ahora: un dato y una acción por pantalla. La flecha va
+    /// porque el color no puede ser lo único que distinga lo estimado de lo medido.
+    ///
+    /// Con la hora, no con «en 30 minutos»: el horizonte se cuenta desde la lectura con la que
+    /// se predijo.
+    var cifraDeLaProyeccion: String? {
+        primeraProyeccion.map {
+            "\(Self.entero($0.valorMgDl)) mg/dL a las \(Self.hora($0.objetivo))"
+        }
+    }
+
+    /// Lo mismo que el pie, para VoiceOver: con la unidad dicha entera y sin abreviar la hora.
+    var proyeccionHablada: String? {
+        guard case let .success(proyecciones) = estado?.proyeccion, !proyecciones.isEmpty
+        else { return nil }
+        let dichas = proyecciones.map {
+            "\(Self.entero($0.valorMgDl)) miligramos por decilitro a las \(Self.hora($0.objetivo))"
+        }
+        return "Estimación: alrededor de " + dichas.joined(separator: ", y de ")
+            + ". Conviene medirte para confirmarlo."
+    }
+
+    /// Con qué versión del modelo se calculó, para la pantalla de ajustes y para el reporte
+    /// (RF-25). No se enseña en Inicio: ahí no significa nada para quien usa la app.
+    var versionDelModelo: String? {
+        guard case let .success(proyecciones) = estado?.proyeccion else { return nil }
+        return proyecciones.first?.versionModelo
     }
 
     var textoSinPuntos: String {
         "No tienes mediciones en los últimos \(Int(ConfiguracionDominio.ventanaInicioSinSensorDias)) días."
     }
 
-    /// Una frase con cada cifra y su unidad. Describe lo que hay, sin interpretar hacia
-    /// dónde va: decir «subiendo» ya sería empezar a proyectar.
+    /// Una frase con cada cifra y su unidad, y después la estimación si la hay.
+    ///
+    /// Lo medido y lo estimado van en frases separadas y la estimación se nombra como tal: la
+    /// gráfica distingue las dos series con el trazo, y quien la escucha necesita que algo haga
+    /// ese papel. Lo medido no se interpreta —decir «subiendo» sería proyectar sin modelo—; lo
+    /// estimado sale del modelo y se dice con su hora.
     var resumenDeLaGrafica: String {
         guard let estado else { return "" }
         let valores = estado.tramos.flatMap { $0 }.map(\.mgDl)
@@ -146,8 +258,10 @@ final class InicioViewModel {
         case .sinSensor: "Tus mediciones de los últimos \(Int(ConfiguracionDominio.ventanaInicioSinSensorDias)) días"
         }
         let cuantas = valores.count == 1 ? "1 medición" : "\(valores.count) mediciones"
-        return "\(periodo): \(cuantas), de \(Self.entero(minimo)) a \(Self.entero(maximo)) "
-            + "miligramos por decilitro. La más reciente, \(Self.entero(ultimo.mgDl))."
+        let medido = "\(periodo): \(cuantas), de \(Self.entero(minimo)) a "
+            + "\(Self.entero(maximo)) miligramos por decilitro. "
+            + "La más reciente, \(Self.entero(ultimo.mgDl))."
+        return [medido, proyeccionHablada].compactMap { $0 }.joined(separator: " ")
     }
 
     var textoCarbohidratos: String {
@@ -191,5 +305,10 @@ final class InicioViewModel {
 
     static func entero(_ valor: Double) -> String {
         String(Int(valor.rounded()))
+    }
+
+    /// La hora en el formato corto del sistema, que respeta si la persona usa 12 o 24 horas.
+    static func hora(_ instante: Date) -> String {
+        instante.formatted(date: .omitted, time: .shortened)
     }
 }

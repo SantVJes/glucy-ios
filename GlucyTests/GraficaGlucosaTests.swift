@@ -31,9 +31,12 @@ struct GraficaGlucosaTests {
         #expect(TramosDeSerie.partir([]).isEmpty)
     }
 
-    /// La frontera con la fase 3. El dibujo punteado existe y está listo, pero mientras no
-    /// haya modelo nadie le da un solo punto.
-    @Test("19 · RF-10: ningún punto que produce la fase 1 es de la serie proyectada")
+    /// Ya hay modelo —la fase 3 llegó—, así que esta prueba dejó de ser una frontera y pasó a
+    /// ser la red: **sin artefacto cargado nadie inventa un punto proyectado**. Una línea base
+    /// de respaldo en la app sería una cifra que nadie validó, en el sitio donde la gente la
+    /// leería como una predicción. Lo que sí hay con modelo está en
+    /// `InicioConProyeccionTests`.
+    @Test("19 · RF-10: sin artefacto cargado no hay ningún punto de la serie proyectada")
     func nadaConstruyeUnaProyeccion() async throws {
         for activa in [true, false] {
             let lecturas = RepositorioLecturasFalso()

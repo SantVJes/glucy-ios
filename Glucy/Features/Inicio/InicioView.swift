@@ -109,6 +109,20 @@ struct InicioView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("letreroDelModo")
             }
+
+            // La cifra de media hora adelante, que es lo que el proyecto promete. Lleva flecha
+            // y la palabra «estimado» porque tiene que distinguirse de la de ahora sin
+            // depender del tamaño ni del color.
+            if let proyectada = modelo.cifraDeLaProyeccion {
+                // `arrow.forward` y no un símbolo más expresivo: los nombres de SF Symbols
+                // cambian entre versiones y uno que no existe no falla al compilar, se dibuja
+                // como un hueco. Este existe desde iOS 14.
+                Label("Estimado: \(proyectada)", systemImage: "arrow.forward")
+                    .font(Tema.Tipografia.valorFila)
+                    .foregroundStyle(Tema.Colores.azulProfundo)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("cifraDeLaProyeccion")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
@@ -224,6 +238,10 @@ struct InicioView: View {
                     .accessibilityHidden(true)
             }
 
+            if let aviso = modelo.avisoDeLaProyeccion {
+                franjaDeLaProyeccion(aviso)
+            }
+
             if modelo.cargado {
                 Text(modelo.pieDeLaGrafica)
                     .font(Tema.Tipografia.etiqueta)
@@ -236,6 +254,38 @@ struct InicioView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Tema.Colores.superficie)
         .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.tarjetaGrande))
+    }
+
+    /// Lo que la estimación anticipa, cuando cruza un umbral del perfil.
+    ///
+    /// El color va en el icono y en el borde; lo que informa son la flecha, la palabra, la
+    /// cifra y la hora. La app se revisa en escala de grises y esta franja tiene que seguir
+    /// diciendo lo mismo. Y dice qué va a pasar, nunca qué hacer (regla 7): lo único que
+    /// pide es medirse para confirmarlo, que es una medición y no un tratamiento.
+    private func franjaDeLaProyeccion(_ aviso: AvisoEnPantalla) -> some View {
+        let baja = aviso.tipo == .bajaPrevista
+        let color = baja ? Tema.Colores.hipoglucemia : Tema.Colores.alertaAmbar
+        return HStack(alignment: .top, spacing: Tema.Espacio.unidad * 3) {
+            Image(systemName: baja ? "arrow.down.right" : "arrow.up.right")
+                .font(.title3)
+                .foregroundStyle(color)
+                .accessibilityHidden(true)
+            Text(aviso.texto)
+                .font(Tema.Tipografia.etiqueta)
+                .foregroundStyle(Tema.Colores.textoPrincipal)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(Tema.Espacio.interior)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Tema.Colores.superficie)
+        .clipShape(RoundedRectangle(cornerRadius: Tema.Radio.bloqueInterno))
+        .overlay(
+            RoundedRectangle(cornerRadius: Tema.Radio.bloqueInterno)
+                .stroke(color, lineWidth: 2)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("avisoDeLaProyeccion")
     }
 
     /// Dos cifras chicas, cada una con de dónde sale. Ninguna va seguida de un consejo.

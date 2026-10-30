@@ -19,14 +19,22 @@ nonisolated struct EstadoInicio: Sendable, Equatable {
     let puedeAlertarHipoglucemia: Bool
     /// Si el sensor que la persona dijo tener está escribiendo. No es el modo.
     let estadoDelSensor: EstadoDelSensor
+    /// Las predicciones a 30 y 60 minutos, o el motivo de que no haya. El motivo se enseña:
+    /// un número ausente sin explicación se lee como una falla de la app.
+    let proyeccion: Result<[Proyeccion], SinProyeccion>
 }
 
 /// Junta lo que la pantalla de inicio necesita y decide lo que hay que decidir: qué ventana
 /// se enseña en cada modo y dónde se corta la línea. Así el ViewModel no decide nada.
 ///
-/// **No produce ninguna predicción.** Todos los puntos que devuelve son `.medida`: en la
-/// fase 1 no hay modelo, y una proyección sin modelo sería una extrapolación inventada con
-/// apariencia de predicción (RF-10).
+/// **La predicción la calcula `CalcularPrediccion` y esto solo la coloca**: los puntos medidos
+/// van en sus tramos y los predichos en un tramo aparte, marcados `.proyectada`, para que la
+/// gráfica los dibuje punteados. Lo medido y lo predicho no se pueden parecer: una persona a
+/// media noche tiene que distinguirlos sin leer la leyenda.
+///
+/// La ventana se estira hasta la predicción más lejana. Sin eso la línea punteada se calcula,
+/// se dibuja fuera de la escala y no se ve: el peor de los dos fallos posibles, porque parece
+/// que la app no predice.
 nonisolated struct ConsultarInicio: Sendable {
     let lecturas: any RepositorioLecturas
     let modo: ConsultarModo
@@ -35,6 +43,9 @@ nonisolated struct ConsultarInicio: Sendable {
     /// Para saber si la persona dijo tener sensor. Sin él, el sensor cuenta como no
     /// configurado.
     var perfil: (any RepositorioPerfil)? = nil
+    /// Opcional porque hay pantallas y pruebas que no necesitan predicción. Sin él no se
+    /// inventa nada: se dice que no hay modelo.
+    var predecir: CalcularPrediccion? = nil
 
     /// - Parameter lecturaHealthKitActiva: si la última consulta a Salud respondió. Ver
     ///   `ConsultarModo`.
@@ -58,11 +69,40 @@ nonisolated struct ConsultarInicio: Sendable {
             PuntoGrafica(id: $0.uuid, ts: $0.tsUtc, mgDl: $0.mgDl, serie: .medida, origen: $0.origen)
         }
 
-        let tramos: [[PuntoGrafica]] = switch estadoModo.modo {
+        var tramos: [[PuntoGrafica]] = switch estadoModo.modo {
         case .sensor: TramosDeSerie.partir(puntos)
         // Un tramo por punto: con eso es imposible que la gráfica una dos pinchazos
         // separados por horas con una recta que nadie midió (RF-23).
         case .sinSensor: puntos.map { [$0] }
+        }
+
+        let proyeccion: Result<[Proyeccion], SinProyeccion>
+        if let predecir {
+            // `try?` y no `try`: que el modelo no cargue no puede tumbar la pantalla de
+            // inicio. Se queda sin línea punteada y lo dice.
+            proyeccion = (try? await predecir.ejecutar(modo: estadoModo.modo, ahora: ahora))
+                ?? .failure(.sinModelo(detalle: "la consulta del modelo falló"))
+        } else {
+            proyeccion = .failure(.sinModelo(detalle: "no se configuró el predictor"))
+        }
+
+        var hasta = ahora
+        if case let .success(proyecciones) = proyeccion, let primera = proyecciones.first {
+            // El tramo punteado arranca en la lectura desde la que se predijo, no en el borde
+            // derecho de la gráfica: así la línea sale del punto medido y se ve de dónde
+            // viene. Va con `minutos: 0`, que es el id reservado para la base.
+            tramos.append(
+                [
+                    PuntoGrafica.proyectado(
+                        ts: primera.base.ts, mgDl: primera.base.mgDl, minutos: 0
+                    )
+                ] + proyecciones.map {
+                    PuntoGrafica.proyectado(
+                        ts: $0.objetivo, mgDl: $0.valorMgDl, minutos: $0.horizonteMin
+                    )
+                }
+            )
+            hasta = max(hasta, proyecciones.map(\.objetivo).max() ?? ahora)
         }
 
         // La última que entró por Salud, venga marcada como sensor o como HealthKit.
@@ -76,13 +116,14 @@ nonisolated struct ConsultarInicio: Sendable {
             antiguedadMin: ultima.map { ahora.timeIntervalSince($0.tsUtc) / 60 },
             ultima: ultima,
             tramos: tramos,
-            ventana: desde...ahora,
+            ventana: desde...hasta,
             carbohidratosActivosG: try await carbohidratosActivos.ejecutar(ahora: ahora),
             insulinaActivaUI: try await insulinaActiva.ejecutar(ahora: ahora),
             puedeAlertarHipoglucemia: estadoModo.puedeAlertarHipoglucemia,
             estadoDelSensor: DecisionModo.estadoDelSensor(
                 usaSensor: usaSensor, tsUltimaDelSensor: delSensor, ahora: ahora
-            )
+            ),
+            proyeccion: proyeccion
         )
     }
 }

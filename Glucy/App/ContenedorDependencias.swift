@@ -38,6 +38,16 @@ final class ContenedorDependencias {
     /// Donde vive el token del backend. En el contenedor porque el borrado de la cuenta
     /// también tiene que vaciarlo.
     let almacenDeToken: any AlmacenDeToken
+    /// Los artefactos que cargaron, uno por horizonte. Se cargan **una vez** al arrancar: un
+    /// `MLModel` tarda en abrirse y rehacerlo en cada pasada de Inicio se notaría.
+    ///
+    /// Puede venir vacío, y entonces la app funciona completa sin línea punteada y lo dice.
+    /// Un artefacto que no carga no es motivo para que no se pueda registrar una lectura
+    /// (regla 1).
+    let modelos: [any RepositorioModelo]
+    /// Por qué no cargó alguno, para la pantalla de ajustes y para el reporte. Vacío cuando
+    /// los dos cargaron.
+    let modelosQueFallaron: [String]
 
     init(
         contenedor: ModelContainer,
@@ -49,7 +59,9 @@ final class ContenedorDependencias {
         configuracionBackend: ConfiguracionBackend = .desdeBundle(),
         backend: (any ClienteBackend)? = nil,
         red: any EstadoDeRed = MonitorDeRed(),
-        almacenDeToken: any AlmacenDeToken = Llavero()
+        almacenDeToken: any AlmacenDeToken = Llavero(),
+        // Se puede pasar otra lista en las pruebas; por omisión se cargan los del paquete.
+        modelos: [any RepositorioModelo]? = nil
     ) {
         self.candado = candado
         self.configuracionBackend = configuracionBackend
@@ -78,6 +90,21 @@ final class ContenedorDependencias {
         sincronizarSensor = SincronizarLecturasDelSensor(
             servicio: salud, lecturas: lecturas, ancla: ancla, perfil: perfil
         )
+        if let modelos {
+            self.modelos = modelos
+            modelosQueFallaron = []
+        } else {
+            let cargados = [ModeloCoreML.nombreM1, ModeloCoreML.nombreM2].map { nombre in
+                Result { try ModeloCoreML(nombre: nombre) }
+            }
+            self.modelos = cargados.compactMap { try? $0.get() }
+            // El motivo se guarda, no se descarta: un artefacto cuyo contrato no cuadra es
+            // justo lo que no puede pasar inadvertido, y sin esto el síntoma sería una
+            // pantalla sin línea punteada y ninguna explicación.
+            modelosQueFallaron = cargados.compactMap {
+                if case let .failure(error) = $0 { String(describing: error) } else { nil }
+            }
+        }
     }
 
     /// La copia en Salud de lo que Glucy captura. Un solo caso de uso para los tres tipos.
@@ -114,6 +141,13 @@ final class ContenedorDependencias {
         CalcularCarbohidratosActivos(comidas: comidas)
     }
 
+    /// La predicción a 30 y 60 minutos, calculada en el teléfono (C-16).
+    var calcularPrediccion: CalcularPrediccion {
+        CalcularPrediccion(
+            lecturas: lecturas, comidas: comidas, dosis: dosis, perfil: perfil, modelos: modelos
+        )
+    }
+
     /// Todo lo que dibuja la pantalla de inicio, ya resuelto.
     var consultarInicio: ConsultarInicio {
         ConsultarInicio(
@@ -121,7 +155,8 @@ final class ContenedorDependencias {
             modo: ConsultarModo(lecturas: lecturas),
             carbohidratosActivos: calcularCarbohidratosActivos,
             insulinaActiva: calcularInsulinaActiva,
-            perfil: perfil
+            perfil: perfil,
+            predecir: calcularPrediccion
         )
     }
 
