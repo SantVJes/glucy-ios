@@ -48,6 +48,13 @@ final class ContenedorDependencias {
     /// Por qué no cargó alguno, para la pantalla de ajustes y para el reporte. Vacío cuando
     /// los dos cargaron.
     let modelosQueFallaron: [String]
+    /// Las alertas emitidas. Se guardan aunque la pantalla no las vuelva a leer: el registro
+    /// es lo que permite medir el tiempo de anticipación y lo que impide que la app repita el
+    /// mismo aviso cada minuto.
+    let alertas: any RepositorioAlertas
+    /// Los avisos del sistema, detrás de su protocolo. Nadie fuera de `Data/Avisos/` sabe que
+    /// existen `UNUserNotificationCenter` ni el motor táctil.
+    let avisos: any ServicioAvisos
 
     init(
         contenedor: ModelContainer,
@@ -61,7 +68,8 @@ final class ContenedorDependencias {
         red: any EstadoDeRed = MonitorDeRed(),
         almacenDeToken: any AlmacenDeToken = Llavero(),
         // Se puede pasar otra lista en las pruebas; por omisión se cargan los del paquete.
-        modelos: [any RepositorioModelo]? = nil
+        modelos: [any RepositorioModelo]? = nil,
+        avisos: any ServicioAvisos = AvisosDelSistema()
     ) {
         self.candado = candado
         self.configuracionBackend = configuracionBackend
@@ -86,6 +94,8 @@ final class ContenedorDependencias {
         self.ocr = ocr
         self.servicioProductos = servicioProductos
         productos = ProductosSwiftData(modelContainer: contenedor)
+        alertas = AlertasSwiftData(modelContainer: contenedor)
+        self.avisos = avisos
         self.ancla = ancla
         sincronizarSensor = SincronizarLecturasDelSensor(
             servicio: salud, lecturas: lecturas, ancla: ancla, perfil: perfil
@@ -146,6 +156,12 @@ final class ContenedorDependencias {
         CalcularPrediccion(
             lecturas: lecturas, comidas: comidas, dosis: dosis, perfil: perfil, modelos: modelos
         )
+    }
+
+    /// El aviso de hipoglucemia prevista (RF-10). Solo avisa de una baja, solo en modo
+    /// sensor, y no se repite.
+    var avisarDeLaProyeccion: AvisarDeLaProyeccion {
+        AvisarDeLaProyeccion(alertas: alertas, avisos: avisos)
     }
 
     /// Todo lo que dibuja la pantalla de inicio, ya resuelto.
