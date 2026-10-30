@@ -114,15 +114,25 @@ actor ModeloCoreML: RepositorioModelo {
     }
 
     func predecir(_ vector: [String: Double]) async throws -> Double {
+        // El trabajo va en un método **síncrono** del actor, y no es un detalle de estilo.
+        // `MLModel.prediction(from:)` tiene dos sobrecargas desde iOS 17, una síncrona y una
+        // asíncrona, y en un contexto asíncrono el compilador elige la asíncrona: entonces
+        // `modelo` —un `MLModel`, que no es `Sendable`— cruzaría de dominio de aislamiento y
+        // el compilador lo rechaza con «Sending 'self.modelo' risks causing data races».
+        // Dentro de un método no asíncrono la asíncrona no es elegible, así que se usa la
+        // síncrona y el `MLModel` no sale nunca del actor. Es el actor el que serializa el
+        // acceso, que es justo lo que hay que garantizar.
+        try prediccion(vector)
+    }
+
+    private func prediccion(_ vector: [String: Double]) throws -> Double {
         let entradas = try MLDictionaryFeatureProvider(
             // `MLFeatureValue(double:)` explícito en lugar de dejar que el puente elija: un
             // `NaN` tiene que llegar como `NaN` al árbol, que es quien sabe para qué lado
             // mandar la fila con un hueco. Rellenarlo desvía hasta 19.8 mg/dL.
             dictionary: vector.mapValues { MLFeatureValue(double: $0) }
         )
-        // La sobrecarga asíncrona, que es la que iOS 17 añadió: la síncrona existe todavía,
-        // pero el compilador elige esta y pide el `await`.
-        let salida = try await modelo.prediction(from: entradas)
+        let salida = try modelo.prediction(from: entradas)
         guard let valor = salida.featureValue(for: Self.nombreDeLaSalida)?.doubleValue else {
             throw ErrorModelo.salidaInesperada(
                 detalle: "no vino \(Self.nombreDeLaSalida) en la respuesta del modelo"
