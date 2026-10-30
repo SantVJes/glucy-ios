@@ -42,11 +42,17 @@ nonisolated struct AvisarDeLaProyeccion: Sendable {
     /// - Parameter umbralHipo: el del perfil, que es el que se registra con la alerta: quien
     ///   mueve su umbral cambia qué cuenta como alerta, y sin guardarlo no se podría explicar
     ///   después por qué se avisó de un 75 el martes y no el lunes.
+    /// - Parameter puedePedirPermiso: `false` cuando no hay ninguna pantalla dibujada. iOS no
+    ///   puede presentar el diálogo del permiso con la app en segundo plano, y preguntar ahí
+    ///   gasta la única vez que se puede preguntar: negado, no se vuelve a ofrecer nunca. En
+    ///   segundo plano se entrega si ya hay permiso, y si no, la alerta queda registrada y la
+    ///   pantalla lo pregunta la próxima vez que alguien abra la app.
     func ejecutar(
         proyecciones: [Proyeccion],
         modo: ModoApp,
         umbralHipo: Double,
-        ahora: Date = Date()
+        ahora: Date = Date(),
+        puedePedirPermiso: Bool = true
     ) async throws -> ResultadoDelAviso {
         guard modo == .sensor else { return .sinSensorNoSeAnticipa }
 
@@ -78,7 +84,7 @@ nonisolated struct AvisarDeLaProyeccion: Sendable {
         // vez: un permiso que se pide sin contexto se niega, y negado no se vuelve a
         // preguntar nunca.
         var permiso = await avisos.permiso()
-        if permiso == .sinPreguntar {
+        if permiso == .sinPreguntar && puedePedirPermiso {
             permiso = (try? await avisos.pedirPermiso()) == true ? .concedido : .negado
         }
         guard permiso == .concedido else { return .registradaSinPermiso(alerta) }

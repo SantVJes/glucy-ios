@@ -23,6 +23,17 @@ nonisolated struct SincronizarLecturasDelSensor: Sendable {
     /// Para saber si la persona quiere que se lea su sensor. Sin él se lee siempre, que es
     /// como lo usan las pruebas de la lectura.
     var perfil: (any RepositorioPerfil)? = nil
+    /// Lo que hay que hacer **después** de guardar, y solo cuando se guardó algo. Es por donde
+    /// entra la vigilancia del aviso (RF-10).
+    ///
+    /// Va aquí y no como parámetro de `iniciar()` a propósito: `iniciar()` se llama desde el
+    /// arranque, desde la pantalla raíz y desde Ajustes al encender el sensor, y un parámetro
+    /// dejaría a quien lo olvidara con un observador registrado sin vigilancia. Quien decide
+    /// si avisar se le pone al caso de uso cuando se arma, una vez, en el contenedor.
+    ///
+    /// Este caso de uso guarda lecturas y no decide alertas: por eso quien decide llega desde
+    /// fuera y la dependencia sigue yendo en un solo sentido.
+    var alLlegarMuestrasNuevas: (@Sendable (ResultadoSincronizacion) async -> Void)? = nil
 
     /// Tope de lotes por pasada, para que un ancla que HealthKit nunca diera por terminada
     /// no deje la pasada corriendo para siempre. Con lotes de 500 son años de sensor.
@@ -42,9 +53,21 @@ nonisolated struct SincronizarLecturasDelSensor: Sendable {
         if let perfil, (try? await perfil.actual())?.usaSensor != true { return }
         let caso = self
         try? await servicio.observarGlucosa {
-            _ = await caso.ejecutar()
+            let resultado = await caso.ejecutar()
+            await caso.vigilar(resultado)
         }
-        _ = await ejecutar()
+        // La primera pasada también vigila: cuando iOS **relanza** la app para entregar una
+        // muestra, esto corre en el arranque y puede ser la única pasada que vea esa muestra.
+        let primera = await ejecutar()
+        await vigilar(primera)
+    }
+
+    /// Solo cuando entró algo nuevo. iOS reentrega la misma muestra más de una vez, y una
+    /// pasada que no guardó nada no cambió la predicción: volver a calcularla gastaría batería
+    /// en segundo plano para llegar al mismo número.
+    private func vigilar(_ resultado: ResultadoSincronizacion) async {
+        guard resultado.guardadas > 0, let alLlegarMuestrasNuevas else { return }
+        await alLlegarMuestrasNuevas(resultado)
     }
 
     /// Una pasada: todo lo nuevo desde el ancla guardada, lote por lote.
