@@ -104,8 +104,8 @@ struct MigracionEsquemaV5Tests {
     func lasEtapasAnterioresNoSeTocaron() async throws {
         #expect(EsquemaGlucyV5.versionIdentifier == Schema.Version(5, 0, 0))
         #expect(EsquemaGlucyV5.models.count == 10)
-        #expect(PlanMigracionGlucy.schemas.count == 5)
-        #expect(PlanMigracionGlucy.stages.count == 4)
+        #expect(PlanMigracionGlucy.schemas.count == 6)
+        #expect(PlanMigracionGlucy.stages.count == 5)
 
         // Cada versión sigue describiendo la base como era: si dos coinciden, el plan no las
         // distingue y la app se cae al abrir una base vieja.
@@ -118,8 +118,11 @@ struct MigracionEsquemaV5Tests {
         #expect(EsquemaGlucyV3.models.contains { $0 == EsquemaGlucyV1.DosisInsulina.self })
         #expect(EsquemaGlucyV4.models.contains { $0 == EsquemaGlucyV4.Perfil.self })
         #expect(EsquemaGlucyV4.models.contains { $0 == DosisInsulina.self })
-        #expect(EsquemaGlucyV5.models.contains { $0 == Perfil.self })
+        // La V5 pasó a describir su propio `Perfil` congelado cuando nació la V6: ya no es
+        // el de hoy, que es lo que la distingue de la siguiente.
+        #expect(EsquemaGlucyV5.models.contains { $0 == EsquemaGlucyV5.Perfil.self })
         #expect(!EsquemaGlucyV5.models.contains { $0 == EsquemaGlucyV4.Perfil.self })
+        #expect(!EsquemaGlucyV5.models.contains { $0 == Perfil.self })
 
         // Y la cadena entera sigue funcionando: una base de la V3 llega hasta la V5 con sus
         // filas, pasando por las dos etapas.

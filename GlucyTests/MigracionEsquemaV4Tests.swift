@@ -73,8 +73,8 @@ struct MigracionEsquemaV4Tests {
         // abrir una base vieja.
         #expect(EsquemaGlucyV4.versionIdentifier == Schema.Version(4, 0, 0))
         #expect(EsquemaGlucyV4.models.count == 10)
-        #expect(PlanMigracionGlucy.schemas.count == 5)
-        #expect(PlanMigracionGlucy.stages.count == 4)
+        #expect(PlanMigracionGlucy.schemas.count == 6)
+        #expect(PlanMigracionGlucy.stages.count == 5)
         #expect(EsquemaGlucyV3.models.contains { $0 == EsquemaGlucyV1.DosisInsulina.self })
         #expect(EsquemaGlucyV3.models.contains { $0 == EsquemaGlucyV1.Perfil.self })
         #expect(EsquemaGlucyV4.models.contains { $0 == DosisInsulina.self })

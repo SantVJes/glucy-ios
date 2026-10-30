@@ -22,6 +22,7 @@ nonisolated struct AjustesEditables: Sendable, Equatable {
     var usaSensor: Bool
     var sincronizacionActiva: Bool
     var bloqueoBiometrico: Bool
+    var asistenteActivo: Bool
 
     init(perfil: PerfilDato) {
         nombre = perfil.nombre
@@ -39,6 +40,7 @@ nonisolated struct AjustesEditables: Sendable, Equatable {
         usaSensor = perfil.usaSensor
         sincronizacionActiva = perfil.sincronizacionActiva
         bloqueoBiometrico = perfil.bloqueoBiometrico
+        asistenteActivo = perfil.asistenteActivo
     }
 }
 
@@ -98,6 +100,7 @@ nonisolated struct GuardarAjustes: Sendable {
             tipoInsulinaRapida: insulina.isEmpty ? nil : insulina,
             sincronizacionActiva: cambios.sincronizacionActiva,
             bloqueoBiometrico: cambios.bloqueoBiometrico,
+            asistenteActivo: cambios.asistenteActivo,
             creadoTsUtc: actual.creadoTsUtc,
             actualizadoTsUtc: ahora,
             zonaHoraria: actual.zonaHoraria

@@ -27,6 +27,14 @@ nonisolated struct EstadoInicio: Sendable, Equatable {
     /// a 80 cambió qué cuenta como alerta, y sin guardarlo no se podría explicar después por
     /// qué se avisó de un 75 el martes y no el lunes.
     let umbralHipo: Double
+    /// El umbral de hiperglucemia del perfil, por la misma razón: es lo que viaja a
+    /// `POST /explain`, y mandar el de por omisión haría que la frase hablara de un umbral que
+    /// no es el de esta persona.
+    let umbralHiper: Double
+    /// Si la persona quiere que la frase la redacte el asistente. Va en el estado porque el
+    /// sobre de `POST /explain` lo lleva, y leer el perfil otra vez en la pantalla daría dos
+    /// respuestas del mismo instante.
+    let asistenteActivo: Bool
 }
 
 /// Junta lo que la pantalla de inicio necesita y decide lo que hay que decidir: qué ventana
@@ -130,7 +138,11 @@ nonisolated struct ConsultarInicio: Sendable {
                 usaSensor: usaSensor, tsUltimaDelSensor: delSensor, ahora: ahora
             ),
             proyeccion: proyeccion,
-            umbralHipo: delPerfil?.umbralHipo ?? ConfiguracionDominio.umbralHipoPorOmision
+            umbralHipo: delPerfil?.umbralHipo ?? ConfiguracionDominio.umbralHipoPorOmision,
+            umbralHiper: delPerfil?.umbralHiper ?? ConfiguracionDominio.umbralHiperPorOmision,
+            // Sin perfil, encendido: es como nace el campo, y así quien todavía no acabó el
+            // alta ve la misma app que quien ya lo hizo.
+            asistenteActivo: delPerfil?.asistenteActivo ?? true
         )
     }
 }
