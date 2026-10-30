@@ -53,7 +53,10 @@ struct InicioConProyeccionTests {
             ).tramos.flatMap { $0 }.filter { $0.serie == .proyectada }.map(\.id)
         }
         // Con un id nuevo en cada pasada la gráfica se volvería a animar entera cada minuto.
-        #expect(try await ids() == (try await ids()))
+        let primera = try await ids()
+        let segunda = try await ids()
+        #expect(primera == segunda)
+        #expect(!primera.isEmpty)
     }
 
     @Test("La ventana de la gráfica llega hasta la predicción más lejana")

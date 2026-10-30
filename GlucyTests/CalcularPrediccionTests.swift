@@ -124,7 +124,8 @@ struct CalcularPrediccionTests {
 
         #expect(resultado == .failure(.sinSensor))
         // Y el modelo no se llamó: no es que el número se oculte, es que no se calcula.
-        #expect(await modelo.recibidos.isEmpty)
+        let recibidos = await modelo.recibidos
+        #expect(recibidos.isEmpty)
     }
 
     @Test("Sin ninguna lectura del sensor no se inventa nada")
@@ -207,7 +208,8 @@ struct CalcularPrediccionTests {
             modelos: [ModeloFalso(devuelve: .success(80))]
         ).ejecutar(modo: .sensor, ahora: ahora)
 
-        #expect(try resultado.get().first?.aviso == .bajaPrevista)
+        let proyecciones = try resultado.get()
+        #expect(proyecciones.first?.aviso == .bajaPrevista)
         #expect(CalcularPrediccion.aviso(valorMgDl: 80, umbralHipo: 70, umbralHiper: 180) == nil)
     }
 

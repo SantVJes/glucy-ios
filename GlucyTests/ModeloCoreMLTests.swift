@@ -78,8 +78,10 @@ struct ModeloCoreMLTests {
         // propio archivo, y por eso sus métricas no van al documento final (riesgo R-2). El
         // día que llegue OhioT1DM esta prueba falla, y eso es la señal de que hay que
         // actualizar el reporte.
-        #expect(try cargar(ModeloCoreML.nombreM1).descrito.metricasSePuedenReportar == false)
-        #expect(try cargar(ModeloCoreML.nombreM2).descrito.metricasSePuedenReportar == false)
+        let m1 = try cargar(ModeloCoreML.nombreM1)
+        let m2 = try cargar(ModeloCoreML.nombreM2)
+        #expect(m1.descrito.metricasSePuedenReportar == false)
+        #expect(m2.descrito.metricasSePuedenReportar == false)
     }
 
     @Test("Un artefacto que no está en el paquete se dice, no se adivina")
@@ -94,9 +96,8 @@ struct ModeloCoreMLTests {
     @Test("M-1 da el mismo número que el XGBoost con el que se entrenó")
     func m1DaElMismoNumeroQueXgboost() async throws {
         let modelo = try cargar(ModeloCoreML.nombreM1)
-        let valor = try await modelo.predecir(
-            try VectorDeCaracteristicas.paraCoreML(Self.fila)
-        )
+        let entradas = try VectorDeCaracteristicas.paraCoreML(Self.fila)
+        let valor = try await modelo.predecir(entradas)
         // 160.777_74 es lo que `m1-v0.2.0-simulador.ubj` devuelve para esta fila en float32.
         // La tolerancia es de una centésima; la diferencia medida en la conversión fue de
         // 0.000 259 mg/dL sobre 2 000 filas.
@@ -106,9 +107,8 @@ struct ModeloCoreMLTests {
     @Test("M-2 da el mismo número que el XGBoost con el que se entrenó")
     func m2DaElMismoNumeroQueXgboost() async throws {
         let modelo = try cargar(ModeloCoreML.nombreM2)
-        let valor = try await modelo.predecir(
-            try VectorDeCaracteristicas.paraCoreML(Self.fila)
-        )
+        let entradas = try VectorDeCaracteristicas.paraCoreML(Self.fila)
+        let valor = try await modelo.predecir(entradas)
         #expect(abs(valor - 139.964_63) < 0.01, "Core ML dio \(valor)")
     }
 
@@ -117,12 +117,9 @@ struct ModeloCoreMLTests {
         // La comprobación que no se podía hacer desde Python. Si Core ML ignorara el valor
         // faltante, estos números serían otros: la desviación medida al no respetarlo llegaba
         // a 19.8 mg/dL en M-1 y a 35.9 en M-2.
-        let m1 = try await cargar(ModeloCoreML.nombreM1).predecir(
-            try VectorDeCaracteristicas.paraCoreML(Self.filaConHuecos)
-        )
-        let m2 = try await cargar(ModeloCoreML.nombreM2).predecir(
-            try VectorDeCaracteristicas.paraCoreML(Self.filaConHuecos)
-        )
+        let entradas = try VectorDeCaracteristicas.paraCoreML(Self.filaConHuecos)
+        let m1 = try await cargar(ModeloCoreML.nombreM1).predecir(entradas)
+        let m2 = try await cargar(ModeloCoreML.nombreM2).predecir(entradas)
         #expect(abs(m1 - 158.900_01) < 0.01, "M-1 con huecos dio \(m1)")
         #expect(abs(m2 - 154.951_94) < 0.01, "M-2 con huecos dio \(m2)")
     }
@@ -152,9 +149,8 @@ struct ModeloCoreMLTests {
             ahora: instante,
             zona: TimeZone(identifier: "UTC")!
         )
-        let valor = try await cargar(ModeloCoreML.nombreM1).predecir(
-            try VectorDeCaracteristicas.paraCoreML(vector)
-        )
+        let entradas = try VectorDeCaracteristicas.paraCoreML(vector)
+        let valor = try await cargar(ModeloCoreML.nombreM1).predecir(entradas)
         #expect(abs(valor - 160.777_74) < 0.01, "con la fila calculada dio \(valor)")
     }
 }
