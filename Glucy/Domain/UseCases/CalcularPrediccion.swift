@@ -73,7 +73,10 @@ nonisolated struct CalcularPrediccion: Sendable {
     let lecturas: any RepositorioLecturas
     let comidas: any RepositorioComidas
     let dosis: any RepositorioDosis
-    let perfil: any RepositorioPerfil
+    /// Opcional, como en `ConsultarInicio`: sin perfil los umbrales son los de por omisión.
+    /// No se exige un repositorio para poder predecir, y así nadie tiene que fabricar un
+    /// perfil vacío solo para pedir un número.
+    let perfil: (any RepositorioPerfil)?
     /// Uno por horizonte. Vacío si ninguno cargó, y entonces no hay predicción y se dice.
     let modelos: [any RepositorioModelo]
 
@@ -135,9 +138,9 @@ nonisolated struct CalcularPrediccion: Sendable {
             return .failure(.serieInsuficiente)
         }
 
-        let actualPerfil = try? await perfil.actual()
-        let umbralHipo = actualPerfil?.umbralHipo ?? ConfiguracionDominio.umbralHipoPorOmision
-        let umbralHiper = actualPerfil?.umbralHiper ?? ConfiguracionDominio.umbralHiperPorOmision
+        let delPerfil = try? await perfil?.actual()
+        let umbralHipo = delPerfil?.umbralHipo ?? ConfiguracionDominio.umbralHipoPorOmision
+        let umbralHiper = delPerfil?.umbralHiper ?? ConfiguracionDominio.umbralHiperPorOmision
 
         var proyecciones: [Proyeccion] = []
         for modelo in modelos.sorted(by: { $0.descrito.horizonteMin < $1.descrito.horizonteMin }) {
