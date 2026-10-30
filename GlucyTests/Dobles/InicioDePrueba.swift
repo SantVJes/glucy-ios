@@ -14,17 +14,26 @@ enum InicioDePrueba {
         ))
     }
 
+    /// - Parameter modelos: vacío por omisión, y entonces no hay predicción y el estado lo
+    ///   dice. Las pruebas que miran la línea punteada pasan un `ModeloFalso`.
     static func estado(
         lecturas: any RepositorioLecturas,
         comidas: any RepositorioComidas,
         dosis: any RepositorioDosis,
-        lecturaHealthKitActiva: Bool
+        lecturaHealthKitActiva: Bool,
+        modelos: [any RepositorioModelo] = [],
+        perfil: (any RepositorioPerfil)? = nil
     ) async throws -> EstadoInicio {
         try await ConsultarInicio(
             lecturas: lecturas,
             modo: ConsultarModo(lecturas: lecturas),
             carbohidratosActivos: CalcularCarbohidratosActivos(comidas: comidas),
-            insulinaActiva: CalcularInsulinaActiva(dosis: dosis)
+            insulinaActiva: CalcularInsulinaActiva(dosis: dosis),
+            perfil: perfil,
+            predecir: CalcularPrediccion(
+                lecturas: lecturas, comidas: comidas, dosis: dosis,
+                perfil: perfil ?? RepositorioPerfilFalso(), modelos: modelos
+            )
         ).ejecutar(lecturaHealthKitActiva: lecturaHealthKitActiva, ahora: ahora)
     }
 }
