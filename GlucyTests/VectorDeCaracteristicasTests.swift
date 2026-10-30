@@ -174,7 +174,10 @@ struct VectorDeCaracteristicasTests {
     func laSegundaDerivadaEsLaDelBackend() {
         // 100, 110, 125: la pendiente pasa de 2 a 3 mg/dL por minuto.
         let vector = denso(serieDeCincoMinutos([100, 110, 125]))
-        #expect(vector["derivada_2"] == (125 - 2 * 110 + 100) / 25)
+        // Con el tipo escrito: sin él los literales son enteros, `5 / 25` da 0 y la prueba
+        // compara contra cero mientras el vector trae 0.2. Fallaba la prueba, no la fórmula.
+        let esperada: Double = (125 - 2 * 110 + 100) / 25
+        #expect(vector["derivada_2"] == esperada)
         #expect(vector["derivada_2"] == 0.2)
     }
 
