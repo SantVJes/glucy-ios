@@ -257,13 +257,25 @@ struct SincronizarLecturasDelSensorTests {
         }
     }
 
+    /// Las muestras de las dos pruebas de abajo van sobre el reloj de verdad y no sobre la
+    /// fecha fija de las demás. `iniciar()` no recibe `ahora` a propósito: en la app arranca
+    /// con el reloj del teléfono, y es lo que se quiere probar. Con la fecha fija, la muestra
+    /// tendría más de un año de antigüedad, no pasaría la regla de frescura y el modo saldría
+    /// sin sensor.
+    private func muestraDeAhora(mgDl: Double, haceMin: Double) -> MuestraGlucosa {
+        MuestraGlucosa(
+            uuid: UUID(), valor: mgDl, ts: Date().addingTimeInterval(-haceMin * 60),
+            esPropia: false
+        )
+    }
+
     @Test("RF-10: cada entrega con muestras nuevas llama a lo que decide si avisar")
     func cadaEntregaConMuestrasNuevasAvisa() async throws {
         let salud = HealthKitFalso()
         let repositorio = RepositorioLecturasFalso()
         let ancla = anclaDePrueba()
         defer { borrar(ancla) }
-        await salud.agregar([muestra(mgDl: 120, haceMin: 5)])
+        await salud.agregar([muestraDeAhora(mgDl: 120, haceMin: 5)])
 
         let anotador = Anotador()
         let caso = SincronizarLecturasDelSensor(
@@ -288,7 +300,7 @@ struct SincronizarLecturasDelSensorTests {
         #expect(modos == [ModoApp.sensor])
 
         // Llega otra muestra y iOS entrega.
-        await salud.agregar([muestra(mgDl: 96, haceMin: 0)])
+        await salud.agregar([muestraDeAhora(mgDl: 112, haceMin: 1)])
         await salud.entregar()
         #expect(await anotador.veces == 2)
 
@@ -305,7 +317,7 @@ struct SincronizarLecturasDelSensorTests {
         let repositorio = RepositorioLecturasFalso()
         let ancla = anclaDePrueba()
         defer { borrar(ancla) }
-        await salud.agregar([muestra(mgDl: 120, haceMin: 5)])
+        await salud.agregar([muestraDeAhora(mgDl: 120, haceMin: 5)])
         let perfil = RepositorioPerfilFalso(PerfilDato(
             fechaNacimiento: ReglasDePerfil.fechaDeAnio(1990), tipoUsuario: .tipo1,
             usaSensor: false, consentimientoTsUtc: ahora
