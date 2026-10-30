@@ -106,7 +106,7 @@ struct PedirFactoresYExplicacionTests {
         #expect(pedidas.count == 1)
 
         // Lo guardado es el número del teléfono, el de los dos horizontes.
-        let guardadas = await cache.todas()
+        let guardadas = try await cache.todas()
         #expect(guardadas.count == 2)
         #expect(guardadas.first?.valorMgDl == 142)
         #expect(guardadas.first?.versionModelo == "m1-v0.2.0-simulador")
@@ -296,7 +296,7 @@ struct PedirFactoresYExplicacionTests {
         let aportes = try #require(resultado.aportes)
         #expect(aportes[0].explicacion == nil)
         #expect(aportes[0].paraLaPantalla.isEmpty == false)
-        let guardadas = await cache.todas()
+        let guardadas = try await cache.todas()
         #expect(guardadas.count == 1)
     }
 
