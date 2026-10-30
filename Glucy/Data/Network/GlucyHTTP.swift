@@ -59,6 +59,41 @@ nonisolated struct GlucyHTTP: ClienteBackend {
         _ = try await enviar(ruta: "perfil", cuerpo: cuerpo)
     }
 
+    // MARK: - Los factores y la explicación
+
+    func pedirPrediccion() async throws -> PrediccionRemota {
+        let datos = try await enviar(ruta: "predict", metodo: "GET", cuerpo: nil)
+        return try Self.prediccion(desde: datos)
+    }
+
+    func pedirExplicacion(_ entrada: ExplicacionPedida) async throws -> ExplicacionRemota {
+        // Se comprueba aquí y no se manda: un `400` no se reintenta, así que un sobre que el
+        // servidor va a rechazar sería una explicación perdida sin nada que la explique.
+        guard entrada.sirveParaMandar else {
+            throw ErrorBackend.sobreInvalido(
+                detalle: "el sobre de /explain lleva \(entrada.shap.count) contribuciones y "
+                    + "hora_local \(entrada.horaLocal)"
+            )
+        }
+        let cuerpo = try Self.codificador.encode(entrada)
+        let datos = try await enviar(ruta: "explain", cuerpo: cuerpo)
+        do {
+            return try Self.decodificador.decode(ExplicacionRemota.self, from: datos)
+        } catch {
+            throw ErrorBackend.respuestaIlegible
+        }
+    }
+
+    /// La traducción de lo que contesta `GET /predict`, aparte y pura para poder probarla
+    /// sobre respuestas escritas a mano, sin red y sin servidor.
+    static func prediccion(desde datos: Data) throws -> PrediccionRemota {
+        do {
+            return try decodificadorConFechas.decode(PrediccionRemota.self, from: datos)
+        } catch {
+            throw ErrorBackend.respuestaIlegible
+        }
+    }
+
     // MARK: - El trabajo común
 
     private func lote<Renglon: Encodable & Sendable>(
@@ -73,7 +108,9 @@ nonisolated struct GlucyHTTP: ClienteBackend {
         }
     }
 
-    private func enviar(ruta: String, cuerpo: Data) async throws -> Data {
+    private func enviar(
+        ruta: String, metodo: String = "POST", cuerpo: Data?
+    ) async throws -> Data {
         guard let base = configuracion.url, let token = almacen.token() else {
             throw ErrorBackend.sinConfiguracion
         }
@@ -81,7 +118,7 @@ nonisolated struct GlucyHTTP: ClienteBackend {
         // La ruta va sin diagonal inicial: `appendingPathComponent` la agrega, y con dos
         // la dirección saldría con una doble.
         var peticion = URLRequest(url: base.appendingPathComponent(ruta))
-        peticion.httpMethod = "POST"
+        peticion.httpMethod = metodo
         peticion.httpBody = cuerpo
         peticion.timeoutInterval = configuracion.timeoutSegundos
         peticion.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -159,4 +196,68 @@ nonisolated struct GlucyHTTP: ClienteBackend {
     }
 
     static var decodificador: JSONDecoder { JSONDecoder() }
+
+    /// El decodificador de las respuestas que traen fechas, que son las de `/predict`.
+    ///
+    /// Se prueban las dos formas porque FastAPI escribe la fracción de segundo solo cuando el
+    /// valor la tiene: `ts_objetivo` sale de una suma y suele llegar en punto, mientras
+    /// `ts_utc` trae microsegundos. Un decodificador que exija una sola forma falla en la
+    /// mitad de los campos y la respuesta entera se vuelve ilegible.
+    static var decodificadorConFechas: JSONDecoder {
+        let decodificador = JSONDecoder()
+        decodificador.dateDecodingStrategy = .custom { desdeElJson in
+            let texto = try desdeElJson.singleValueContainer().decode(String.self)
+            guard let leida = fecha(desde: texto) else {
+                throw DecodingError.dataCorrupted(
+                    DecodingError.Context(
+                        codingPath: desdeElJson.codingPath,
+                        debugDescription: "no es una fecha ISO 8601: \(texto)"
+                    )
+                )
+            }
+            return leida
+        }
+        return decodificador
+    }
+
+    /// ISO 8601 con offset, con fracción de segundo o sin ella.
+    ///
+    /// Si el texto no trae zona se toma como UTC, y eso **no** contradice la regla de no
+    /// suponerla: aquí se está leyendo al servidor de Glucy, que guarda y responde todo en UTC
+    /// y rechaza una marca sin zona en la entrada. Suponerla al subir sería distinto, porque
+    /// del otro lado hay un teléfono que puede estar en cualquier parte.
+    static func fecha(desde texto: String) -> Date? {
+        let recortado = recortarFraccion(texto)
+
+        let conFraccion = ISO8601DateFormatter()
+        conFraccion.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let leida = conFraccion.date(from: recortado) { return leida }
+
+        let sinFraccion = ISO8601DateFormatter()
+        sinFraccion.formatOptions = [.withInternetDateTime]
+        if let leida = sinFraccion.date(from: recortado) { return leida }
+
+        // Sin zona: se reintenta como UTC, una sola vez. La «Z» que se agrega es lo que
+        // corta la recursión.
+        guard let ultimo = recortado.last, ultimo != "Z", !recortado.contains("+") else {
+            return nil
+        }
+        return fecha(desde: recortado + "Z")
+    }
+
+    /// Recorta la fracción de segundo a tres dígitos.
+    ///
+    /// Python escribe seis —microsegundos— y `ISO8601DateFormatter` con `.withFractionalSeconds`
+    /// **no los acepta**: devuelve `nil`, no un valor aproximado. Sin este recorte la respuesta
+    /// entera de `/predict` se volvería ilegible por tres ceros de más, y la pantalla de
+    /// factores se quedaría vacía sin que nada fallara. Lo que se pierde son microsegundos de
+    /// una marca de tiempo que la app enseña al minuto.
+    static func recortarFraccion(_ texto: String) -> String {
+        guard let punto = texto.firstIndex(of: ".") else { return texto }
+        let desdeElPunto = texto[texto.index(after: punto)...]
+        let digitos = desdeElPunto.prefix { $0.isNumber }
+        guard digitos.count > 3 else { return texto }
+        let resto = desdeElPunto.dropFirst(digitos.count)
+        return String(texto[..<punto]) + "." + String(digitos.prefix(3)) + String(resto)
+    }
 }
