@@ -21,6 +21,7 @@ struct PestanasView: View {
                 consultar: dependencias.consultarInicio,
                 sincronizar: dependencias.sincronizarSensor,
                 ajustes: dependencias.ajustesDeInsulina,
+                pedirAlServidor: dependencias.pedirFactoresYExplicacion,
                 alAnotar: { tipo in
                     registro = tipo
                     pestana = .registrar

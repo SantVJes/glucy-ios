@@ -48,6 +48,9 @@ final class ContenedorDependencias {
     /// Por qué no cargó alguno, para la pantalla de ajustes y para el reporte. Vacío cuando
     /// los dos cargaron.
     let modelosQueFallaron: [String]
+    /// La última predicción de cada horizonte con lo que el servidor aportó sobre ella, para
+    /// que la frase y los factores se pinten al instante en el siguiente arranque.
+    let prediccionCache: any RepositorioPrediccionCache
 
     init(
         contenedor: ModelContainer,
@@ -86,6 +89,7 @@ final class ContenedorDependencias {
         self.ocr = ocr
         self.servicioProductos = servicioProductos
         productos = ProductosSwiftData(modelContainer: contenedor)
+        prediccionCache = PrediccionCacheSwiftData(modelContainer: contenedor)
         self.ancla = ancla
         sincronizarSensor = SincronizarLecturasDelSensor(
             servicio: salud, lecturas: lecturas, ancla: ancla, perfil: perfil
@@ -146,6 +150,12 @@ final class ContenedorDependencias {
         CalcularPrediccion(
             lecturas: lecturas, comidas: comidas, dosis: dosis, perfil: perfil, modelos: modelos
         )
+    }
+
+    /// Los factores y la explicación, que vienen del servidor (la otra mitad de C-16).
+    /// Sin dirección configurada no hay a quién preguntar y la app funciona igual (regla 1).
+    var pedirFactoresYExplicacion: PedirFactoresYExplicacion {
+        PedirFactoresYExplicacion(backend: backend, cache: prediccionCache)
     }
 
     /// Todo lo que dibuja la pantalla de inicio, ya resuelto.
