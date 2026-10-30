@@ -18,6 +18,14 @@ actor BackendFalso: ClienteBackend {
     private(set) var dosisRecibidas: [[DosisSubida]] = []
     private(set) var perfilesRecibidos: [PerfilSubido] = []
 
+    /// Lo de `/predict` y `/explain`. Por omisión, `sinConfiguracion`: una prueba que no se
+    /// ocupa de esto no debe recibir una predicción de regalo.
+    var respuestaPrediccion: Result<PrediccionRemota, ErrorBackend> = .failure(.sinConfiguracion)
+    var respuestaExplicacion: Result<ExplicacionRemota, ErrorBackend> =
+        .failure(.sinConfiguracion)
+    private(set) var pedidosDePrediccion = 0
+    private(set) var explicacionesPedidas: [ExplicacionPedida] = []
+
     func responder(lecturas: [Result<RespuestaLote, ErrorBackend>]) {
         respuestasLecturas = lecturas
     }
@@ -32,6 +40,14 @@ actor BackendFalso: ClienteBackend {
 
     func responder(perfil: Result<Void, ErrorBackend>) {
         respuestaPerfil = perfil
+    }
+
+    func responder(prediccion: Result<PrediccionRemota, ErrorBackend>) {
+        respuestaPrediccion = prediccion
+    }
+
+    func responder(explicacion: Result<ExplicacionRemota, ErrorBackend>) {
+        respuestaExplicacion = explicacion
     }
 
     func subirLecturas(_ items: [LecturaSubida]) async throws -> RespuestaLote {
@@ -52,6 +68,16 @@ actor BackendFalso: ClienteBackend {
     func subirPerfil(_ perfil: PerfilSubido) async throws {
         perfilesRecibidos.append(perfil)
         try respuestaPerfil.get()
+    }
+
+    func pedirPrediccion() async throws -> PrediccionRemota {
+        pedidosDePrediccion += 1
+        return try respuestaPrediccion.get()
+    }
+
+    func pedirExplicacion(_ entrada: ExplicacionPedida) async throws -> ExplicacionRemota {
+        explicacionesPedidas.append(entrada)
+        return try respuestaExplicacion.get()
     }
 
     private static func resolver(

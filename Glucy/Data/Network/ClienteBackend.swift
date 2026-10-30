@@ -17,6 +17,21 @@ nonisolated protocol ClienteBackend: Sendable {
     /// Deja los seis parámetros clínicos del perfil. Es un `upsert`: mandarlo dos veces no
     /// crea nada nuevo, así que se puede subir en cada ventana sin llevar la cuenta.
     func subirPerfil(_ perfil: PerfilSubido) async throws
+
+    /// La predicción del servidor con sus factores, de `GET /predict`.
+    ///
+    /// **No es de donde sale el número que la pantalla enseña**: ese lo calcula Core ML en el
+    /// teléfono y sale sin red (C-16). Esto trae lo que el teléfono no puede calcular —las
+    /// cinco contribuciones SHAP— y, de paso, el número del servidor, que sirve para comparar
+    /// los dos caminos. Responde en menos de 200 ms.
+    func pedirPrediccion() async throws -> PrediccionRemota
+
+    /// La frase que explica una predicción, de `POST /explain`.
+    ///
+    /// Tarda de 1 a 3 segundos, así que se pide **en segundo plano** y no bloquea ninguna
+    /// pantalla. Siempre contesta algo: si el modelo de lenguaje no responde en diez
+    /// segundos, llega la plantilla determinista y `origen` lo dice (P-13).
+    func pedirExplicacion(_ entrada: ExplicacionPedida) async throws -> ExplicacionRemota
 }
 
 /// Por qué no se pudo subir un lote, en los términos en los que la app tiene que decidir.
