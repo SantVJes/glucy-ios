@@ -15,10 +15,18 @@ nonisolated struct FactorDeLaPrediccion: Sendable, Equatable, Identifiable {
 
     /// Si se puede enseñar.
     ///
-    /// Un nombre con guion bajo es el nombre de una columna del modelo, no una frase: si llega
-    /// así, el servidor no lo tradujo y es un error suyo. No se enseña y no se inventa una
-    /// traducción (plan de la fase 3).
-    var sePuedeEnsenar: Bool { !nombre.contains("_") && !nombre.isEmpty }
+    /// Un nombre que es el de una columna del modelo no es una frase: si llega así, el
+    /// servidor no lo tradujo y es un error suyo. No se enseña y **no se inventa una
+    /// traducción** (plan de la fase 3).
+    ///
+    /// Se comprueba contra la lista de características que la app ya tiene, que es el contrato
+    /// con el pipeline, y no solo contra el guion bajo: `iob` y `cob` no llevan ninguno y son
+    /// nombres de columna igual. El guion bajo se sigue mirando por lo que no esté en esa
+    /// lista, como los nombres del juego disperso.
+    var sePuedeEnsenar: Bool {
+        guard !nombre.isEmpty, !nombre.contains("_") else { return false }
+        return !VectorDeCaracteristicas.densas.contains(nombre)
+    }
 
     /// Si empuja la glucosa hacia arriba. Va aparte del signo para que la pantalla no tenga
     /// que decidirlo: el color no es el único portador de la información y cada factor lleva

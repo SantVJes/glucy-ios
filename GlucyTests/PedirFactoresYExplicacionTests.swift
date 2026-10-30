@@ -172,6 +172,9 @@ struct PedirFactoresYExplicacionTests {
             [horizonte(30, valorPredicho: 142, factores: [
                 ("tu glucosa de ahora", 12.5),
                 ("rezago_45", -3.0),
+                // `iob` no lleva guion bajo y es nombre de columna igual: se comprueba contra
+                // la lista de características, que es el contrato con el pipeline.
+                ("iob", -8.0),
                 ("", 1.0),
             ])],
             tsBase: base
@@ -184,9 +187,9 @@ struct PedirFactoresYExplicacionTests {
         )
 
         let aportes = try #require(resultado.aportes)
-        // Los tres llegaron; solo uno se puede enseñar. El del guion bajo es el nombre de una
-        // columna del modelo y es un error del servidor, no algo que la app deba traducir.
-        #expect(aportes[0].factores.count == 3)
+        // Los cuatro llegaron; solo uno se puede enseñar. Los otros son nombres de columna
+        // del modelo, y eso es un error del servidor, no algo que la app deba traducir.
+        #expect(aportes[0].factores.count == 4)
         #expect(aportes[0].paraLaPantalla.map(\.nombre) == ["tu glucosa de ahora"])
     }
 
