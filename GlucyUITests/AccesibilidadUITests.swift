@@ -196,7 +196,8 @@ final class AccesibilidadUITests: XCTestCase {
         comprobar(
             ["ajusteNombre", "ajustePeso", "ajusteUnidad_mgDl", "ajusteUmbralHipoMas",
              "ajusteRegistraInsulina", "ajusteDuracionAccionMas", "ajusteUsaSensor",
-             "ajusteSincronizacion", "pendientesEnCola", "ajusteCandado", "botonIrABorrarCuenta",
+             "ajusteSincronizacion", "pendientesEnCola", "ajusteAsistente",
+             "queSeMandaAlAsistente", "ajusteCandado", "botonIrABorrarCuenta",
              "avisoNoEsDispositivoMedico"],
             en: app, pantalla: "Ajustes"
         )

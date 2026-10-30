@@ -97,4 +97,44 @@ struct ConsultarInicioTests {
         )
         #expect(fresco.puedeAlertarHipoglucemia)
     }
+
+    // MARK: - Lo que el estado le pasa al servidor
+
+    @Test("Los umbrales y el interruptor del asistente salen del perfil, no de la omisión")
+    func losUmbralesYElAsistenteSalenDelPerfil() async throws {
+        let lecturas = RepositorioLecturasFalso()
+        try await InicioDePrueba.guardar(118, haceMin: 3, origen: .sensor, en: lecturas)
+        // Esta persona movió sus dos umbrales y apagó el asistente.
+        let suyo = PerfilDato(
+            fechaNacimiento: ReglasDePerfil.fechaDeAnio(1990), tipoUsuario: .tipo1,
+            umbralHipo: 80, umbralHiper: 200, asistenteActivo: false
+        )
+        let perfil = RepositorioPerfilFalso(suyo)
+
+        let estado = try await InicioDePrueba.estado(
+            lecturas: lecturas, comidas: RepositorioComidasFalso(),
+            dosis: RepositorioDosisFalso(), lecturaHealthKitActiva: true, perfil: perfil
+        )
+
+        // Los dos umbrales viajan a `POST /explain`: mandar el de por omisión haría que la
+        // frase hablara de un umbral que no es el de esta persona.
+        #expect(estado.umbralHipo == 80)
+        #expect(estado.umbralHiper == 200)
+        #expect(estado.asistenteActivo == false)
+    }
+
+    @Test("Sin perfil el asistente queda encendido, como nace el campo")
+    func sinPerfilElAsistenteQuedaEncendido() async throws {
+        let lecturas = RepositorioLecturasFalso()
+        try await InicioDePrueba.guardar(118, haceMin: 3, origen: .sensor, en: lecturas)
+
+        let estado = try await InicioDePrueba.estado(
+            lecturas: lecturas, comidas: RepositorioComidasFalso(),
+            dosis: RepositorioDosisFalso(), lecturaHealthKitActiva: true
+        )
+
+        #expect(estado.asistenteActivo)
+        #expect(estado.umbralHipo == ConfiguracionDominio.umbralHipoPorOmision)
+        #expect(estado.umbralHiper == ConfiguracionDominio.umbralHiperPorOmision)
+    }
 }

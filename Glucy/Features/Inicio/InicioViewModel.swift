@@ -109,9 +109,10 @@ final class InicioViewModel {
                 proyecciones: proyecciones,
                 modo: estado.modo,
                 umbralHipo: estado.umbralHipo,
-                umbralHiper: ConfiguracionDominio.umbralHiperPorOmision,
+                umbralHiper: estado.umbralHiper,
                 cobG: estado.carbohidratosActivosG,
-                iobUI: estado.insulinaActivaUI
+                iobUI: estado.insulinaActivaUI,
+                asistenteActivo: estado.asistenteActivo
             )
             guard !Task.isCancelled else { return }
             if case let .llego(aportes) = resultado, let aporte = aportes.first {

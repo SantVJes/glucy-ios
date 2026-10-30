@@ -220,3 +220,62 @@ extension EsquemaGlucyV4 {
         }
     }
 }
+
+extension EsquemaGlucyV5 {
+
+    /// `Perfil` con los cinco campos de F-1 y antes de `asistenteActivo`.
+    @Model
+    nonisolated final class Perfil {
+        @Attribute(.unique) var uuid: UUID
+        var nombre: String
+        var apellidos: String
+        var pesoKg: Double?
+        var fechaNacimiento: Date
+        var tipoUsuario: TipoUsuario
+        var umbralHipo: Double
+        var umbralHiper: Double
+        var tiempoAbsorcionPorOmisionMin: Int
+        var duracionAccionInsulinaH: Double
+        var usaSensor: Bool
+        var registraInsulina: Bool = true
+        var consentimientoTsUtc: Date?
+        var unidadPreferida: UnidadGlucosa?
+        var tipoInsulinaRapida: String?
+        var sincronizacionActiva: Bool = false
+        var bloqueoBiometrico: Bool = false
+        var creadoTsUtc: Date
+        var actualizadoTsUtc: Date
+        var zonaHoraria: String
+        var syncEstado: SyncEstado
+
+        init(
+            uuid: UUID = UUID(), nombre: String = "", pesoKg: Double? = nil,
+            fechaNacimiento: Date, tipoUsuario: TipoUsuario,
+            umbralHipo: Double = ConfiguracionDominio.umbralHipoPorOmision,
+            duracionAccionInsulinaH: Double = ConfiguracionDominio.duracionAccionPorOmisionH,
+            usaSensor: Bool = false, registraInsulina: Bool = true
+        ) {
+            self.uuid = uuid
+            self.nombre = nombre
+            apellidos = ""
+            self.pesoKg = pesoKg
+            self.fechaNacimiento = fechaNacimiento
+            self.tipoUsuario = tipoUsuario
+            self.umbralHipo = umbralHipo
+            umbralHiper = ConfiguracionDominio.umbralHiperPorOmision
+            tiempoAbsorcionPorOmisionMin = ConfiguracionDominio.absorcionPorOmisionMin
+            self.duracionAccionInsulinaH = duracionAccionInsulinaH
+            self.usaSensor = usaSensor
+            self.registraInsulina = registraInsulina
+            consentimientoTsUtc = nil
+            unidadPreferida = nil
+            tipoInsulinaRapida = nil
+            sincronizacionActiva = false
+            bloqueoBiometrico = false
+            creadoTsUtc = Date()
+            actualizadoTsUtc = Date()
+            zonaHoraria = TimeZone.current.identifier
+            syncEstado = .local
+        }
+    }
+}

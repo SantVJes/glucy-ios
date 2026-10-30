@@ -47,6 +47,7 @@ struct AjustesView: View {
                         comidas(ajustes)
                         sensor(ajustes)
                         sincronizacion(ajustes)
+                        asistente(ajustes)
                         privacidad
                         seguridad(ajustes)
                         borrar
@@ -302,6 +303,41 @@ struct AjustesView: View {
             } else {
                 pie("Esta versión de la app no trae servidor configurado: aunque enciendas la "
                     + "sincronización, nada sale de tu teléfono. Los registros esperan en la cola.")
+            }
+        }
+    }
+
+    /// El interruptor del asistente de explicaciones.
+    ///
+    /// Se dice qué se apaga y qué no: apagarlo no deja la pantalla sin explicación, porque la
+    /// app arma la frase con los mismos factores y sin llamar a ningún modelo de lenguaje. Un
+    /// interruptor cuyo efecto no se entiende se queda como lo encontró.
+    private func asistente(_ ajustes: AjustesEditables) -> some View {
+        seccion("La explicación") {
+            interruptor(
+                "Que el asistente redacte la frase",
+                explicacion: "Apagado, Glucy arma la frase con los mismos factores y sin "
+                    + "consultar ningún asistente. Dice lo mismo, con menos variedad.",
+                encendido: Binding(
+                    get: { ajustes.asistenteActivo },
+                    set: { nuevo in Task { await modelo.cambiar { $0.asistenteActivo = nuevo } } }
+                ),
+                identificador: "ajusteAsistente"
+            )
+
+            // Lo que se manda, enumerado, en la pantalla donde se decide: es el único dato de
+            // la app que acaba en el texto de un asistente (regla 3).
+            Text("Cuando está encendido se manda tu glucosa de ahora y la estimada, la hora, "
+                + "tus umbrales, y qué movió la estimación. No se manda tu nombre, tu peso, "
+                + "tus notas ni nada que te identifique.")
+                .font(Tema.Tipografia.etiqueta)
+                .foregroundStyle(Tema.Colores.textoSecundario)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("queSeMandaAlAsistente")
+
+            if !modelo.hayBackend {
+                pie("Esta versión de la app no trae servidor configurado, así que por ahora no "
+                    + "hay frase de ninguna de las dos maneras. La estimación sale igual.")
             }
         }
     }

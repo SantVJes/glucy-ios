@@ -65,6 +65,14 @@ nonisolated final class Perfil {
     /// se bloquea sola el primer día, sin que nadie lo pidiera, se desinstala.
     var bloqueoBiometrico: Bool = false
 
+    /// Si la frase que explica la estimación la redacta el asistente o la arma la app.
+    ///
+    /// Nace **encendido**: la explicación en español llano es la mitad de lo que hace Glucy, y
+    /// una app que llega apagada por omisión se usa apagada. Apagarlo no deja la pantalla sin
+    /// explicación: el servidor arma la plantilla determinista con los mismos factores y sin
+    /// llamar a ningún modelo de lenguaje.
+    var asistenteActivo: Bool = true
+
     var creadoTsUtc: Date
     var actualizadoTsUtc: Date
     /// Identificador de `TimeZone`, por ejemplo `America/Mexico_City` (regla 5).
@@ -90,6 +98,7 @@ nonisolated final class Perfil {
         tipoInsulinaRapida: String? = nil,
         sincronizacionActiva: Bool = false,
         bloqueoBiometrico: Bool = false,
+        asistenteActivo: Bool = true,
         creadoTsUtc: Date = Date(),
         actualizadoTsUtc: Date = Date(),
         zonaHoraria: String = TimeZone.current.identifier,
@@ -112,6 +121,7 @@ nonisolated final class Perfil {
         self.tipoInsulinaRapida = tipoInsulinaRapida
         self.sincronizacionActiva = sincronizacionActiva
         self.bloqueoBiometrico = bloqueoBiometrico
+        self.asistenteActivo = asistenteActivo
         self.creadoTsUtc = creadoTsUtc
         self.actualizadoTsUtc = actualizadoTsUtc
         self.zonaHoraria = zonaHoraria
@@ -141,6 +151,7 @@ extension Perfil {
             tipoInsulinaRapida: dato.tipoInsulinaRapida,
             sincronizacionActiva: dato.sincronizacionActiva,
             bloqueoBiometrico: dato.bloqueoBiometrico,
+            asistenteActivo: dato.asistenteActivo,
             creadoTsUtc: dato.creadoTsUtc,
             actualizadoTsUtc: dato.actualizadoTsUtc,
             zonaHoraria: dato.zonaHoraria,
@@ -167,6 +178,7 @@ extension Perfil {
             tipoInsulinaRapida: tipoInsulinaRapida,
             sincronizacionActiva: sincronizacionActiva,
             bloqueoBiometrico: bloqueoBiometrico,
+            asistenteActivo: asistenteActivo,
             creadoTsUtc: creadoTsUtc,
             actualizadoTsUtc: actualizadoTsUtc,
             zonaHoraria: zonaHoraria,

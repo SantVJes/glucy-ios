@@ -39,6 +39,7 @@ actor PerfilSwiftData: RepositorioPerfil {
             existente.tipoInsulinaRapida = dato.tipoInsulinaRapida
             existente.sincronizacionActiva = dato.sincronizacionActiva
             existente.bloqueoBiometrico = dato.bloqueoBiometrico
+            existente.asistenteActivo = dato.asistenteActivo
             existente.actualizadoTsUtc = dato.actualizadoTsUtc
             existente.zonaHoraria = dato.zonaHoraria
             existente.syncEstado = .local

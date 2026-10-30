@@ -35,6 +35,10 @@ nonisolated struct PerfilDato: Sendable, Equatable, Identifiable {
     let tipoInsulinaRapida: String?
     let sincronizacionActiva: Bool
     let bloqueoBiometrico: Bool
+    /// Si la frase que explica la estimación la redacta el asistente o la arma la app. Viaja
+    /// a `POST /explain` como `asistente_activo`; apagado, el servidor usa la plantilla
+    /// determinista y no llama a ningún modelo de lenguaje.
+    let asistenteActivo: Bool
     let creadoTsUtc: Date
     let actualizadoTsUtc: Date
     /// Identificador de `TimeZone` (regla 5).
@@ -59,6 +63,7 @@ nonisolated struct PerfilDato: Sendable, Equatable, Identifiable {
         tipoInsulinaRapida: String? = nil,
         sincronizacionActiva: Bool = false,
         bloqueoBiometrico: Bool = false,
+        asistenteActivo: Bool = true,
         creadoTsUtc: Date = Date(),
         actualizadoTsUtc: Date = Date(),
         zonaHoraria: String = TimeZone.current.identifier,
@@ -81,6 +86,7 @@ nonisolated struct PerfilDato: Sendable, Equatable, Identifiable {
         self.tipoInsulinaRapida = tipoInsulinaRapida
         self.sincronizacionActiva = sincronizacionActiva
         self.bloqueoBiometrico = bloqueoBiometrico
+        self.asistenteActivo = asistenteActivo
         self.creadoTsUtc = creadoTsUtc
         self.actualizadoTsUtc = actualizadoTsUtc
         self.zonaHoraria = zonaHoraria

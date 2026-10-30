@@ -67,10 +67,10 @@ struct MigracionEsquemaTests {
     func elPlanDeclaraElCamino() {
         // Desde los pasos 6 y 7 hay dos versiones y dos etapas más; la de aquí sigue siendo
         // la primera.
-        #expect(PlanMigracionGlucy.schemas.count == 5)
+        #expect(PlanMigracionGlucy.schemas.count == 6)
         #expect(EsquemaGlucyV1.versionIdentifier == Schema.Version(1, 0, 0))
         #expect(EsquemaGlucyV2.versionIdentifier == Schema.Version(2, 0, 0))
-        #expect(PlanMigracionGlucy.stages.count == 4)
+        #expect(PlanMigracionGlucy.stages.count == 5)
         #expect(EsquemaGlucyV2.models.count == 10)
     }
 }

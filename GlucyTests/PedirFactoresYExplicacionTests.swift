@@ -142,6 +142,29 @@ struct PedirFactoresYExplicacionTests {
         #expect(sobre.asistenteActivo)
     }
 
+    @Test("Con el asistente apagado el sobre lo dice, y la frase se pide igual")
+    func elAsistenteApagadoViajaEnElSobre() async throws {
+        let backend = BackendFalso()
+        await backend.responder(prediccion: .success(
+            remota([horizonte(30, valorPredicho: 142)], tsBase: base)
+        ))
+        await backend.responder(explicacion: .success(explicacion("Una frase.")))
+
+        let resultado = await PedirFactoresYExplicacion(backend: backend, cache: nil).ejecutar(
+            proyecciones: [proyeccion(142, horizonteMin: 30)],
+            modo: .sensor, umbralHipo: 70, umbralHiper: 180, cobG: 0, iobUI: 0,
+            asistenteActivo: false
+        )
+
+        // Se pide igual: apagado no quiere decir sin frase, quiere decir que la arma el
+        // servidor con la plantilla determinista y sin llamar a ningún modelo de lenguaje.
+        let pedidas = await backend.explicacionesPedidas
+        let sobre = try #require(pedidas.first)
+        #expect(sobre.asistenteActivo == false)
+        let aportes = try #require(resultado.aportes)
+        #expect(aportes[0].explicacion == "Una frase.")
+    }
+
     @Test("Nunca se mandan más de cinco contribuciones")
     func nuncaMasDeCinco() throws {
         let siete = (0..<7).map { ContribucionRemota(variable: "v\($0)", mgDl: Double($0)) }

@@ -67,6 +67,18 @@ nonisolated enum EsquemaGlucyV5: VersionedSchema {
     static var versionIdentifier: Schema.Version { Schema.Version(5, 0, 0) }
 
     static var models: [any PersistentModel.Type] {
+        [EsquemaGlucyV5.Perfil.self, LecturaGlucosa.self, Comida.self, DosisInsulina.self,
+         EventoContexto.self, Alerta.self, PrediccionCache.self, ProductoCache.self,
+         ColaSincronizacion.self, ColaXapi.self]
+    }
+}
+
+/// Las mismas diez, con `asistenteActivo` en `Perfil`: el interruptor del asistente de
+/// explicaciones. Nace encendido, porque la frase es la mitad de lo que hace la app.
+nonisolated enum EsquemaGlucyV6: VersionedSchema {
+    static var versionIdentifier: Schema.Version { Schema.Version(6, 0, 0) }
+
+    static var models: [any PersistentModel.Type] {
         [Perfil.self, LecturaGlucosa.self, Comida.self, DosisInsulina.self,
          EventoContexto.self, Alerta.self, PrediccionCache.self, ProductoCache.self,
          ColaSincronizacion.self, ColaXapi.self]
@@ -82,16 +94,21 @@ nonisolated enum EsquemaGlucyV5: VersionedSchema {
 nonisolated enum PlanMigracionGlucy: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
         [EsquemaGlucyV1.self, EsquemaGlucyV2.self, EsquemaGlucyV3.self, EsquemaGlucyV4.self,
-         EsquemaGlucyV5.self]
+         EsquemaGlucyV5.self, EsquemaGlucyV6.self]
     }
 
-    /// Ligeras las cuatro: los campos nuevos son opcionales o traen valor por omisión, y un
+    /// Ligeras las cinco: los campos nuevos son opcionales o traen valor por omisión, y un
     /// campo que pasa a opcional no pierde lo que tenía, así que SwiftData puede migrar sin
     /// que nadie escriba cómo rellenar las filas existentes.
+    ///
+    /// La quinta es la del interruptor del asistente. `asistenteActivo` nace en `true`, así
+    /// que quien ya tenía la app sigue viendo la frase después de actualizar: una etapa ligera
+    /// no toca las filas que ya existen, y el valor por omisión es lo que leen.
     static var stages: [MigrationStage] {
         [.lightweight(fromVersion: EsquemaGlucyV1.self, toVersion: EsquemaGlucyV2.self),
          .lightweight(fromVersion: EsquemaGlucyV2.self, toVersion: EsquemaGlucyV3.self),
          .lightweight(fromVersion: EsquemaGlucyV3.self, toVersion: EsquemaGlucyV4.self),
-         .lightweight(fromVersion: EsquemaGlucyV4.self, toVersion: EsquemaGlucyV5.self)]
+         .lightweight(fromVersion: EsquemaGlucyV4.self, toVersion: EsquemaGlucyV5.self),
+         .lightweight(fromVersion: EsquemaGlucyV5.self, toVersion: EsquemaGlucyV6.self)]
     }
 }
