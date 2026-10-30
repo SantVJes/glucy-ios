@@ -25,16 +25,23 @@ struct CalcularPrediccionTests {
         return repositorio
     }
 
+    /// Los dobles se construyen **dentro**, cada uno en su propia línea, y no como valor por
+    /// omisión de un parámetro: un valor por omisión se evalúa en quien llama, y llamar ahí al
+    /// init de un actor hace que el compilador quiera marcarlo `nonisolated`, lo que en un
+    /// init síncrono de actor no vale. Las demás pruebas del repositorio lo hacen así, y por
+    /// algo. Las comidas y las dosis no se parametrizan porque ninguna prueba de aquí las
+    /// necesita: lo que estas pruebas miran es la serie, la base y el modelo.
     private func caso(
         lecturas: RepositorioLecturasFalso,
-        comidas: RepositorioComidasFalso = RepositorioComidasFalso(),
-        dosis: RepositorioDosisFalso = RepositorioDosisFalso(),
         perfil: PerfilDato? = nil,
         modelos: [any RepositorioModelo]
     ) -> CalcularPrediccion {
-        CalcularPrediccion(
+        let comidas = RepositorioComidasFalso()
+        let dosis = RepositorioDosisFalso()
+        let dePerfil = RepositorioPerfilFalso(perfil)
+        return CalcularPrediccion(
             lecturas: lecturas, comidas: comidas, dosis: dosis,
-            perfil: RepositorioPerfilFalso(perfil), modelos: modelos
+            perfil: dePerfil, modelos: modelos
         )
     }
 

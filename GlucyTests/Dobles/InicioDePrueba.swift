@@ -24,7 +24,18 @@ enum InicioDePrueba {
         modelos: [any RepositorioModelo] = [],
         perfil: (any RepositorioPerfil)? = nil
     ) async throws -> EstadoInicio {
-        try await ConsultarInicio(
+        // En un `let` suelto y no dentro de un `??`: el lado derecho de `??` es un
+        // `@autoclosure`, y llamar ahí al init de un actor hace que el compilador quiera
+        // marcarlo `nonisolated`, lo que en un init síncrono de actor no vale. Todas las
+        // demás pruebas construyen sus dobles así, en su propia línea.
+        let dePerfil: any RepositorioPerfil
+        if let perfil {
+            dePerfil = perfil
+        } else {
+            dePerfil = RepositorioPerfilFalso()
+        }
+
+        return try await ConsultarInicio(
             lecturas: lecturas,
             modo: ConsultarModo(lecturas: lecturas),
             carbohidratosActivos: CalcularCarbohidratosActivos(comidas: comidas),
@@ -32,7 +43,7 @@ enum InicioDePrueba {
             perfil: perfil,
             predecir: CalcularPrediccion(
                 lecturas: lecturas, comidas: comidas, dosis: dosis,
-                perfil: perfil ?? RepositorioPerfilFalso(), modelos: modelos
+                perfil: dePerfil, modelos: modelos
             )
         ).ejecutar(lecturaHealthKitActiva: lecturaHealthKitActiva, ahora: ahora)
     }
