@@ -20,6 +20,10 @@ final class AjustesViewModel {
     private(set) var fallo: String?
     /// Se intentó encender el sensor y no se pudo pedir el permiso. No es un error.
     private(set) var seguimosSinSensor = false
+    /// Si el Keychain ya tiene un token del servidor. **Solo si lo hay, nunca cuál es**:
+    /// enseñar el token en pantalla no sirve de nada y lo deja a la vista de quien mire el
+    /// teléfono por encima del hombro.
+    private(set) var hayToken = false
     private(set) var ocupado = false
 
     // Lo que se teclea vive como texto hasta que se confirma.
@@ -28,6 +32,10 @@ final class AjustesViewModel {
     var textoPeso = ""
     var textoAnio = ""
     var textoInsulina = ""
+    /// Lo que se pega en el campo del token. Se vacía en cuanto el token entra al Keychain:
+    /// dejarlo aquí lo mantendría en la memoria de la vista y en la captura de pantalla que
+    /// iOS guarda al mandar la app al fondo.
+    var textoToken = ""
 
     private let guardar: GuardarAjustes
     private let pendientes: ConsultarColaPendiente
@@ -37,6 +45,8 @@ final class AjustesViewModel {
     /// `nil` cuando la app se armó sin dirección de backend: entonces el botón no está, en
     /// lugar de estar y no hacer nada.
     private let subirAlBackend: SincronizarConBackend?
+    /// Donde vive el token del servidor. `nil` en las pruebas que no lo necesitan.
+    private let almacenDeToken: (any AlmacenDeToken)?
 
     init(
         guardar: GuardarAjustes,
@@ -44,7 +54,8 @@ final class AjustesViewModel {
         completarAlta: CompletarAlta,
         sincronizar: SincronizarLecturasDelSensor,
         candado: any Candado,
-        subirAlBackend: SincronizarConBackend? = nil
+        subirAlBackend: SincronizarConBackend? = nil,
+        almacenDeToken: (any AlmacenDeToken)? = nil
     ) {
         self.guardar = guardar
         self.pendientes = pendientes
@@ -52,6 +63,7 @@ final class AjustesViewModel {
         self.sincronizar = sincronizar
         self.candado = candado
         self.subirAlBackend = subirAlBackend
+        self.almacenDeToken = almacenDeToken
     }
 
     var hayBackend: Bool { subirAlBackend != nil }
@@ -59,9 +71,49 @@ final class AjustesViewModel {
     func cargar() async {
         pendientesEnCola = await pendientes.ejecutar()
         erroresEnCola = await pendientes.conError()
+        revisarToken()
         guard let actuales = try? await guardar.actuales() else { return }
         ajustes = actuales
         ponerTextos(de: actuales)
+    }
+
+    /// Si el campo del token tiene sentido en esta instalación: hace falta servidor **y**
+    /// dónde guardar el token.
+    var sePuedeGuardarToken: Bool { hayBackend && almacenDeToken != nil }
+
+    func revisarToken() {
+        hayToken = almacenDeToken?.token() != nil
+    }
+
+    /// Guarda el token pegado y **vacía el campo**.
+    ///
+    /// El backend no tiene ningún endpoint que emita tokens: los firma a mano
+    /// `scripts/token-de-prueba.py` del repositorio del servidor. Hasta que la fase 2 traiga
+    /// el alta y la rotación, pegarlo aquí es la única forma de que un teléfono de verdad se
+    /// autentique contra el servidor de casa, y es lo que permite ver los factores y la
+    /// explicación fuera del simulador.
+    func guardarToken() {
+        guard let almacenDeToken else { return }
+        let token = textoToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else { return }
+        do {
+            try almacenDeToken.guardar(token: token)
+            textoToken = ""
+            hayToken = true
+            fallo = nil
+        } catch {
+            // El Keychain falla por razones que no se pueden explicar a nadie; lo que
+            // importa es que el token NO quedó guardado y que la sincronización va a seguir
+            // contestando 401.
+            fallo = "No pude guardar el token. Vuelve a intentarlo."
+        }
+    }
+
+    func borrarToken() {
+        guard let almacenDeToken else { return }
+        try? almacenDeToken.borrar()
+        textoToken = ""
+        revisarToken()
     }
 
     /// Aplica un cambio y lo guarda. Si se rechaza, la pantalla vuelve a lo guardado.
