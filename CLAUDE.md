@@ -235,6 +235,9 @@ instrucción de tratamiento**, y todo número con su unidad y su hora.
 
 ## Dónde está el resto de la documentación
 
+**Si llegas sin contexto, empieza por [`docs/TRASPASO.md`](docs/TRASPASO.md)**: el estado real,
+lo que falta en orden, las trampas que ya costaron horas, y que el trabajo vive en `develop`.
+
 En los archivos del proyecto de Claude, carpeta `glucy-base`: `00-CONTEXTO-GLUCY.md` (el panorama),
 `01-glucy-ios.md` (las diez tablas campo por campo, las diez pantallas, los tokens, los nueve
 estados), `04-PLAN-FASE-1.md` (el orden de construcción) y
