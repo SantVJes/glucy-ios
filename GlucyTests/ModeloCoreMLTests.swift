@@ -29,9 +29,9 @@ struct ModeloCoreMLTests {
     ]
 
     /// La misma fila con los huecos que deja una serie de dos lecturas. Va aparte porque
-    /// comprueba otra cosa: que Core ML trate el `NaN` como lo trata XGBoost. El artefacto
-    /// trae 498 nodos con `missingValueTracksTrueChild`, y si el teléfono no respetara eso la
-    /// predicción se desviaría hasta 19.8 mg/dL.
+    /// comprueba otra cosa: que Core ML trate el `NaN` como lo trata XGBoost. M-1 trae 892
+    /// cortes con `missingValueTracksTrueChild` y M-2 trae 755; si el teléfono no respetara eso,
+    /// en esta misma fila M-1 daría 177.07 en lugar de 173.57 y M-2 161.33 en lugar de 175.86.
     private static var filaConHuecos: [String: Double] {
         var con = fila
         for nombre in ["rezago_10", "rezago_15", "rezago_30", "rezago_60", "derivada_2",
@@ -68,20 +68,21 @@ struct ModeloCoreMLTests {
         #expect(m2.descrito.horizonteMin == 60)
         // La versión sale del archivo y no de una constante de Swift, así que reemplazar el
         // artefacto no deja a la app reportando una versión que no calculó el número (RF-25).
-        #expect(m1.descrito.version == "v0.2.0-simulador")
-        #expect(m2.descrito.version == "v0.2.0-simulador")
+        #expect(m1.descrito.version == "v0.3.0-ohiot1dm")
+        #expect(m2.descrito.version == "v0.3.0-ohiot1dm")
     }
 
-    @Test("Los artefactos de hoy dicen que sus métricas no se pueden reportar")
-    func lasMetricasDeHoyNoSePuedenReportar() throws {
-        // Están entrenados con el simulador fisiológico, no con datos de personas. Lo dice el
-        // propio archivo, y por eso sus métricas no van al documento final (riesgo R-2). El
-        // día que llegue OhioT1DM esta prueba falla, y eso es la señal de que hay que
-        // actualizar el reporte.
+    @Test("Los artefactos de hoy dicen que sus métricas se pueden reportar")
+    func lasMetricasDeHoySePuedenReportar() throws {
+        // Están entrenados con OhioT1DM, doce personas con diabetes tipo 1, y el propio archivo
+        // lo dice. Que se puedan reportar no las hace generalizables: son doce sujetos y el
+        // reporte dice el número (riesgo R-2). Si alguien vuelve a meter un artefacto del
+        // simulador, esta prueba falla, y esa es la señal de que el teléfono ya no ejecuta el
+        // modelo cuyas métricas están en el documento.
         let m1 = try cargar(ModeloCoreML.nombreM1)
         let m2 = try cargar(ModeloCoreML.nombreM2)
-        #expect(m1.descrito.metricasSePuedenReportar == false)
-        #expect(m2.descrito.metricasSePuedenReportar == false)
+        #expect(m1.descrito.metricasSePuedenReportar == true)
+        #expect(m2.descrito.metricasSePuedenReportar == true)
     }
 
     @Test("Un artefacto que no está en el paquete se dice, no se adivina")
@@ -98,10 +99,10 @@ struct ModeloCoreMLTests {
         let modelo = try cargar(ModeloCoreML.nombreM1)
         let entradas = try VectorDeCaracteristicas.paraCoreML(Self.fila)
         let valor = try await modelo.predecir(entradas)
-        // 160.777_74 es lo que `m1-v0.2.0-simulador.ubj` devuelve para esta fila en float32.
+        // 175.276_54 es lo que `m1-v0.3.0-ohiot1dm.ubj` devuelve para esta fila en float32.
         // La tolerancia es de una centésima; la diferencia medida en la conversión fue de
-        // 0.000 259 mg/dL sobre 2 000 filas.
-        #expect(abs(valor - 160.777_74) < 0.01, "Core ML dio \(valor)")
+        // 0.000 305 mg/dL sobre 2 000 filas de OhioT1DM.
+        #expect(abs(valor - 175.276_54) < 0.01, "Core ML dio \(valor)")
     }
 
     @Test("M-2 da el mismo número que el XGBoost con el que se entrenó")
@@ -109,19 +110,19 @@ struct ModeloCoreMLTests {
         let modelo = try cargar(ModeloCoreML.nombreM2)
         let entradas = try VectorDeCaracteristicas.paraCoreML(Self.fila)
         let valor = try await modelo.predecir(entradas)
-        #expect(abs(valor - 139.964_63) < 0.01, "Core ML dio \(valor)")
+        #expect(abs(valor - 178.710_13) < 0.01, "Core ML dio \(valor)")
     }
 
     @Test("Una fila con huecos da el número que da XGBoost con esos mismos huecos")
     func losHuecosSeTratanIgualQueEnXgboost() async throws {
         // La comprobación que no se podía hacer desde Python. Si Core ML ignorara el valor
-        // faltante, estos números serían otros: la desviación medida al no respetarlo llegaba
-        // a 19.8 mg/dL en M-1 y a 35.9 en M-2.
+        // faltante, estos números serían otros: sobre 2 000 filas de OhioT1DM la desviación
+        // medida al no respetarlo llegaba a 98.6 mg/dL en M-1 y a 71.2 en M-2.
         let entradas = try VectorDeCaracteristicas.paraCoreML(Self.filaConHuecos)
         let m1 = try await cargar(ModeloCoreML.nombreM1).predecir(entradas)
         let m2 = try await cargar(ModeloCoreML.nombreM2).predecir(entradas)
-        #expect(abs(m1 - 158.900_01) < 0.01, "M-1 con huecos dio \(m1)")
-        #expect(abs(m2 - 154.951_94) < 0.01, "M-2 con huecos dio \(m2)")
+        #expect(abs(m1 - 173.567_09) < 0.01, "M-1 con huecos dio \(m1)")
+        #expect(abs(m2 - 175.855_19) < 0.01, "M-2 con huecos dio \(m2)")
     }
 
     @Test("La fila que calcula la app es la misma que se le pasa al modelo")
@@ -151,6 +152,6 @@ struct ModeloCoreMLTests {
         )
         let entradas = try VectorDeCaracteristicas.paraCoreML(vector)
         let valor = try await cargar(ModeloCoreML.nombreM1).predecir(entradas)
-        #expect(abs(valor - 160.777_74) < 0.01, "con la fila calculada dio \(valor)")
+        #expect(abs(valor - 175.276_54) < 0.01, "con la fila calculada dio \(valor)")
     }
 }
