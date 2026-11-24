@@ -46,6 +46,7 @@ Escrito el 20 de noviembre de 2026. Si lees esto mucho después, compara contra 
 | Piloto de usabilidad (fase 7) | `docs/fase7-piloto-de-usabilidad.md` |
 | Paleta y modo oscuro, con contrastes medidos | `docs/modo-oscuro.md` |
 | Modelos Core ML dentro de la app | `Glucy/Resources/Modelos/GlucyM1.mlmodel`, `GlucyM2.mlmodel` |
+| En qué iPhone corre y cómo instalarla en el de otra persona (TestFlight, Ad Hoc) | `docs/instalar-en-cualquier-iphone.md` |
 
 ## 4. Estado al 20 de noviembre de 2026
 
@@ -54,20 +55,20 @@ Escrito el 20 de noviembre de 2026. Si lees esto mucho después, compara contra 
   teléfono, pantalla de factores y frase del servidor, aviso de baja prevista con la app
   cerrada, interruptor del asistente.
 - 396 pruebas en 59 suites; corren en el simulador dentro de la integración continua.
-- **Los modelos que trae la app son `v0.2.0-simulador`**, entrenados con el simulador
-  fisiológico. El servidor ya usa `v0.3.0-ohiot1dm`. Ver el punto 1 de la sección 5.
+- **Los modelos que trae la app son `v0.3.0-ohiot1dm`**, los mismos que carga el servidor
+  (actualizado el 24 de noviembre de 2026; antes eran `v0.2.0-simulador`).
+- Solo iPhone (`TARGETED_DEVICE_FAMILY = 1`), iOS 17 o posterior, con icono y la declaración
+  de cifrado exento que pide TestFlight.
 
 ## 5. Lo que falta
 
 Cada punto tiene su issue en este repositorio.
 
-1. **Reemplazar los `.mlmodel` por los de `v0.3.0-ohiot1dm`** cuando glucy-ml los convierta
-   (issue allá). Al copiarlos hay que actualizar `GlucyTests/ModeloCoreMLTests.swift`: la
-   versión esperada (`v0.2.0-simulador`), la prueba de que las métricas no se pueden reportar
-   (con OhioT1DM sí se pueden: esa prueba **tiene** que cambiar) y los tres valores de
-   referencia contra XGBoost (160.777 74, 158.900 01 y 154.951 94), que glucy-ml calcula con
-   la misma fila en `float32`. También los `modelo_version` de ejemplo en
-   `PrediccionRemotaTests.swift` si se quieren al día.
+1. **Cuando glucy-ml entrene otra versión**, se copian los `.mlmodel` y se actualizan en
+   `GlucyTests/ModeloCoreMLTests.swift` la versión esperada y los cuatro valores de referencia
+   contra XGBoost (hoy 175.276 54, 178.710 13, 173.567 09 y 175.855 19), que se sacan corriendo
+   el `.ubj` con la misma fila en `float32`. Que la prueba falle al cambiar el modelo es a
+   propósito.
 2. **Avisos con prioridad de tiempo.** La cuenta de desarrollador del proyecto es personal y
    **no soporta la capacidad Time Sensitive Notifications**: si se declara, Xcode no puede
    firmar y la app no se instala. El aviso sale con prioridad normal y un Modo de
