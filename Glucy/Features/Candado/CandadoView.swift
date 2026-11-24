@@ -9,6 +9,19 @@ struct CandadoView: View {
     let alDesbloquear: () -> Void
 
     var body: some View {
+        // Si con letra de accesibilidad o el teléfono de lado el contenido no cabe, se desplaza
+        // en lugar de cortarse: un botón de desbloquear fuera de la pantalla deja a la persona
+        // fuera de su propia app.
+        ViewThatFits(in: .vertical) {
+            contenido
+            ScrollView { contenido }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Tema.Colores.fondo.ignoresSafeArea())
+        .accessibilityAddTraits(.isModal)
+    }
+
+    private var contenido: some View {
         VStack(spacing: Tema.Espacio.entreTarjetas) {
             Image(systemName: "lock.fill")
                 .font(.system(size: 44))
@@ -29,8 +42,7 @@ struct CandadoView: View {
             BotonPrincipal(titulo: "Desbloquear", identificador: "botonDesbloquear", accion: alDesbloquear)
         }
         .padding(.horizontal, Tema.Espacio.margenLateral)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Tema.Colores.fondo.ignoresSafeArea())
-        .accessibilityAddTraits(.isModal)
+        .padding(.vertical, Tema.Espacio.interior)
+        .frame(maxWidth: .infinity)
     }
 }

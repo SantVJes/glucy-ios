@@ -17,6 +17,10 @@ struct ConfirmarLecturaOcrView: View {
 
     var body: some View {
         NavigationStack {
+            // Con letra de accesibilidad o el teléfono de lado en un iPhone chico, el número
+            // leído no cabe junto con los botones. Los botones van fijos abajo y el número se
+            // desplaza: si se cortara, se estaría confirmando un valor que no se vio (D-11).
+            ScrollView {
             VStack(alignment: .leading, spacing: Tema.Espacio.entreTarjetas) {
                 switch modelo.estadoFoto {
                 case .procesando:
@@ -51,6 +55,8 @@ struct ConfirmarLecturaOcrView: View {
             .padding(.horizontal, Tema.Espacio.margenLateral)
             .padding(.top, Tema.Espacio.interior)
             .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .scrollBounceBehavior(.basedOnSize)
             .background(Tema.Colores.fondo)
             .safeAreaInset(edge: .bottom) { botones }
             .toolbar {
